@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block titulo %}Modo tablet · local{% endblock %}
+{% block estilos %}
+<style>
+  .tb-wrap {
+    min-height: calc(100vh - 12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background:
+      radial-gradient(ellipse 90% 50% at 50% -15%, rgba(var(--brand-primary-rgb), 0.16), transparent 55%),
+      linear-gradient(180deg, #f8fafc, #eef2f7);
+  }
+  .tb-card {
+    width: 100%;
+    max-width: 420px;
+    background: #fff;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+    overflow: hidden;
+  }
+  .tb-head {
+    background: linear-gradient(135deg, #0f172a 0%, #334155 55%, var(--brand-primary) 100%);
+    color: #fff;
+    padding: 1.75rem 1.5rem;
+    text-align: center;
+  }
+  .tb-head .bi { font-size: 2.5rem; opacity: 0.95; margin-bottom: 0.75rem; }
+  .tb-head h1 { font-size: 1.35rem; font-weight: 700; margin: 0 0 0.35rem 0; letter-spacing: -0.02em; }
+  .tb-head p { margin: 0; font-size: 0.88rem; color: rgba(255,255,255,0.85); line-height: 1.45; }
+  .tb-body { padding: 1.5rem 1.5rem 1.75rem; }
+  .tb-pin {
+    font-size: 1.4rem;
+    letter-spacing: 0.25em;
+    text-align: center;
+    padding: 0.85rem 1rem;
+    border-radius: 14px;
+    border: 2px solid #e2e8f0;
+  }
+  .tb-hint {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-top: 1rem;
+    line-height: 1.45;
+  }
+  .pwa-standalone .js-install-ui { display: none !important; }
+</style>
+{% endblock %}
+{% block contenido %}
+<div class="tb-wrap">
+  <div class="tb-card">
+    <div class="tb-head">
+      <i class="bi bi-tablet-landscape d-block"></i>
+      <h1>Tablet del local</h1>
+      <p>Reservas y fichaje. Sin editor de salón ni ajustes del sistema.</p>
+    </div>
+    <div class="tb-body">
+      <a href="{{ url_for('public.inicio') }}" class="text-decoration-none small text-muted d-inline-flex align-items-center gap-1 mb-3">
+        <i class="bi bi-arrow-left"></i> Otros accesos
+      </a>
+      {% if error %}
+      <div class="alert alert-danger py-2 small mb-3">PIN incorrecto</div>
+      {% endif %}
+      <form method="post" action="{{ url_for('public.tablet_acceso') }}">
+        <label class="form-label small text-muted">PIN modo tablet</label>
+        <input type="password" name="pin" class="form-control tb-pin mb-3" placeholder="••••" required autofocus autocomplete="off" inputmode="numeric">
+        <button type="submit" class="btn btn-primary w-100 py-3 fw-semibold rounded-3">Entrar</button>
+      </form>
+      <button type="button" class="btn btn-outline-secondary w-100 mt-2 js-install-ui" id="btn-install-tablet-acceso">
+        <i class="bi bi-download me-1"></i>Instalar app en este tablet
+      </button>
+      <p class="tb-hint mb-0 js-install-ui">
+        El administrador puede cambiarlo en <strong>Servicio → PIN modo tablet</strong>.
+        Para cancelar o borrar reservas se pedirá el PIN de administrador.
+      </p>
+      <p class="tb-hint mb-0 mt-2 js-install-ui">
+        Recomendado: instala esta web en la pantalla de inicio del tablet para abrirla en modo app.
+      </p>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  function isStandaloneApp() {
+    try {
+      return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  if (isStandaloneApp()) return;
+
+  let deferredPrompt = null;
+  const btn = document.getElementById("btn-install-tablet-acceso");
+  window.addEventListener("beforeinstallprompt", function (e) {
+    e.preventDefault();
+    deferredPrompt = e;
+  });
+  if (!btn) return;
+  btn.addEventListener("click", async function () {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      try { await deferredPrompt.userChoice; } catch (_) {}
+      deferredPrompt = null;
+      return;
+    }
+    alert(
+      "Si no aparece el instalador automático:\\n\\n" +
+      "Android (Chrome): menú ⋮ > Instalar aplicación o Añadir a pantalla de inicio.\\n" +
+      "iPad/iPhone (Safari): Compartir > Añadir a pantalla de inicio."
+    );
+  });
+})();
+</script>
+{% endblock %}

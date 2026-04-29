@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block titulo %}{{ tr('page.clientes.detail_title') }}{% endblock %}
+{% block contenido %}
+{% include 'partials/volver_bar.html' %}
+<div class="app-page" style="max-width: 900px; margin: 0 auto;">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h3 class="mb-0">{{ tr('page.clientes.detail_title') }}</h3>
+    <a href="{{ url_for('admin.lista_clientes') }}" class="btn btn-outline-secondary btn-sm">{{ tr('page.clientes.back_list') }}</a>
+  </div>
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <form method="post" action="{{ url_for('admin.cliente_actualizar', cid=cliente.id) }}">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">{{ tr('page.clientes.col_name') }}</label>
+            <input name="nombre" class="form-control" required value="{{ cliente.nombre }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">{{ tr('page.clientes.col_phone') }}</label>
+            <input name="telefono" class="form-control" required value="{{ cliente.telefono }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">{{ tr('page.clientes.form_email') }}</label>
+            <input name="email" type="email" class="form-control" value="{{ cliente.email or '' }}" placeholder="email@…">
+          </div>
+          <div class="col-12">
+            <label class="form-label">{{ tr('page.clientes.form_notes_internal') }}</label>
+            <textarea name="notas_internas" class="form-control" rows="3">{{ cliente.notas_internas or '' }}</textarea>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">{{ tr('page.clientes.field_tag') }}</label>
+            <input name="etiqueta" class="form-control" value="{{ cliente.etiqueta or '' }}" placeholder="{{ tr('page.clientes.field_tag_ph') }}">
+          </div>
+          <div class="col-md-6 d-flex align-items-end pb-2">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="vip" value="1" id="cli_vip" {% if (cliente.get('vip') or 0)|int == 1 %}checked{% endif %}>
+              <label class="form-check-label" for="cli_vip">{{ tr('page.clientes.field_vip') }}</label>
+            </div>
+          </div>
+          <div class="col-12">
+            <label class="form-label">{{ tr('page.clientes.field_allergies') }}</label>
+            <textarea name="alergias" class="form-control" rows="2" placeholder="{{ tr('page.clientes.field_allergies_ph') }}">{{ cliente.alergias or '' }}</textarea>
+          </div>
+          <div class="col-12">
+            <label class="form-label">{{ tr('page.clientes.field_prefs') }}</label>
+            <textarea name="preferencias" class="form-control" rows="2" placeholder="{{ tr('page.clientes.field_prefs_ph') }}">{{ cliente.preferencias or '' }}</textarea>
+          </div>
+          <div class="col-12 text-end">
+            <button type="submit" class="btn btn-primary">{{ tr('page.clientes.btn_save') }}</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <h5 class="mb-2">{{ tr('page.clientes.reservations_title') }}</h5>
+  <div class="app-surface p-0 overflow-hidden border rounded-3">
+    {% if reservas_hist %}
+    <div class="table-responsive">
+      <table class="table table-sm mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>{{ tr('page.clientes.th_date') }}</th>
+            <th>{{ tr('page.clientes.th_time') }}</th>
+            <th>{{ tr('page.clientes.th_table') }}</th>
+            <th>{{ tr('page.clientes.th_party') }}</th>
+            <th>{{ tr('page.clientes.th_status') }}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for rv in reservas_hist %}
+          <tr>
+            <td>{{ rv.fecha }}</td>
+            <td>{{ rv.hora }}</td>
+            <td>{{ rv.mesa }}</td>
+            <td>{{ rv.personas }}</td>
+            <td><span class="badge bg-light text-dark border">{{ rv.estado }}</span></td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.editar', id=rv.id) }}?fecha={{ rv.fecha }}">{{ tr('page.clientes.open_booking') }}</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="p-3 text-muted small">{{ tr('page.clientes.history_empty') }}</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

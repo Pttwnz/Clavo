@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>El Clavo — Full menu (English)</title>
+<style>
+:root {
+  --red: #b91c1c;
+  --ink: #1c1917;
+  --muted: #57534e;
+  --paper: #fafaf9;
+  --line: #e7e5e4;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  background: #e7e5e4;
+  color: var(--ink);
+  line-height: 1.35;
+}
+.wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px 16px 48px;
+}
+.sheet {
+  background: var(--paper);
+  box-shadow: 0 4px 24px rgba(0,0,0,.08);
+  border-radius: 4px;
+  padding: 28px 22px 36px;
+}
+.brand {
+  text-align: center;
+  margin-bottom: 8px;
+}
+.brand svg { width: 56px; height: 56px; }
+.brand h1 {
+  margin: 8px 0 4px;
+  font-size: 2rem;
+  letter-spacing: .12em;
+  font-weight: 800;
+  color: var(--red);
+}
+.brand p { margin: 0; font-size: .85rem; color: var(--muted); }
+.promos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.promo {
+  background: #f5f5f4;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 14px 12px;
+  text-align: center;
+}
+.promo h3 { margin: 0 0 8px; font-size: .95rem; color: var(--red); text-transform: uppercase; letter-spacing: .04em; }
+.promo p { margin: 0; font-size: .82rem; color: var(--muted); }
+.promo-price { margin-top: 10px !important; font-weight: 800; font-size: 1.1rem !important; color: var(--ink) !important; }
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px 36px;
+  margin-bottom: 28px;
+}
+@media (max-width: 780px) {
+  .grid2 { grid-template-columns: 1fr; }
+}
+.sec h2 {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--red);
+  border-bottom: 2px solid var(--red);
+  padding-bottom: 6px;
+}
+.dish {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 10px;
+  padding: 8px 0;
+  border-bottom: 1px dotted var(--line);
+  font-size: .88rem;
+  align-items: start;
+}
+.dish-main { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.dish-name { font-weight: 600; }
+.dish-sub { grid-column: 1 / -1; font-size: .78rem; color: var(--muted); margin-top: 2px; }
+.dish-price { font-weight: 700; white-space: nowrap; text-align: right; }
+.alf-icons { display: inline-flex; gap: 3px; flex-wrap: wrap; }
+.alf {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 800;
+  color: #fff;
+  background: #78716c;
+}
+.alf[data-n="1"] { background: #65a30d; }
+.alf[data-n="2"] { background: #0ea5e9; }
+.alf[data-n="3"] { background: #0284c7; }
+.alf[data-n="4"] { background: #0369a1; }
+.alf[data-n="5"] { background: #ca8a04; }
+.alf[data-n="6"] { background: #ea580c; }
+.alf[data-n="7"] { background: #dc2626; }
+.alf[data-n="8"] { background: #84cc16; }
+.alf[data-n="9"] { background: #16a34a; }
+.alf[data-n="10"] { background: #db2777; }
+.alf[data-n="11"] { background: #ca8a04; }
+.alf[data-n="12"] { background: #a16207; }
+.alf[data-n="13"] { background: #9333ea; }
+.alf[data-n="14"] { background: #854d0e; }
+.row3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 28px;
+}
+@media (max-width: 900px) {
+  .row3 { grid-template-columns: 1fr; }
+}
+.wines {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-bottom: 24px;
+}
+@media (max-width: 700px) {
+  .wines { grid-template-columns: 1fr; }
+}
+.legend {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 2px solid var(--line);
+}
+.legend h2 { font-size: .95rem; margin: 0 0 14px; color: var(--red); }
+.legend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px 14px;
+  font-size: .72rem;
+}
+.legend-item { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+.legend-item .alf { flex-shrink: 0; }
+.note { font-size: .75rem; color: var(--muted); margin-top: 20px; text-align: center; }
+.meats-note { font-size: .78rem; color: var(--muted); margin-top: -12px; margin-bottom: 20px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="sheet">
+    <header class="brand">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="28" fill="none" stroke="#1c1917" stroke-width="2"/><path fill="#b91c1c" d="M32 8l6 18h18l-14 10 5 18-15-11-15 11 5-18L8 26h18z"/><line x1="32" y1="8" x2="32" y2="4" stroke="#1c1917" stroke-width="3" stroke-linecap="round"/></svg>
+      <h1>EL CLAVO</h1>
+      <p>Taberna · València · Reservations 963 287 041</p>
+    </header>
+    <div class="promos"><article class="promo"><h3>Lunch menu (until 12:00)</h3><p>Sandwich, drink and coffee: €6.50 Mon–Fri; €7.50 Sat–Sun. Half lunch: €5.50 (Mon–Fri) / €6.50 (Sat–Sun).</p><p class="promo-price">from €6.50</p></article><article class="promo"><h3>Daily special (Mon–Thu)</h3><p>Includes the daily dish and coffee for €10.</p><p class="promo-price">10 €</p></article><article class="promo"><h3>Every Friday: cocido stew</h3><p>Seasonal stew — €16.</p><p class="promo-price">16 €</p></article><article class="promo"><h3>Reservations</h3><p>Phone 963 287 041</p><p class="promo-price">963 287 041</p></article></div>
+    <div class="grid2">
+      <div>
+        <section class="sec"><h2>Tapas</h2>
+          <div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Ajoarriero</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="3">3</span><span class="alf" data-n="4">4</span><span class="alf" data-n="6">6</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">House classic.</span></div>
+  <span class="dish-price">8 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Russian salad</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="3">3</span><span class="alf" data-n="4">4</span><span class="alf" data-n="6">6</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Bar-style recipe.</span></div>
+  <span class="dish-price">8 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Titaina del Cabanyal</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="3">3</span><span class="alf" data-n="7">7</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Seafaring version.</span></div>
+  <span class="dish-price">10 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">House-pickled anchovies</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="3">3</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Vinegar and olive oil.</span></div>
+  <span class="dish-price">8 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Cádiz mojama with tomato and almonds</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="3">3</span><span class="alf" data-n="14">14</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Cured fish, fine chop.</span></div>
+  <span class="dish-price">10 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Octopus salad</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="2">2</span><span class="alf" data-n="4">4</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Fresh and citrusy.</span></div>
+  <span class="dish-price">9 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Esgarraet</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="3">3</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Peppers and cod.</span></div>
+  <span class="dish-price">9 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Spanish omelette</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="6">6</span><span class="alf" data-n="11">11</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Juicy; onion optional.</span></div>
+  <span class="dish-price">8 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Valencian tomato, mackerel fillets and pickles</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="3">3</span><span class="alf" data-n="13">13</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Extra virgin olive oil.</span></div>
+  <span class="dish-price">15 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Patatas bravas</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="7">7</span><span class="alf" data-n="13">13</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Brava sauce and aioli.</span></div>
+  <span class="dish-price">7 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Poor man’s potatoes (egg, parmesan, truffle)</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="5">5</span><span class="alf" data-n="6">6</span><span class="alf" data-n="7">7</span><span class="alf" data-n="13">13</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">With egg, parmesan and truffle.</span></div>
+  <span class="dish-price">14 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Padrón peppers</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Sea salt and oil.</span></div>
+  <span class="dish-price">8 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Grilled marinated pig’s ear</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="13">13</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">House marinade.</span></div>
+  <span class="dish-price">7 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Garlic prawns</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="4">4</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Hot oil and chilli.</span></div>
+  <span class="dish-price">10 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Burgos blood sausage, goat cheese, caramelised onion</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="5">5</span><span class="alf" data-n="7">7</span><span class="alf" data-n="13">13</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Sweet–savoury contrast.</span></div>
+  <span class="dish-price">10 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Fried brie with red berry jam</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="5">5</span><span class="alf" data-n="7">7</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Crispy outside.</span></div>
+  <span class="dish-price">10 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Artichoke with ham (3 pcs.)</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="13">13</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Half portion.</span></div>
+  <span class="dish-price">10 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Artichokes with foie (3 pcs.)</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Seared.</span></div>
+  <span class="dish-price">12 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Artichokes with baby squid parmesan</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="2">2</span><span class="alf" data-n="3">3</span><span class="alf" data-n="5">5</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Gratin.</span></div>
+  <span class="dish-price">17 €</span>
+</div>
+        </section>
+      </div>
+      <div>
+        <section class="sec"><h2>Tapas (continued)</h2>
+          <div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Aubergines with honey</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="7">7</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Light batter.</span></div>
+  <span class="dish-price">10 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Grilled sardines</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="3">3</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">In season.</span></div>
+  <span class="dish-price">10 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Bluefin tuna with sautéed cherry tomatoes</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="3">3</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Garlic and parsley.</span></div>
+  <span class="dish-price">12 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Fried cod with titaina</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="3">3</span><span class="alf" data-n="6">6</span><span class="alf" data-n="7">7</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Pepper sauce.</span></div>
+  <span class="dish-price">14 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Grilled cuttlefish</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="2">2</span><span class="alf" data-n="3">3</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Hot griddle.</span></div>
+  <span class="dish-price">16 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Mediterranean squid</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="2">2</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Whole tentacle.</span></div>
+  <span class="dish-price">18 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Crispy pork belly</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="13">13</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Crispy and salty.</span></div>
+  <span class="dish-price">8 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Bravas Clavo (cheese sauce &amp; ibérico ham)</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="5">5</span><span class="alf" data-n="7">7</span><span class="alf" data-n="13">13</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Our premium take.</span></div>
+  <span class="dish-price">14 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Grilled baby squid</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="2">2</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Seared.</span></div>
+  <span class="dish-price">12 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Porcini croquettes (2 pcs.)</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="5">5</span><span class="alf" data-n="6">6</span><span class="alf" data-n="7">7</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Creamy.</span></div>
+  <span class="dish-price">4 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Cecina croquettes (2 pcs.)</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="5">5</span><span class="alf" data-n="6">6</span><span class="alf" data-n="7">7</span><span class="alf" data-n="13">13</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Mild smoke.</span></div>
+  <span class="dish-price">4 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Red prawn croquettes (2 pcs.)</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="3">3</span><span class="alf" data-n="4">4</span><span class="alf" data-n="5">5</span><span class="alf" data-n="6">6</span><span class="alf" data-n="7">7</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Seafood flavour.</span></div>
+  <span class="dish-price">4 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Ham croquettes (2 pcs.)</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="5">5</span><span class="alf" data-n="6">6</span><span class="alf" data-n="7">7</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Long cure.</span></div>
+  <span class="dish-price">4 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Cheek croquettes (2 pcs.)</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="5">5</span><span class="alf" data-n="6">6</span><span class="alf" data-n="7">7</span><span class="alf" data-n="13">13</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Dark reduction.</span></div>
+  <span class="dish-price">4 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Chorizo in cider</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="13">13</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Natural cider.</span></div>
+  <span class="dish-price">7 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Ibérico ham &amp; cured cheese board</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="5">5</span><span class="alf" data-n="13">13</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">For sharing.</span></div>
+  <span class="dish-price">16 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Gildas</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="3">3</span><span class="alf" data-n="13">13</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Anchovy, chilli, olive.</span></div>
+  <span class="dish-price">2 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Bag of crisps</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Bar classic.</span></div>
+  <span class="dish-price">1.50 €</span>
+</div>
+        </section>
+      </div>
+    </div>
+    <div class="row3">
+      <section class="sec"><h2>Toasts</h2><div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Ibérico ham &amp; tomato toast</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="7">7</span><span class="alf" data-n="13">13</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Toasted country bread.</span></div>
+  <span class="dish-price">4 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Smoked sardine toast with tomato</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="3">3</span><span class="alf" data-n="7">7</span><span class="alf" data-n="13">13</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Fine drizzle of oil.</span></div>
+  <span class="dish-price">4 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Salmon toast with house tartare sauce</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="3">3</span><span class="alf" data-n="6">6</span><span class="alf" data-n="7">7</span><span class="alf" data-n="13">13</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Dill and lemon.</span></div>
+  <span class="dish-price">4 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Pulled pork toast</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="7">7</span><span class="alf" data-n="11">11</span><span class="alf" data-n="13">13</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Mild BBQ.</span></div>
+  <span class="dish-price">4 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Cream cheese &amp; anchovy toast</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="3">3</span><span class="alf" data-n="5">5</span><span class="alf" data-n="7">7</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Creamy texture.</span></div>
+  <span class="dish-price">4 €</span>
+</div></section>
+      <section class="sec"><h2>Meats</h2><div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Beef sirloin &amp; vegetable skewer</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="7">7</span><span class="alf" data-n="13">13</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Charcoal grilled.</span></div>
+  <span class="dish-price">22 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Beef sirloin</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="7">7</span><span class="alf" data-n="13">13</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Cooking to taste.</span></div>
+  <span class="dish-price">18 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Iberian pork secret cut</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="7">7</span><span class="alf" data-n="13">13</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Juicy.</span></div>
+  <span class="dish-price">14 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Wine-braised pork cheek</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="7">7</span><span class="alf" data-n="13">13</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Slow reduction.</span></div>
+  <span class="dish-price">15 €</span>
+</div></section>
+      <section class="sec"><h2>Bread &amp; extras</h2><div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Bread</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="7">7</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Per piece.</span></div>
+  <span class="dish-price">1.20 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Bread with tomato &amp; aioli</span>
+    <span class="alf-icons" aria-label="Allergens"><span class="alf" data-n="6">6</span><span class="alf" data-n="7">7</span></span>
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Grated to order.</span></div>
+  <span class="dish-price">2.50 €</span>
+</div></section>
+    </div>
+    <p class="meats-note">* Meats may contain sulphites and gluten (traces).</p>
+    <div class="row3">
+      <section class="sec"><h2>Desserts</h2><div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">French toast with meringue-milk ice cream</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Cinnamon and honey.</span></div>
+  <span class="dish-price">7 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Brownie with vanilla ice cream</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Intense chocolate.</span></div>
+  <span class="dish-price">7 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Carrot cake</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Spices and frosting.</span></div>
+  <span class="dish-price">7 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Cheesecake</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Baked.</span></div>
+  <span class="dish-price">7 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Nougat ice cream</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Creamy.</span></div>
+  <span class="dish-price">7 €</span>
+</div></section>
+      <div>
+        <section class="sec"><h2>Beers</h2><div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Small beer</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Draft.</span></div>
+  <span class="dish-price">1.50 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Large beer</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Draft.</span></div>
+  <span class="dish-price">2.50 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Alhambra Verde bottle</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">33 cl.</span></div>
+  <span class="dish-price">3 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">0.0 / gluten-free bottle</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">33 cl.</span></div>
+  <span class="dish-price">3 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Selecta toasted malt bottle</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">33 cl.</span></div>
+  <span class="dish-price">3 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Shandy</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Beer with lemon.</span></div>
+  <span class="dish-price">2.50 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Radler</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Refreshing.</span></div>
+  <span class="dish-price">3 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Magna bottle</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">33 cl.</span></div>
+  <span class="dish-price">3 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Pint</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Draft.</span></div>
+  <span class="dish-price">3.50 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Wine spritzer</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Lemon or orange.</span></div>
+  <span class="dish-price">4 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Sangria</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Fresh fruit.</span></div>
+  <span class="dish-price">6 €</span>
+</div></section>
+        <section class="sec"><h2>Soft drinks</h2><div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Soft drinks</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Brand of the day.</span></div>
+  <span class="dish-price">2.50 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Still or sparkling water</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Bottle.</span></div>
+  <span class="dish-price">2 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Aquarius orange / peach</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">50 cl.</span></div>
+  <span class="dish-price">2.50 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Juices</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Orange or multivitamin.</span></div>
+  <span class="dish-price">2.50 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Bitter Kas</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Valencian classic.</span></div>
+  <span class="dish-price">2.50 €</span>
+</div></section>
+      </div>
+      <div>
+        <section class="sec"><h2>Spirits</h2><div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Mixed drinks</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Gin, rum, whisky…</span></div>
+  <span class="dish-price">€8 / €9</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Premium mixed drinks</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Selected brands.</span></div>
+  <span class="dish-price">10 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Vaquerito shot</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Creamy shot.</span></div>
+  <span class="dish-price">3.50 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Shot</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">By spirit.</span></div>
+  <span class="dish-price">€2.50 / €3</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Premium glass</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Top-shelf spirit.</span></div>
+  <span class="dish-price">10 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Small glass</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Liqueur or mistela.</span></div>
+  <span class="dish-price">4.50 €</span>
+</div></section>
+        <section class="sec"><h2>Coffee</h2><div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Espresso</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Strong.</span></div>
+  <span class="dish-price">1.20 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Macchiato</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Warm milk.</span></div>
+  <span class="dish-price">1.50 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Coffee with milk</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Breakfast style.</span></div>
+  <span class="dish-price">2 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Coffee with brandy</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Spirit of your choice.</span></div>
+  <span class="dish-price">2.50 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Condensed-milk coffee</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Condensed milk.</span></div>
+  <span class="dish-price">1.80 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Americano</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Mild long black.</span></div>
+  <span class="dish-price">1.50 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Cremaet (coffee cocktail)</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Valencian classic.</span></div>
+  <span class="dish-price">3 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Herbal tea</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Assorted.</span></div>
+  <span class="dish-price">2 €</span>
+</div></section>
+      </div>
+    </div>
+    <div class="wines">
+      <section class="sec"><h2>White wines</h2><div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Academia de los Nocturnos (Valencia)</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Glass / bottle.</span></div>
+  <span class="dish-price">€3 / €16</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Verdeo</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Verdejo.</span></div>
+  <span class="dish-price">€3 / €16</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Ramón Bilbao (Verdejo)</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Rueda.</span></div>
+  <span class="dish-price">€4 / €18</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Pazo de Bruixas (Albariño)</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Bottle.</span></div>
+  <span class="dish-price">21 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Mar de Frades (Albariño)</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Bottle.</span></div>
+  <span class="dish-price">28 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">La Poda (Godello)</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Bottle.</span></div>
+  <span class="dish-price">21 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Iconos (Chardonnay)</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Glass / bottle.</span></div>
+  <span class="dish-price">€3.50 / €17</span>
+</div></section>
+      <section class="sec"><h2>Red wines</h2><div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Academia de los Nocturnos (Valencia)</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Red.</span></div>
+  <span class="dish-price">€3 / €16</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Avaniel (Ribera del Duero)</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Young.</span></div>
+  <span class="dish-price">€3.50 / €18</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Celeste (Ribera del Duero)</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Bottle.</span></div>
+  <span class="dish-price">20 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Altos Ibéricos (Rioja)</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Crianza.</span></div>
+  <span class="dish-price">€3.50 / €18</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Ramón Bilbao (Rioja)</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Bottle.</span></div>
+  <span class="dish-price">24 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Ramón Bilbao Reserva 2019</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Bottle.</span></div>
+  <span class="dish-price">28 €</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Petit Pittacum (Bierzo)</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Mencía.</span></div>
+  <span class="dish-price">€4 / €20</span>
+</div>
+<div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Sangre de Toro</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Bottle.</span></div>
+  <span class="dish-price">15 €</span>
+</div></section>
+    </div>
+    <div class="row3">
+      <section class="sec"><h2>Rosé wines</h2><div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Ramón Bilbao rosé (Rioja)</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Fresh.</span></div>
+  <span class="dish-price">€4 / €18</span>
+</div></section>
+      <section class="sec"><h2>Vermouth</h2><div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Vermouth (red / white / rosé / mixed)</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Glass.</span></div>
+  <span class="dish-price">4 €</span>
+</div></section>
+      <section class="sec"><h2>Cava</h2><div class="dish">
+  <div class="dish-main">
+    <span class="dish-name">Brut nature cava</span>
+    
+  </div>
+  <div class="dish-sub"><span class="dish-desc">Glass / bottle.</span></div>
+  <span class="dish-price">€4 / €24</span>
+</div></section>
+    </div>
+    <div class="legend">
+      <h2>Allergen legend (numbers on dishes)</h2>
+      <div class="legend-grid">
+        <div class="legend-item"><span class="alf" data-n="1">1</span><span>Soy</span></div><div class="legend-item"><span class="alf" data-n="2">2</span><span>Molluscs</span></div><div class="legend-item"><span class="alf" data-n="3">3</span><span>Fish</span></div><div class="legend-item"><span class="alf" data-n="4">4</span><span>Crustaceans</span></div><div class="legend-item"><span class="alf" data-n="5">5</span><span>Dairy</span></div><div class="legend-item"><span class="alf" data-n="6">6</span><span>Egg</span></div><div class="legend-item"><span class="alf" data-n="7">7</span><span>Gluten</span></div><div class="legend-item"><span class="alf" data-n="8">8</span><span>Lupins</span></div><div class="legend-item"><span class="alf" data-n="9">9</span><span>Celery</span></div><div class="legend-item"><span class="alf" data-n="10">10</span><span>Sesame</span></div><div class="legend-item"><span class="alf" data-n="11">11</span><span>Mustard</span></div><div class="legend-item"><span class="alf" data-n="12">12</span><span>Peanuts</span></div><div class="legend-item"><span class="alf" data-n="13">13</span><span>Sulphites</span></div><div class="legend-item"><span class="alf" data-n="14">14</span><span>Tree nuts</span></div>
+      </div>
+    </div>
+    <p class="note">Prices from the digital menu; may differ in the restaurant. Always confirm allergens with staff.</p>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,610 @@
+{% extends "base.html" %}
+
+{% block titulo %}Empleados · RRHH{% endblock %}
+
+{% block estilos %}
+<style>
+/* Cabecera: .app-hero (base.html) */
+.emp-kpi {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  padding: 0.65rem 1rem;
+  min-width: 120px;
+  text-align: center;
+}
+.emp-kpi .n { font-size: 1.35rem; font-weight: 700; line-height: 1.2; }
+.emp-kpi .l { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.75; }
+.emp-card.app-surface {
+  padding: 1.25rem 1.35rem;
+  margin-bottom: 1rem;
+}
+@media (min-width: 992px) {
+  .emp-sticky { position: sticky; top: 88px; align-self: flex-start; max-height: calc(100vh - 100px); overflow-y: auto; }
+}
+.emp-section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin: 0 0 0.75rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.emp-section-title i { opacity: 0.85; }
+.emp-fieldset {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+  background: #fafbfc;
+}
+.emp-fieldset legend {
+  float: none;
+  width: auto;
+  padding: 0 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+}
+.emp-hint { font-size: 0.78rem; color: #64748b; margin-top: 0.25rem; }
+.emp-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.emp-toolbar .form-control { max-width: 280px; }
+.emp-table-wrap {
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+.emp-table { margin: 0; font-size: 0.875rem; }
+.emp-table thead th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+  padding: 0.65rem 0.75rem;
+}
+.emp-table tbody td { padding: 0.6rem 0.75rem; vertical-align: middle; border-color: #f1f5f9; }
+.emp-table tbody tr:hover { background: #fafbfc; }
+.emp-table .emp-name { font-weight: 600; color: #0f172a; }
+.emp-actions .btn { padding: 0.2rem 0.45rem; font-size: 0.78rem; }
+.emp-pin-cell code { font-size: 0.8rem; background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 6px; }
+.emp-empty {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: #94a3b8;
+}
+.emp-empty i { font-size: 2.25rem; display: block; margin-bottom: 0.5rem; opacity: 0.5; }
+.emp-quick-hrs .btn { font-size: 0.75rem; padding: 0.15rem 0.45rem; }
+#formEditarEmpleado .modal-body { max-height: min(70vh, 620px); overflow-y: auto; }
+</style>
+{% endblock %}
+
+{% block contenido %}
+{% include 'partials/volver_bar.html' %}
+
+<div class="app-page">
+
+  <div class="emp-hero app-hero">
+    <div>
+      <h1><i class="bi bi-people-fill me-2"></i>Registro de empleados</h1>
+      <p class="sub mb-0">
+        Alta rápida con datos agrupados, validación de DNI duplicado y listado filtrable.
+        Los PDFs de horarios y el portal del empleado usan el PIN que definas aquí.
+      </p>
+    </div>
+    <div class="d-flex flex-wrap gap-2 justify-content-end">
+      <div class="emp-kpi"><div class="n">{{ total_empleados }}</div><div class="l">Total</div></div>
+      <div class="emp-kpi"><div class="n text-success">{{ empleados_activos }}</div><div class="l">Activos</div></div>
+      <div class="emp-kpi"><div class="n text-secondary">{{ total_empleados - empleados_activos }}</div><div class="l">Inactivos</div></div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-5 col-xl-4">
+      <div class="emp-card app-surface emp-sticky" id="nuevo-empleado">
+        <h2 class="emp-section-title"><i class="bi bi-person-plus"></i> Nuevo empleado</h2>
+        {% set b = alta_borrador or {} %}
+
+        <form method="post" action="{{ url_for('admin.crear_empleado') }}" id="formNuevoEmpleado" autocomplete="off">
+          {% if b.get('preregistro_id') %}
+          <input type="hidden" name="preregistro_id" value="{{ b['preregistro_id'] }}">
+          {% endif %}
+          {% if b.get('foto_perfil') %}
+          <div class="mb-3 d-flex align-items-center gap-2 flex-wrap">
+            <img src="{{ url_for('static', filename=b['foto_perfil']) }}" alt="" class="rounded border" width="72" height="72" style="object-fit:cover">
+            <span class="small text-muted">Foto del preregistro: se asignará como foto de perfil al guardar la ficha.</span>
+          </div>
+          {% endif %}
+
+          <fieldset class="emp-fieldset">
+            <legend class="w-auto px-1">Identificación y acceso</legend>
+            <div class="row g-2">
+              <div class="col-md-7">
+                <label class="form-label small mb-1">PIN <span class="text-danger">*</span></label>
+                <div class="input-group input-group-sm">
+                  <input type="text" name="pin" id="nuevo_pin" class="form-control{% if alta_pin_error %} is-invalid{% endif %}" inputmode="numeric" pattern="[0-9]*" minlength="3" maxlength="12" required placeholder="Ej. 1234" value="{% if not alta_pin_error %}{{ b['pin']|default('', true) }}{% endif %}">
+                  <button class="btn btn-outline-secondary" type="button" id="btnGenPin" title="Generar PIN aleatorio">
+                    <i class="bi bi-shuffle"></i>
+                  </button>
+                </div>
+                {% if alta_pin_error %}<div class="invalid-feedback d-block">Ese PIN ya está en uso; elige otro.</div>{% endif %}
+                <p class="emp-hint mb-0">Mínimo 3 dígitos, <strong>único por persona</strong> (no puede repetirse). Usado en tablet y portal del empleado.</p>
+              </div>
+              <div class="col-md-5">
+                <label class="form-label small mb-1">Estado</label>
+                <select name="activo" class="form-select form-select-sm">
+                  <option value="1" {% if (b['activo']|default(1))|int == 1 %}selected{% endif %}>Activo</option>
+                  <option value="0" {% if (b['activo']|default(1))|int == 0 %}selected{% endif %}>Inactivo</option>
+                </select>
+              </div>
+              <div class="col-12 mt-2">
+                <label class="form-label small mb-1">Rol / rango</label>
+                <select name="rango_id" class="form-select form-select-sm">
+                  {% for rg in rangos %}
+                  <option value="{{ rg.id }}" {% if (b['rango_id']|default(1))|int == rg.id %}selected{% endif %}>{{ rg.nombre }}</option>
+                  {% endfor %}
+                </select>
+                <p class="emp-hint mb-0">Jerarquía de rangos: Gerente → Encargado → Empleado (el acceso total con PIN es SuperAdmin). Configura permisos en <a href="{{ url_for('admin.rangos_permisos') }}">Rangos</a>.</p>
+              </div>
+            </div>
+            <div class="row g-2 mt-1">
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Nombre <span class="text-danger">*</span></label>
+                <input type="text" name="nombre" class="form-control form-control-sm" required placeholder="Nombre" value="{{ b['nombre']|default('', true) }}">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Apellidos</label>
+                <input type="text" name="apellido" class="form-control form-control-sm" placeholder="Apellidos" value="{{ b['apellido']|default('', true) }}">
+              </div>
+            </div>
+            <div class="row g-2 mt-1">
+              <div class="col-md-6">
+                <label class="form-label small mb-1">DNI / NIE</label>
+                <input type="text" name="dni" class="form-control form-control-sm{% if alta_dni_error %} is-invalid{% endif %}" placeholder="Opcional si aún no lo tienes" value="{{ b['dni']|default('', true) }}">
+                {% if alta_dni_error %}<div class="invalid-feedback d-block">Ese documento ya está registrado.</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Fecha de nacimiento</label>
+                <input type="date" name="fecha_nacimiento" class="form-control form-control-sm" value="{{ b['fecha_nacimiento']|default('', true) }}">
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="emp-fieldset">
+            <legend class="w-auto px-1">Contacto</legend>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Teléfono</label>
+                <input type="tel" name="telefono" class="form-control form-control-sm" placeholder="+34…" value="{{ b['telefono']|default('', true) }}">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Correo electrónico</label>
+                <input type="email" name="email" class="form-control form-control-sm" placeholder="nombre@…" value="{{ b['email']|default('', true) }}">
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="emp-fieldset">
+            <legend class="w-auto px-1">Puesto y contrato</legend>
+            {% set tc_sel = b['tipo_contrato']|default('Indefinido', true) %}
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Puesto</label>
+                <input type="text" name="puesto" class="form-control form-control-sm" list="lista-puestos" placeholder="Selecciona o escribe" value="{{ b['puesto']|default('', true) }}">
+                <datalist id="lista-puestos">
+                  {% for p in puestos_sugeridos %}<option value="{{ p }}">{% endfor %}
+                </datalist>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Departamento / área</label>
+                <input type="text" name="departamento" class="form-control form-control-sm" list="lista-dept" placeholder="Sala, cocina…" value="{{ b['departamento']|default('', true) }}">
+                <datalist id="lista-dept">
+                  {% for d in departamentos_sugeridos %}<option value="{{ d }}">{% endfor %}
+                </datalist>
+              </div>
+            </div>
+            <div class="mt-2">
+              <label class="form-label small mb-1">Categoría de servicio <span class="text-muted">(opcional, p. ej. cuadrantes)</span></label>
+              <input type="text" name="categoria_servicio" class="form-control form-control-sm" placeholder="Ej. camarero barra, cocinero línea fría…" value="{{ b['categoria_servicio']|default('', true) }}">
+            </div>
+            <div class="row g-2 mt-1">
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Tipo de contrato</label>
+                <select name="tipo_contrato" class="form-select form-select-sm">
+                  <option {% if tc_sel == 'Indefinido' %}selected{% endif %}>Indefinido</option>
+                  <option {% if tc_sel == 'Temporal' %}selected{% endif %}>Temporal</option>
+                  <option {% if tc_sel == 'Obra y servicio' %}selected{% endif %}>Obra y servicio</option>
+                  <option {% if tc_sel == 'Interinidad' %}selected{% endif %}>Interinidad</option>
+                  <option {% if tc_sel == 'Fijo discontinuo' %}selected{% endif %}>Fijo discontinuo</option>
+                  <option {% if tc_sel == 'Media jornada' %}selected{% endif %}>Media jornada</option>
+                  <option {% if tc_sel == 'Tiempo parcial' %}selected{% endif %}>Tiempo parcial</option>
+                  <option {% if tc_sel == 'Extra' %}selected{% endif %}>Extra</option>
+                  <option {% if tc_sel == 'Formación en alternancia' %}selected{% endif %}>Formación en alternancia</option>
+                  <option {% if tc_sel == 'Prácticas' %}selected{% endif %}>Prácticas</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Fecha de alta</label>
+                <input type="date" name="fecha_alta" class="form-control form-control-sm" value="{{ b['fecha_alta']|default('', true) }}">
+              </div>
+            </div>
+            <div class="mt-2">
+              <label class="form-label small mb-1">Horas semanales</label>
+              <div class="d-flex flex-wrap align-items-center gap-2">
+                <input type="text" name="horas_contrato" id="nuevo_horas" class="form-control form-control-sm" style="max-width:88px" value="{{ b['horas_contrato']|default('40', true) }}" inputmode="decimal">
+                <span class="emp-quick-hrs">
+                  <button type="button" class="btn btn-light border btn-sm js-hpreset" data-h="40">40</button>
+                  <button type="button" class="btn btn-light border btn-sm js-hpreset" data-h="30">30</button>
+                  <button type="button" class="btn btn-light border btn-sm js-hpreset" data-h="20">20</button>
+                  <button type="button" class="btn btn-light border btn-sm js-hpreset" data-h="15">15</button>
+                </span>
+              </div>
+            </div>
+            <div class="mt-2">
+              <label class="form-label small mb-1">Nº Seguridad Social</label>
+              <input type="text" name="numero_ss" class="form-control form-control-sm" placeholder="Opcional" value="{{ b['numero_ss']|default('', true) }}">
+            </div>
+          </fieldset>
+
+          <fieldset class="emp-fieldset mb-3">
+            <legend class="w-auto px-1">Notas internas</legend>
+            <textarea name="observaciones" class="form-control form-control-sm" rows="2" placeholder="Alergias, disponibilidad, observaciones de RRHH…">{{ b['observaciones']|default('', true) }}</textarea>
+          </fieldset>
+
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-check-lg me-1"></i> Guardar empleado
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-lg-7 col-xl-8">
+      <div class="emp-card app-surface">
+        <h2 class="emp-section-title"><i class="bi bi-list-ul"></i> Plantilla actual</h2>
+
+        <div class="emp-toolbar">
+          <div class="flex-grow-1" style="min-width:200px;">
+            <label class="form-label small text-muted mb-1">Buscar</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+              <input type="search" class="form-control" id="empBuscar" placeholder="Nombre, DNI, puesto, departamento…" autocomplete="off">
+            </div>
+          </div>
+          <div class="small text-muted align-self-end">
+            <span id="empContador">{{ empleados|length }}</span> visibles
+          </div>
+        </div>
+
+        <div class="emp-table-wrap">
+          {% if empleados|length %}
+          <div class="table-responsive">
+            <table class="table emp-table mb-0" id="tablaEmpleados">
+              <thead>
+                <tr>
+                  <th>Empleado</th>
+                  <th>Puesto</th>
+                  <th>DNI</th>
+                  <th class="d-none d-md-table-cell">Contacto</th>
+                  <th class="text-center">Horas</th>
+                  <th class="text-center">Estado</th>
+                  <th class="text-nowrap">PIN</th>
+                  <th class="text-end">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for e in empleados %}
+                {% set nom = (e.nombre or '') ~ ' ' ~ (e.apellido or '') %}
+                {% set filt = ((e.nombre or '') ~ ' ' ~ (e.apellido or '') ~ ' ' ~ (e.dni or '') ~ ' ' ~ (e.puesto or '') ~ ' ' ~ (e.departamento or '') ~ ' ' ~ (e.categoria_servicio or '') ~ ' ' ~ (e.email or ''))|lower %}
+                <tr class="emp-row" data-emp-filter="{{ filt }}">
+                  <td>
+                    <div class="emp-name text-truncate" style="max-width:200px">{{ nom.strip() or '—' }}</div>
+                    {% if e.departamento %}<div class="small text-muted text-truncate">{{ e.departamento }}</div>{% endif %}
+                  </td>
+                  <td><span class="text-truncate d-inline-block" style="max-width:140px">{{ e.puesto or '—' }}</span></td>
+                  <td class="small">{{ e.dni or '—' }}</td>
+                  <td class="d-none d-md-table-cell small">
+                    {% if e.telefono or e.email %}
+                      {% if e.telefono %}<div><i class="bi bi-phone me-1 opacity-50"></i>{{ e.telefono }}</div>{% endif %}
+                      {% if e.email %}<div class="text-truncate" style="max-width:180px"><i class="bi bi-envelope me-1 opacity-50"></i>{{ e.email }}</div>{% endif %}
+                    {% else %}—{% endif %}
+                  </td>
+                  <td class="text-center"><span class="badge rounded-pill bg-light text-dark">{{ e.horas_contrato or '—' }} h</span></td>
+                  <td class="text-center">
+                    {% if (e.activo|default(1))|int == 1 %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle">Activo</span>
+                    {% else %}
+                    <span class="badge bg-secondary-subtle text-secondary border">Inactivo</span>
+                    {% endif %}
+                  </td>
+                  <td class="emp-pin-cell">
+                    {% if e.pin %}
+                    <code>{{ e.pin }}</code>
+                    <button type="button" class="btn btn-link btn-sm p-0 ms-1 align-baseline js-copy-pin" data-pin="{{ e.pin }}" title="Copiar PIN"><i class="bi bi-clipboard"></i></button>
+                    {% else %}—{% endif %}
+                  </td>
+                  <td class="text-end emp-actions">
+                    <button type="button" class="btn btn-outline-primary btn-sm js-edit-emp" data-id="{{ e.id }}">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <form method="post" action="{{ url_for('admin.eliminar_empleado', id=e.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar este empleado? Se borrarán también sus fichajes.');">
+                      <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
+                    </form>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="emp-empty">
+            <i class="bi bi-inbox"></i>
+            <p class="mb-0">No hay empleados registrados. Usa el formulario de la izquierda para dar de alta al primero.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="application/json" id="empleados-data">{{ empleados_json|safe }}</script>
+
+<div class="modal fade" id="modalEditarEmpleado" tabindex="-1" aria-labelledby="modalEditarEmpleadoLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title fs-5" id="modalEditarEmpleadoLabel"><i class="bi bi-pencil-square me-2"></i>Editar empleado</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <form method="post" action="" id="formEditarEmpleado" autocomplete="off">
+        <div class="modal-body">
+          <p class="small text-muted">Deja el PIN en blanco para no cambiarlo.</p>
+
+          <fieldset class="emp-fieldset">
+            <legend class="w-auto px-1">Identificación y acceso</legend>
+            <div class="row g-2">
+              <div class="col-md-7">
+                <label class="form-label small mb-1">PIN</label>
+                <input type="text" name="pin" id="edit_pin" class="form-control form-control-sm" inputmode="numeric" placeholder="Sin cambios" minlength="3" maxlength="12">
+              </div>
+              <div class="col-md-5">
+                <label class="form-label small mb-1">Estado</label>
+                <select name="activo" id="edit_activo" class="form-select form-select-sm">
+                  <option value="1">Activo</option>
+                  <option value="0">Inactivo</option>
+                </select>
+              </div>
+              <div class="col-12 mt-2">
+                <label class="form-label small mb-1">Rol / rango</label>
+                <select name="rango_id" id="edit_rango_id" class="form-select form-select-sm">
+                  {% for rg in rangos %}
+                  <option value="{{ rg.id }}">{{ rg.nombre }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="row g-2 mt-1">
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Nombre <span class="text-danger">*</span></label>
+                <input type="text" name="nombre" id="edit_nombre" class="form-control form-control-sm" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Apellidos</label>
+                <input type="text" name="apellido" id="edit_apellido" class="form-control form-control-sm">
+              </div>
+            </div>
+            <div class="row g-2 mt-1">
+              <div class="col-md-6">
+                <label class="form-label small mb-1">DNI / NIE</label>
+                <input type="text" name="dni" id="edit_dni" class="form-control form-control-sm">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Fecha de nacimiento</label>
+                <input type="date" name="fecha_nacimiento" id="edit_fecha_nacimiento" class="form-control form-control-sm">
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="emp-fieldset">
+            <legend class="w-auto px-1">Contacto</legend>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Teléfono</label>
+                <input type="tel" name="telefono" id="edit_telefono" class="form-control form-control-sm">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Correo electrónico</label>
+                <input type="email" name="email" id="edit_email" class="form-control form-control-sm">
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="emp-fieldset">
+            <legend class="w-auto px-1">Puesto y contrato</legend>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Puesto</label>
+                <input type="text" name="puesto" id="edit_puesto" class="form-control form-control-sm" list="lista-puestos-edit">
+                <datalist id="lista-puestos-edit">
+                  {% for p in puestos_sugeridos %}<option value="{{ p }}">{% endfor %}
+                </datalist>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Departamento</label>
+                <input type="text" name="departamento" id="edit_departamento" class="form-control form-control-sm" list="lista-dept-edit">
+                <datalist id="lista-dept-edit">
+                  {% for d in departamentos_sugeridos %}<option value="{{ d }}">{% endfor %}
+                </datalist>
+              </div>
+            </div>
+            <div class="mt-2">
+              <label class="form-label small mb-1">Categoría de servicio <span class="text-muted">(opcional)</span></label>
+              <input type="text" name="categoria_servicio" id="edit_categoria_servicio" class="form-control form-control-sm" placeholder="Ej. camarero barra, cocinero…">
+            </div>
+            <div class="row g-2 mt-1">
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Tipo de contrato</label>
+                <select name="tipo_contrato" id="edit_tipo_contrato" class="form-select form-select-sm"></select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Fecha de alta</label>
+                <input type="date" name="fecha_alta" id="edit_fecha_alta" class="form-control form-control-sm">
+              </div>
+            </div>
+            <div class="mt-2">
+              <label class="form-label small mb-1">Horas semanales</label>
+              <input type="text" name="horas_contrato" id="edit_horas_contrato" class="form-control form-control-sm" style="max-width:120px">
+            </div>
+            <div class="mt-2">
+              <label class="form-label small mb-1">Nº Seguridad Social</label>
+              <input type="text" name="numero_ss" id="edit_numero_ss" class="form-control form-control-sm">
+            </div>
+          </fieldset>
+
+          <fieldset class="emp-fieldset mb-0">
+            <legend class="w-auto px-1">Notas internas</legend>
+            <textarea name="observaciones" id="edit_observaciones" class="form-control form-control-sm" rows="2"></textarea>
+          </fieldset>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i> Guardar cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const hoy = new Date().toISOString().slice(0, 10);
+  const fa = document.querySelector('#formNuevoEmpleado input[name="fecha_alta"]');
+  if (fa && !fa.value) fa.value = hoy;
+
+  document.querySelectorAll('.js-hpreset').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var h = document.getElementById('nuevo_horas');
+      if (h) h.value = btn.getAttribute('data-h') || '40';
+    });
+  });
+
+  var gen = document.getElementById('btnGenPin');
+  if (gen) {
+    gen.addEventListener('click', function () {
+      var n = '';
+      for (var i = 0; i < 4; i++) n += Math.floor(Math.random() * 10);
+      var inp = document.getElementById('nuevo_pin');
+      if (inp) { inp.value = n; inp.focus(); }
+    });
+  }
+
+  document.querySelectorAll('.js-copy-pin').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var p = btn.getAttribute('data-pin');
+      if (!p) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(p).then(function () {
+          btn.classList.add('text-success');
+          setTimeout(function () { btn.classList.remove('text-success'); }, 800);
+        });
+      }
+    });
+  });
+
+  var rows = document.querySelectorAll('#tablaEmpleados tbody tr.emp-row');
+  var buscar = document.getElementById('empBuscar');
+  var contador = document.getElementById('empContador');
+  function aplicarFiltro() {
+    var q = (buscar && buscar.value || '').trim().toLowerCase();
+    var n = 0;
+    rows.forEach(function (tr) {
+      var hay = !q || (tr.getAttribute('data-emp-filter') || '').indexOf(q) !== -1;
+      tr.style.display = hay ? '' : 'none';
+      if (hay) n++;
+    });
+    if (contador) contador.textContent = n;
+  }
+  if (buscar) buscar.addEventListener('input', aplicarFiltro);
+
+  var empMap = [];
+  try {
+    var raw = document.getElementById('empleados-data');
+    if (raw) empMap = JSON.parse(raw.textContent || '[]');
+  } catch (e) { empMap = []; }
+  if (!Array.isArray(empMap)) empMap = [];
+
+  var TIPOS_CONTRATO = [
+    'Indefinido', 'Temporal', 'Obra y servicio', 'Interinidad', 'Fijo discontinuo',
+    'Media jornada', 'Tiempo parcial', 'Extra', 'Formación en alternancia', 'Prácticas'
+  ];
+  var selTipo = document.getElementById('edit_tipo_contrato');
+  if (selTipo && !selTipo.options.length) {
+    TIPOS_CONTRATO.forEach(function (t) {
+      var o = document.createElement('option');
+      o.value = t;
+      o.textContent = t;
+      selTipo.appendChild(o);
+    });
+  }
+
+  var modalEl = document.getElementById('modalEditarEmpleado');
+  var formEdit = document.getElementById('formEditarEmpleado');
+  {% if alta_pin_error %}
+  (function () {
+    var pe = document.getElementById('nuevo_pin');
+    if (pe) {
+      pe.focus();
+      pe.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  })();
+  {% endif %}
+
+  document.querySelectorAll('.js-edit-emp').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = parseInt(btn.getAttribute('data-id'), 10);
+      var e = empMap.find(function (x) { return x.id === id; });
+      if (!e || !formEdit) return;
+      formEdit.action = '/actualizar_empleado/' + id;
+      document.getElementById('edit_pin').value = '';
+      document.getElementById('edit_nombre').value = e.nombre || '';
+      document.getElementById('edit_apellido').value = e.apellido || '';
+      document.getElementById('edit_dni').value = e.dni || '';
+      document.getElementById('edit_telefono').value = e.telefono || '';
+      document.getElementById('edit_email').value = e.email || '';
+      document.getElementById('edit_numero_ss').value = e.numero_ss || '';
+      document.getElementById('edit_puesto').value = e.puesto || '';
+      document.getElementById('edit_departamento').value = e.departamento || '';
+      var ecs = document.getElementById('edit_categoria_servicio');
+      if (ecs) ecs.value = e.categoria_servicio || '';
+      document.getElementById('edit_horas_contrato').value = e.horas_contrato || '40';
+      document.getElementById('edit_observaciones').value = e.observaciones || '';
+      document.getElementById('edit_fecha_alta').value = (e.fecha_alta || '').slice(0, 10);
+      document.getElementById('edit_fecha_nacimiento').value = (e.fecha_nacimiento || '').slice(0, 10);
+      document.getElementById('edit_activo').value = (e.activo === 0 || e.activo === '0') ? '0' : '1';
+      var er = document.getElementById('edit_rango_id');
+      if (er) er.value = String(e.rango_id != null ? e.rango_id : 1);
+      var tc = e.tipo_contrato || 'Indefinido';
+      selTipo.value = TIPOS_CONTRATO.indexOf(tc) >= 0 ? tc : 'Indefinido';
+      if (window.bootstrap && modalEl) {
+        var m = new bootstrap.Modal(modalEl);
+        m.show();
+      }
+    });
+  });
+})();
+</script>
+
+{% endblock %}

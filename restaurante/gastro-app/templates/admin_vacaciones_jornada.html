@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block titulo %}Vacaciones y jornada (resumen){% endblock %}
+
+{% block estilos %}
+<style>
+/* .app-page, .app-hero-light; vj-hero añade tinte verde */
+.vj-hero.app-hero-light {
+  background: linear-gradient(135deg, #f0fdf4 0%, #fff 100%);
+  border-color: #bbf7d0;
+}
+.vj-hero.app-hero-light h1 { font-size: 1.2rem; }
+.vj-hero.app-hero-light p { font-size: 0.88rem; color: #475569; line-height: 1.55; margin: 0 0 8px 0; max-width: 58rem; }
+.vj-meta { font-size: 0.82rem; color: #64748b; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0; }
+.vj-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #e2e8f0; }
+.vj-table { font-size: 0.85rem; margin: 0; }
+.vj-table thead th {
+  background: #f8fafc; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.03em;
+  color: #64748b; white-space: nowrap; padding: 10px 12px; border-bottom: 2px solid #e2e8f0;
+}
+.vj-table tbody td { padding: 10px 12px; vertical-align: middle; border-bottom: 1px solid #f1f5f9; }
+</style>
+{% endblock %}
+
+{% block contenido %}
+{% include 'partials/volver_bar.html' %}
+
+<div class="app-page">
+  <div class="vj-hero app-hero-light">
+    <h1><i class="bi bi-umbrella-fill text-success me-2"></i>Resumen de jornada y vacaciones (referencia)</h1>
+    <p>
+      Vista para <strong>dirección / RRHH</strong>: horas efectivas acumuladas según <strong>fichajes</strong> (entrada, salida, pausas),
+      jornada tomada del <strong>contrato</strong> del empleado (horas semanales en su ficha) y la <strong>ratio</strong> definida en
+      <a href="{{ url_for('admin.configuracion_empresa') }}">Datos de la empresa</a> → vacaciones desde fichaje.
+    </p>
+    <p>
+      Regla orientativa habitual: <strong>1 semana de vacaciones por trimestre</strong> proporcional al contrato: trimestre ref. ≈ 13 × h/semana;
+      una «semana» de vacación ref. = esas mismas h/semana. Con ratio <strong>13</strong>, 13 h fichadas efectivas equivalen a 1 h de vacación referencia.
+      <strong>No sustituye</strong> convenio colectivo, Estatuto ni el control oficial de vacaciones.
+    </p>
+    <div class="vj-meta">
+      <strong>Ratio global en uso:</strong> {{ '%.2f'|format(ratio_global) }} h trabajadas → 1 h vacación ref.
+      {% if config_empresa and config_empresa.vacaciones_horas_trabajo_por_hora_vacacion is not none %}
+      (valor en empresa: {{ config_empresa.vacaciones_horas_trabajo_por_hora_vacacion }})
+      {% endif %}
+    </div>
+  </div>
+
+  {% if filas|length %}
+  <div class="vj-table-wrap">
+    <table class="table table-hover table-sm mb-0 vj-table">
+      <thead>
+        <tr>
+          <th>Empleado</th>
+          <th class="text-end">h/sem contr.</th>
+          <th class="text-end">Horas trab.</th>
+          <th class="text-end">h vac. ref.</th>
+          <th class="text-end">≈ Sem. vac.</th>
+          <th class="text-end">Trim. ref.</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in filas %}
+        {% set j = row.jornada %}
+        <tr>
+          <td class="fw-medium">{{ row.nombre }}</td>
+          <td class="text-end font-monospace">{{ '%.1f'|format(j.horas_semana_contrato) }}</td>
+          <td class="text-end font-monospace">{{ '%.1f'|format(j.horas_trabajadas) }}</td>
+          <td class="text-end font-monospace text-success">{{ '%.1f'|format(j.horas_vacaciones_generadas) }}</td>
+          <td class="text-end font-monospace">{{ '%.2f'|format(j.semanas_vacacion_equiv) }}</td>
+          <td class="text-end font-monospace">{{ '%.2f'|format(j.trimestres_trabajo_aprox) }}</td>
+          <td class="text-end">
+            <a href="{{ url_for('admin.perfil_empleado', id=row.id) }}" class="btn btn-sm btn-outline-primary py-0">Ficha</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="small text-muted mt-3 mb-0">
+    Columnas: <em>h vac. ref.</em> = horas trabajadas ÷ ratio; <em>≈ Sem. vac.</em> = esas horas ÷ h/semana contrato;
+    <em>Trim. ref.</em> = horas trabajadas ÷ (13 × h/semana).
+  </p>
+  {% else %}
+  <p class="text-muted">No hay empleados activos o la tabla de empleados no está disponible.</p>
+  {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,141 @@
+{# Requiere variables: ac_wrap_id, ac_suggest_id, ac_alert_id, ac_nombre_id, ac_tel_id #}
+<style>
+.cliente-ac-wrap { position: relative; z-index: 20; }
+.cliente-ac-suggest {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  margin-top: 2px;
+  max-height: 260px;
+  overflow-y: auto;
+  z-index: 40;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+}
+.cliente-ac-suggest .ac-item {
+  border: 0;
+  border-bottom: 1px solid #f1f5f9;
+  text-align: left;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.9rem;
+}
+.cliente-ac-suggest .ac-item:last-child { border-bottom: 0; }
+.cliente-ac-suggest .ac-item:hover { background: #f8fafc; }
+.cliente-ac-suggest .ac-name { font-weight: 600; color: #0f172a; }
+.cliente-ac-suggest .ac-tel { font-size: 0.82rem; color: #64748b; }
+.cliente-ac-suggest .ac-hint { font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
+</style>
+<script>
+(function () {
+  var API = {{ url_for('admin.api_clientes_buscar')|tojson }};
+  var wrap = document.getElementById({{ ac_wrap_id|tojson }});
+  var box = document.getElementById({{ ac_suggest_id|tojson }});
+  var alertEl = document.getElementById({{ ac_alert_id|tojson }});
+  var nombre = document.getElementById({{ ac_nombre_id|tojson }});
+  var tel = document.getElementById({{ ac_tel_id|tojson }});
+  if (!wrap || !box || !nombre || !tel) return;
+
+  var debounceMs = 280;
+  var tmr = null;
+  var lastAbort = null;
+
+  function hideSuggest() {
+    box.classList.add('d-none');
+    box.innerHTML = '';
+  }
+
+  function showAlert(c) {
+    if (!alertEl) return;
+    alertEl.innerHTML = '';
+    if (!c || !c.alergias) return;
+    var lead = {{ tr('page.reservas.cliente_alert_allergies_lead')|tojson }};
+    var div = document.createElement('div');
+    div.className = 'alert alert-warning py-2 px-3 small mb-0';
+    div.setAttribute('role', 'alert');
+    div.innerHTML = '<div class="fw-semibold">' + lead + '</div><div class="mt-1 text-break">' + escapeHtml(c.alergias) + '</div>';
+    alertEl.appendChild(div);
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, function (ch) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch];
+    });
+  }
+
+  function pickCliente(c) {
+    nombre.value = c.nombre || '';
+    tel.value = c.telefono || '';
+    hideSuggest();
+    showAlert(c);
+  }
+
+  function renderList(list) {
+    box.innerHTML = '';
+    if (!list || !list.length) {
+      hideSuggest();
+      return;
+    }
+    list.forEach(function (c) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'ac-item list-group-item list-group-item-action w-100';
+      b.innerHTML =
+        '<div class="ac-name">' + escapeHtml(c.nombre) + '</div>' +
+        '<div class="ac-tel">' + escapeHtml(c.telefono) + '</div>' +
+        (c.hint ? '<div class="ac-hint">' + escapeHtml(c.hint) + '</div>' : '');
+      b.addEventListener('mousedown', function (ev) {
+        ev.preventDefault();
+        pickCliente(c);
+      });
+      box.appendChild(b);
+    });
+    box.classList.remove('d-none');
+  }
+
+  function queryStr() {
+    var a = (nombre.value || '').trim();
+    var b = (tel.value || '').trim();
+    if (b.length >= a.length) return b;
+    return a;
+  }
+
+  function runSearch() {
+    var q = queryStr();
+    if (q.length < 2) {
+      hideSuggest();
+      return;
+    }
+    if (lastAbort) lastAbort.abort();
+    lastAbort = new AbortController();
+    fetch(API + '?q=' + encodeURIComponent(q), {
+      credentials: 'same-origin',
+      signal: lastAbort.signal
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data || !data.ok || !data.clientes) {
+          hideSuggest();
+          return;
+        }
+        renderList(data.clientes);
+      })
+      .catch(function () { hideSuggest(); });
+  }
+
+  function schedule() {
+    if (tmr) clearTimeout(tmr);
+    tmr = setTimeout(runSearch, debounceMs);
+  }
+
+  nombre.addEventListener('input', schedule);
+  tel.addEventListener('input', schedule);
+  nombre.addEventListener('focus', schedule);
+  tel.addEventListener('focus', schedule);
+
+  document.addEventListener('click', function (ev) {
+    if (!wrap.contains(ev.target)) hideSuggest();
+  });
+})();
+</script>

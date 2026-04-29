@@ -1,0 +1,129 @@
+{# Calculadora de arqueo: requiere form_id (id del formulario padre con campos name= efectivo_* ) #}
+<div class="card border-success border-opacity-25 shadow-sm mb-3 calc-caja-root">
+  <div class="card-header py-2 bg-success bg-opacity-10 small fw-bold text-success-emphasis">
+    <i class="bi bi-calculator me-1"></i> Calculadora · resumen en vivo
+  </div>
+  <div class="card-body py-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <span class="small text-muted">Efectivo esperado en cajón</span>
+      <strong class="fs-5 calc-js-esperado">0,00&nbsp;€</strong>
+    </div>
+    <div class="d-flex justify-content-between align-items-center border-top pt-2">
+      <span class="small">Diferencia <span class="text-muted">(contado − esperado)</span></span>
+      <strong class="fs-5 calc-js-dif">0,00&nbsp;€</strong>
+    </div>
+  </div>
+</div>
+
+<details class="card mb-0 border-secondary border-opacity-25">
+  <summary class="card-header py-2 small fw-semibold user-select-none" style="cursor:pointer;">
+    <i class="bi bi-stack me-1"></i> Contar billetes y monedas (EUR)
+  </summary>
+  <div class="card-body pt-2 pb-3">
+    <p class="small text-muted mb-2">Indica cantidad de cada pieza; el total puedes pasarlo a «Efectivo contado».</p>
+    <div class="row row-cols-2 g-2 small calc-js-denoms">
+      <!-- filas por JS -->
+    </div>
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3 pt-2 border-top">
+      <span>Total físico: <strong class="calc-js-denom-total">0,00&nbsp;€</strong></span>
+      <button type="button" class="btn btn-sm btn-outline-primary calc-js-aplicar">
+        Copiar total a «Efectivo contado»
+      </button>
+    </div>
+  </div>
+</details>
+
+<script>
+(function () {
+  var form = document.getElementById({{ form_id|tojson }});
+  if (!form) return;
+
+  function parseEuros(s) {
+    if (s === undefined || s === null) return 0;
+    var t = String(s).replace(/\s/g, '').replace(',', '.');
+    var n = parseFloat(t);
+    return isNaN(n) ? 0 : n;
+  }
+
+  function fmt(n) {
+    return n.toFixed(2).replace('.', ',') + ' €';
+  }
+
+  function inp(name) {
+    var el = form.querySelector('[name="' + name + '"]');
+    return el ? parseEuros(el.value) : 0;
+  }
+
+  function refreshResumen() {
+    var a = inp('efectivo_apertura');
+    var ve = inp('ventas_efectivo');
+    var oi = inp('otros_ingresos');
+    var ret = inp('retiros_caja');
+    var cont = inp('efectivo_contado');
+    var esp = a + ve + oi - ret;
+    var dif = cont - esp;
+    var root = form.querySelector('.calc-caja-root');
+    if (!root) return;
+    var eEl = root.querySelector('.calc-js-esperado');
+    var dEl = root.querySelector('.calc-js-dif');
+    if (eEl) eEl.textContent = fmt(esp);
+    if (dEl) {
+      dEl.textContent = fmt(dif);
+      dEl.className = 'fs-5 calc-js-dif ' + (Math.abs(dif) < 0.005 ? 'text-success' : (dif > 0 ? 'text-primary' : 'text-danger'));
+    }
+  }
+
+  form.addEventListener('input', refreshResumen);
+  form.addEventListener('change', refreshResumen);
+  refreshResumen();
+
+  var piezas = [
+    { v: 200, l: '200 €' }, { v: 100, l: '100 €' }, { v: 50, l: '50 €' }, { v: 20, l: '20 €' },
+    { v: 10, l: '10 €' }, { v: 5, l: '5 €' }, { v: 2, l: '2 €' }, { v: 1, l: '1 €' },
+    { v: 0.5, l: '0,50 €' }, { v: 0.2, l: '0,20 €' }, { v: 0.1, l: '0,10 €' }, { v: 0.05, l: '0,05 €' }, { v: 0.02, l: '0,02 €' }, { v: 0.01, l: '0,01 €' }
+  ];
+  var wrap = form.querySelector('.calc-js-denoms');
+  if (wrap) {
+    piezas.forEach(function (p) {
+      var col = document.createElement('div');
+      col.className = 'col';
+      col.innerHTML = '<label class="form-label mb-0 text-muted small">' + p.l + '</label>' +
+        '<input type="number" min="0" step="1" class="form-control form-control-sm calc-js-piece" data-val="' + p.v + '" value="0" inputmode="numeric">';
+      wrap.appendChild(col);
+    });
+  }
+
+  function totalDenoms() {
+    var t = 0;
+    form.querySelectorAll('.calc-js-piece').forEach(function (el) {
+      var n = parseInt(el.value, 10) || 0;
+      var val = parseFloat(el.getAttribute('data-val'), 10);
+      t += n * val;
+    });
+    return t;
+  }
+
+  function refreshDenoms() {
+    var tot = totalDenoms();
+    var te = form.querySelector('.calc-js-denom-total');
+    if (te) te.textContent = fmt(tot);
+  }
+
+  form.addEventListener('input', function (ev) {
+    if (ev.target && ev.target.classList && ev.target.classList.contains('calc-js-piece')) refreshDenoms();
+  });
+  refreshDenoms();
+
+  var btnA = form.querySelector('.calc-js-aplicar');
+  if (btnA) {
+    btnA.addEventListener('click', function () {
+      var tot = totalDenoms();
+      var el = form.querySelector('[name="efectivo_contado"]');
+      if (el) {
+        el.value = tot.toFixed(2).replace('.', ',');
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
+  }
+})();
+</script>

@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ tr('page.rrhh_pet.meta_title') }}{% endblock %}
+
+{% block estilos %}
+<style>
+.pr-root { max-width: 920px; margin: 0 auto; padding: 0 12px 48px; }
+.pr-head {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+  margin-bottom: 20px;
+}
+.pr-head h1 { font-size: 1.25rem; font-weight: 700; margin: 0; color: #0f172a; }
+.pr-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.88rem; font-weight: 500; color: #475569; text-decoration: none;
+}
+.pr-back:hover { color: #0f172a; }
+
+.pr-alert { border-radius: 12px; border: 0; margin-bottom: 18px; }
+
+.pr-block {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 20px 22px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.pr-block-featured {
+  border: 1px solid #bfdbfe;
+  background: linear-gradient(180deg, #f8fafc 0%, #fff 48%);
+  box-shadow: 0 4px 24px rgba(37, 99, 235, 0.08);
+}
+.pr-block > h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pr-lead {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin: 0 0 18px 0;
+  line-height: 1.45;
+  max-width: 52rem;
+}
+.pr-toc {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px;
+}
+.pr-toc a {
+  font-size: 0.78rem; font-weight: 600;
+  padding: 6px 12px; border-radius: 999px;
+  color: #475569; background: #fff; border: 1px solid #e2e8f0; text-decoration: none;
+}
+.pr-toc a:hover { border-color: #94a3b8; color: #0f172a; }
+
+.ap-rrhh-textarea { min-height: 200px; resize: vertical; font-size: 0.95rem; line-height: 1.5; }
+.ap-rrhh-hint { font-size: 0.8rem; color: #64748b; margin-top: 6px; }
+
+.ap-msg {
+  border-radius: 10px; padding: 14px 16px; margin-bottom: 12px;
+  border: 1px solid #e2e8f0; border-left-width: 4px; background: #fff;
+}
+.ap-msg.pend { border-left-color: #f59e0b; }
+.ap-msg.ok { border-left-color: #22c55e; }
+.ap-msg.no { border-left-color: #ef4444; }
+.ap-msg-hd {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px;
+  margin-bottom: 10px; font-size: 0.78rem; color: #64748b;
+}
+.ap-msg-body { font-size: 0.9rem; color: #1e293b; line-height: 1.5; }
+.ap-msg-label {
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  color: #94a3b8; margin: 12px 0 4px 0;
+}
+.ap-msg-long {
+  white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere;
+  line-height: 1.55; font-size: 0.9rem;
+}
+
+.ap-table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid #e2e8f0; }
+.ap-table { width: 100%; font-size: 0.85rem; margin: 0; }
+.ap-table th {
+  font-weight: 600; color: #64748b; font-size: 0.72rem; text-transform: uppercase;
+  letter-spacing: 0.03em; padding: 10px 12px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+}
+.ap-table td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+
+.ap-empty {
+  text-align: center; padding: 28px 16px; color: #94a3b8; font-size: 0.88rem;
+  border: 1px dashed #e2e8f0; border-radius: 12px; background: #fafafa;
+}
+.ap-empty i { font-size: 1.75rem; display: block; margin-bottom: 8px; opacity: 0.45; }
+
+.ap-split { display: grid; grid-template-columns: 1fr; gap: 20px; }
+@media (min-width: 992px) {
+  .ap-split.sol-grid { grid-template-columns: 1fr 1.15fr; align-items: start; }
+}
+#pr-rrhh, #pr-docs, #pr-sol { scroll-margin-top: 96px; }
+</style>
+{% endblock %}
+
+{% block contenido %}
+
+<div class="pr-root">
+
+  <div class="pr-head">
+    <div>
+      <a href="{{ url_for('empleado.area_personal') }}" class="pr-back"><i class="bi bi-arrow-left"></i> {{ tr('page.rrhh_pet.back') }}</a>
+      <h1 class="mt-2"><i class="bi bi-inbox me-2 text-primary"></i>{{ tr('page.rrhh_pet.h1') }}</h1>
+    </div>
+  </div>
+
+  {% if n_rrhh_pend or n_sol_pend %}
+  <div class="alert alert-info pr-alert shadow-sm d-flex flex-wrap align-items-start gap-2 py-3 px-3">
+    <i class="bi bi-hourglass-split fs-5 mt-1"></i>
+    <div class="small">
+      <strong class="d-block mb-1">{{ tr('page.rrhh_pet.review_title') }}</strong>
+      {% if n_rrhh_pend %}<span>{{ tr('page.rrhh_pet.review_rrhh', n=n_rrhh_pend) }}</span>{% endif %}
+      {% if n_rrhh_pend and n_sol_pend %}<span class="mx-1">·</span>{% endif %}
+      {% if n_sol_pend %}<span>{{ tr('page.rrhh_pet.review_sol', n=n_sol_pend) }}</span>{% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <nav class="pr-toc" aria-label="{{ tr('page.rrhh_pet.toc_aria') }}">
+    <a href="#pr-rrhh">{{ tr('page.rrhh_pet.toc_msgs') }}</a>
+    <a href="#pr-docs">{{ tr('page.rrhh_pet.toc_pdfs') }}</a>
+    <a href="#pr-sol">{{ tr('page.rrhh_pet.toc_sol') }}</a>
+  </nav>
+
+  <section id="pr-rrhh" class="pr-block pr-block-featured">
+    <h2><i class="bi bi-chat-dots text-primary"></i> {{ tr('page.rrhh_pet.msgs_h2') }}</h2>
+    <p class="pr-lead mb-3">{{ tr('page.rrhh_pet.msgs_lead') }}</p>
+
+    <form method="post" action="/rrhh_chat" class="mb-4">
+      <label class="form-label fw-semibold text-dark mb-2">{{ tr('page.rrhh_pet.label_your_msg') }}</label>
+      <textarea name="mensaje" class="form-control rounded-3 ap-rrhh-textarea" rows="10" placeholder="{{ tr('page.rrhh_pet.msg_placeholder') }}" required></textarea>
+      <p class="ap-rrhh-hint mb-2">{{ tr('page.rrhh_pet.hint_ia') }}</p>
+      <button type="submit" class="btn btn-primary px-4">
+        <i class="bi bi-send me-1"></i> {{ tr('page.rrhh_pet.btn_send_rrhh') }}
+      </button>
+    </form>
+
+    {% if mensajes_rrhh %}
+    <h3 class="h6 text-uppercase text-muted mb-3" style="font-size:0.72rem; letter-spacing:0.06em;">{{ tr('page.rrhh_pet.history') }}</h3>
+    <div>
+      {% for m in mensajes_rrhh|reverse %}
+      {% set eg = (m.estado_gestion|default('Pendiente', true))|trim|lower %}
+      <article class="ap-msg {% if eg == 'pendiente' %}pend{% elif eg == 'aprobada' %}ok{% elif eg == 'denegada' %}no{% endif %}">
+        <div class="ap-msg-hd">
+          <span>{{ m.creado_en|default('', true) }}</span>
+          {% if eg == 'pendiente' %}
+          <span class="badge rounded-pill text-bg-warning text-dark">{{ tr('page.rrhh_pet.badge_review') }}</span>
+          {% elif eg == 'aprobada' %}
+          <span class="badge rounded-pill text-bg-success">{{ tr('page.rrhh_pet.badge_approved') }}</span>
+          {% elif eg == 'denegada' %}
+          <span class="badge rounded-pill text-bg-danger">{{ tr('page.rrhh_pet.badge_denied') }}</span>
+          {% else %}
+          <span class="badge rounded-pill text-bg-secondary">{{ m.estado_gestion|default('—', true) }}</span>
+          {% endif %}
+        </div>
+        <div class="ap-msg-body ap-msg-long">{{ m.mensaje|default('', true) }}</div>
+        {% if m.respuesta_ia %}
+        <div class="ap-msg-label">{{ tr('page.rrhh_pet.label_ia') }}</div>
+        <div class="ap-msg-body ap-msg-long small">{{ m.respuesta_ia }}</div>
+        {% endif %}
+        {% if m.respuesta_responsable %}
+        <div class="ap-msg-label">{{ tr('page.rrhh_pet.label_mgmt') }}</div>
+        <div class="ap-msg-body ap-msg-long small">{{ m.respuesta_responsable }}</div>
+        {% if m.gestionado_en %}<div class="small text-muted mt-2">{{ m.gestionado_en }}</div>{% endif %}
+        {% endif %}
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-muted small mb-0">{{ tr('page.rrhh_pet.empty_msgs') }}</p>
+    {% endif %}
+  </section>
+
+  <section id="pr-docs" class="pr-block">
+    <h2><i class="bi bi-file-earmark-pdf text-danger"></i> {{ tr('page.rrhh_pet.docs_h2') }}</h2>
+    <p class="pr-lead">{{ tr('page.rrhh_pet.docs_lead') }}</p>
+    {% if horarios_pdf_docs|length %}
+    <div class="ap-table-wrap">
+      <table class="ap-table">
+        <thead>
+          <tr>
+            <th>{{ tr('page.rrhh_pet.th_period') }}</th>
+            <th>{{ tr('page.rrhh_pet.th_published') }}</th>
+            <th class="text-end">{{ tr('page.rrhh_pet.th_action') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in horarios_pdf_docs %}
+          <tr>
+            <td>
+              <strong>{{ d.etiqueta or (d.periodo_desde ~ ' → ' ~ d.periodo_hasta) }}</strong>
+              <div class="small text-muted font-monospace">{{ d.periodo_desde }} · {{ d.periodo_hasta }}</div>
+            </td>
+            <td class="small text-muted">{{ (d.creado_en or '')[:16] }}</td>
+            <td class="text-end">
+              <a href="{{ url_for('empleado.descargar_horario_pdf', doc_id=d.id) }}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-download"></i> {{ tr('page.rrhh_pet.btn_download') }}
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="ap-empty">
+      <i class="bi bi-inbox"></i>
+      {{ tr('page.rrhh_pet.empty_pdfs') }}
+    </div>
+    {% endif %}
+  </section>
+
+  <section id="pr-sol" class="pr-block">
+    <h2><i class="bi bi-file-earmark-text text-secondary"></i> {{ tr('page.rrhh_pet.sol_h2') }}</h2>
+    <p class="pr-lead">{{ tr('page.rrhh_pet.sol_lead') }}</p>
+
+    <div class="ap-split sol-grid">
+      <div>
+        <h3 class="h6 fw-semibold mb-3">{{ tr('page.rrhh_pet.new_req') }}</h3>
+        <form method="post" action="/crear_solicitud">
+          <div class="mb-2">
+            <label class="form-label small">{{ tr('page.rrhh_pet.label_type') }}</label>
+            <select name="tipo" class="form-select form-select-sm" required>
+              <option value="Vacaciones">{{ tr('page.rrhh_pet.opt_vacaciones') }}</option>
+              <option value="Permiso personal">{{ tr('page.rrhh_pet.opt_permiso') }}</option>
+              <option value="Cambio de turno">{{ tr('page.rrhh_pet.opt_turno') }}</option>
+              <option value="Otro">{{ tr('page.rrhh_pet.opt_otro') }}</option>
+            </select>
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              <label class="form-label small">{{ tr('page.rrhh_pet.label_from') }}</label>
+              <input type="date" name="fecha_inicio" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label small">{{ tr('page.rrhh_pet.label_to') }}</label>
+              <input type="date" name="fecha_fin" class="form-control form-control-sm" required>
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">{{ tr('page.rrhh_pet.label_comment') }}</label>
+            <textarea name="comentario" class="form-control form-control-sm" rows="2" placeholder="{{ tr('page.rrhh_pet.placeholder_opt') }}"></textarea>
+          </div>
+          <button type="submit" class="btn btn-success btn-sm">{{ tr('page.rrhh_pet.btn_send_sol') }}</button>
+        </form>
+      </div>
+      <div>
+        <h3 class="h6 fw-semibold mb-3">{{ tr('page.rrhh_pet.your_sol') }}</h3>
+        {% if solicitudes %}
+        <div class="ap-table-wrap">
+          <table class="ap-table">
+            <thead>
+              <tr>
+                <th>{{ tr('page.rrhh_pet.th_type') }}</th>
+                <th>{{ tr('page.rrhh_pet.th_periodo') }}</th>
+                <th>{{ tr('page.rrhh_pet.th_estado') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in solicitudes %}
+              <tr>
+                <td><strong>{{ s.tipo|default('—', true) }}</strong></td>
+                <td class="text-muted small">{{ s.fecha_inicio|default('—', true) }} → {{ s.fecha_fin|default('—', true) }}</td>
+                <td>
+                  {% set st = (s.estado|default('', true))|lower %}
+                  {% if st == 'aprobada' or st == 'aprobado' %}
+                  <span class="badge rounded-pill text-bg-success">{{ s.estado }}</span>
+                  {% elif st == 'rechazada' or st == 'rechazado' %}
+                  <span class="badge rounded-pill text-bg-danger">{{ s.estado }}</span>
+                  {% else %}
+                  <span class="badge rounded-pill text-bg-warning text-dark">{{ s.estado|default('Pendiente', true) }}</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% if s.respuesta_responsable %}
+              <tr class="border-0">
+                <td colspan="3" class="pt-0 pb-3 small text-muted border-0" style="border: none !important;">
+                  <span class="text-uppercase" style="font-size:0.65rem; letter-spacing:0.04em;">{{ tr('page.rrhh_pet.note_mgmt') }}</span><br>
+                  {{ s.respuesta_responsable }}
+                </td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="ap-empty py-4">
+          <i class="bi bi-inbox"></i>
+          {{ tr('page.rrhh_pet.empty_sol') }}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+</div>
+
+{% endblock %}

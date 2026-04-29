@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block titulo %}Accés client{% endblock %}
+
+{% block contenido %}
+
+<div style="max-width:400px; margin:auto; margin-top:60px;">
+
+<h3 class="mb-4">Accés client</h3>
+
+<form method="post" action="/login_cliente">
+
+<label>Email</label>
+
+<input
+type="email"
+name="email"
+class="form-control mb-3"
+required
+>
+
+<label>Telèfon</label>
+
+<input
+name="telefono"
+class="form-control mb-3"
+required
+>
+
+<button class="btn btn-primary w-100">
+Entrar
+</button>
+
+</form>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,970 @@
+{% extends "base.html" %}
+
+{% block titulo %}
+{{ tr('page.panel.meta_title') }}
+{% endblock %}
+
+{% block estilos %}
+
+<style>
+
+.dashboard-shell {
+    max-width: 100%;
+    margin: 0;
+    width: 100%;
+}
+
+/* Hero superior */
+
+.dash-hero {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--brand-primary) 0%, #0f172a 48%, #0a0f18 100%);
+    color: #fff;
+    border-radius: 16px;
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 1.5rem;
+    box-shadow:
+        0 12px 40px rgba(15, 23, 42, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.dash-hero::before {
+    content: "";
+    position: absolute;
+    top: -45%;
+    right: -12%;
+    width: min(52%, 420px);
+    height: 160%;
+    background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.09) 0%, transparent 62%);
+    pointer-events: none;
+}
+
+.dash-hero > * {
+    position: relative;
+    z-index: 1;
+}
+
+.dash-hero .dash-kicker {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 0.35rem;
+}
+
+.dash-hero .dashboard-title {
+    font-size: 1.65rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0;
+    color: #fff;
+}
+
+.dash-hero .dashboard-subtitle {
+    font-size: 0.9rem;
+    color: #cbd5e1;
+    margin: 0.35rem 0 0 0;
+}
+
+.dash-hero .dash-meta-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #e2e8f0;
+}
+
+.dash-hero-date-sub {
+    font-size: 0.7rem;
+    opacity: 0.55;
+    margin-top: 0.25rem;
+}
+
+/* Secciones */
+
+.section {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 14px;
+    padding: 1.35rem clamp(1rem, 2.5vw, 1.5rem);
+    margin-bottom: 1.35rem;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.04),
+        0 8px 24px rgba(15, 23, 42, 0.045),
+        inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+.section-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-title i {
+    font-size: 1rem;
+    color: #94a3b8;
+}
+
+/* KPI */
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+}
+
+.kpi {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 1rem 1rem 1rem 0.85rem;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.kpi:hover {
+    border-color: #cbd5e1;
+    background: #fff;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.07);
+}
+
+.kpi-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+
+.kpi-icon.c1 { background: #dbeafe; color: #1d4ed8; }
+.kpi-icon.c2 { background: #ffedd5; color: #c2410c; }
+.kpi-icon.c3 { background: #e0e7ff; color: #4338ca; }
+.kpi-icon.c4 { background: #d1fae5; color: #047857; }
+
+.kpi-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.15;
+    color: #0f172a;
+}
+
+.kpi-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+    margin-top: 0.2rem;
+}
+
+.quick-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 1.15rem;
+    padding-top: 1.15rem;
+    border-top: 1px solid rgba(226, 232, 240, 0.85);
+}
+
+.quick-strip .btn {
+    border-radius: 999px;
+    font-weight: 500;
+    padding: 0.35rem 0.85rem;
+    min-height: 40px;
+}
+@media (max-width: 767.98px) {
+    .quick-strip {
+        gap: 6px;
+    }
+    .quick-strip .btn {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+}
+
+/* Actividad reciente */
+
+.section-activity {
+    padding: 0;
+    overflow: hidden;
+}
+
+.activity-head {
+    padding: 1.1rem 1.35rem 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: linear-gradient(180deg, #fafbfc 0%, #fff 100%);
+}
+
+.activity-col {
+    padding: 0.5rem 0 1rem;
+    min-height: 180px;
+}
+
+@media (min-width: 768px) {
+    .activity-col:first-child {
+        border-right: 1px solid #e2e8f0;
+    }
+}
+
+.activity-sub {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    padding: 0.65rem 1.35rem 0.35rem;
+}
+
+.feed-list {
+    padding: 0 0.75rem;
+}
+
+.feed-item {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 0.55rem 0.6rem;
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.14s ease;
+}
+
+.feed-list > .feed-item:nth-child(even) {
+    background: rgba(248, 250, 252, 0.65);
+}
+
+a.feed-item:hover {
+    background: #f1f5f9;
+}
+
+.feed-time {
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #64748b;
+    min-width: 3.1rem;
+    padding-top: 0.15rem;
+}
+
+.feed-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #0f172a;
+    line-height: 1.25;
+}
+
+.feed-meta {
+    font-size: 0.78rem;
+    color: #475569;
+    margin-top: 0.1rem;
+    line-height: 1.35;
+}
+
+.feed-item-main {
+    min-width: 0;
+}
+
+.feed-badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.12rem 0.45rem;
+    border-radius: 4px;
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.feed-empty {
+    padding: 1.5rem 1.35rem;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+
+.feed-empty i {
+    font-size: 1.5rem;
+    display: block;
+    margin-bottom: 0.5rem;
+    opacity: 0.6;
+}
+
+/* Módulos */
+
+.module-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.module-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 0.95rem 1rem;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.module-row:hover {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.module-row .module-lead {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    min-width: 0;
+}
+
+.module-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.module-icon.m-res { background: #dbeafe; color: #1d4ed8; }
+.module-icon.m-viz { background: #fef3c7; color: #b45309; }
+.module-icon.m-emp { background: #e0e7ff; color: #4f46e5; }
+.module-icon.m-fic { background: #fce7f3; color: #be185d; }
+.module-icon.m-hor { background: #ccfbf1; color: #0f766e; }
+.module-icon.m-esc { background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); color: #3730a3; }
+
+.module-name {
+    font-weight: 600;
+    font-size: 0.98rem;
+    color: #0f172a;
+}
+
+.module-desc {
+    font-size: 0.82rem;
+    color: #475569;
+    margin-top: 0.15rem;
+    line-height: 1.35;
+}
+
+.module-action {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.module-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #64748b;
+    padding: 0.4rem 0.65rem;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+
+.module-row:hover .module-cta {
+    color: #0f172a;
+    border-color: #cbd5e1;
+    background: #f8fafc;
+}
+
+.module-cta i {
+    font-size: 1rem;
+    opacity: 0.85;
+    transition: transform 0.18s ease, opacity 0.15s ease;
+}
+
+.module-row:hover .module-cta i {
+    transform: translateX(3px);
+    opacity: 1;
+}
+
+/* Equipo del día (horarios) */
+
+.shift-section-head {
+    width: 100%;
+    align-items: flex-start;
+}
+
+@media (min-width: 768px) {
+    .shift-section-head {
+        align-items: center;
+    }
+}
+
+.shift-section-head > div:first-child {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+/* Subtítulo alineado con el texto del título (no con el borde; el icono ocupa 1rem + gap 0.5rem) */
+.shift-section-head > div:first-child > p.small {
+    padding-left: 1.5rem;
+}
+
+.shift-section-head .section-title {
+    margin-bottom: 0.3rem;
+}
+
+.shift-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+    gap: 10px;
+}
+@media (max-width: 575.98px) {
+    .shift-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.shift-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #fafbfc;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.12s, box-shadow 0.12s, background 0.12s;
+}
+
+a.shift-card:hover {
+    border-color: #cbd5e1;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+.shift-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+    color: #3730a3;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.shift-body {
+    min-width: 0;
+    flex: 1;
+}
+
+.shift-name {
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: #0f172a;
+    line-height: 1.25;
+}
+
+.shift-slot {
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: #0369a1;
+    margin-top: 0.2rem;
+}
+
+.shift-meta {
+    font-size: 0.76rem;
+    color: #64748b;
+    margin-top: 0.15rem;
+}
+
+.shift-empty {
+    text-align: center;
+    padding: 1.75rem 1rem;
+    color: #94a3b8;
+    font-size: 0.88rem;
+    border: 1px dashed #e2e8f0;
+    border-radius: 12px;
+    background: #fafafa;
+}
+
+.shift-empty i {
+    font-size: 1.75rem;
+    display: block;
+    margin-bottom: 0.5rem;
+    opacity: 0.65;
+}
+
+</style>
+
+{% endblock %}
+
+{% block contenido %}
+
+<div class="dashboard-shell app-page">
+
+<div class="dash-hero d-flex flex-wrap justify-content-between align-items-start gap-3">
+
+<div>
+<div class="dash-kicker">{{ tr('page.panel.dash_kicker') }}</div>
+<div class="dashboard-title">{{ tr('page.panel.title') }}</div>
+<div class="dashboard-subtitle">{{ tr('page.panel.subtitle') }}</div>
+</div>
+
+<div class="text-md-end">
+  <div class="dash-meta-pill">
+    <i class="bi bi-calendar3"></i>
+    <span>{{ fecha_display }}</span>
+  </div>
+  <div class="small dash-hero-date-sub">{{ fecha_hoy }}</div>
+</div>
+
+</div>
+
+<!-- OPERACIONES DEL DIA -->
+
+<div class="section">
+
+<div class="section-title">
+  <i class="bi bi-speedometer2"></i>
+  {{ tr('page.panel.ops_title') }}
+</div>
+
+<div class="kpi-grid">
+
+<div class="kpi">
+  <div class="kpi-icon c1"><i class="bi bi-calendar-event"></i></div>
+  <div>
+    <div class="kpi-value">{{ reservas_hoy or 0 }}</div>
+    <div class="kpi-label">{{ tr('page.panel.kpi_res') }}</div>
+  </div>
+</div>
+
+<div class="kpi">
+  <div class="kpi-icon c2"><i class="bi bi-grid-3x3-gap"></i></div>
+  <div>
+    <div class="kpi-value">{{ mesas_ocupadas or 0 }}</div>
+    <div class="kpi-label">{{ tr('page.panel.kpi_tables') }}</div>
+  </div>
+</div>
+
+{% if not reservas_only %}
+<div class="kpi">
+  <div class="kpi-icon c3"><i class="bi bi-people"></i></div>
+  <div>
+    <div class="kpi-value">{{ empleados_activos or 0 }}</div>
+    <div class="kpi-label">{{ tr('page.panel.kpi_emp') }}</div>
+  </div>
+</div>
+
+<div class="kpi">
+  <div class="kpi-icon c4"><i class="bi bi-clock-history"></i></div>
+  <div>
+    <div class="kpi-value">{{ fichajes_hoy or 0 }}</div>
+    <div class="kpi-label">{{ tr('page.panel.kpi_fich') }}</div>
+  </div>
+</div>
+
+<div class="kpi {% if n_alertas_stock %}border-warning{% endif %}" style="{% if n_alertas_stock %}background:#fffbeb;border-color:#fde68a;{% endif %}">
+  <div class="kpi-icon" style="{% if n_alertas_stock %}background:linear-gradient(135deg,#fef3c7,#fde68a);color:#b45309;{% else %}background:#f1f5f9;color:#64748b;{% endif %}"><i class="bi bi-exclamation-triangle"></i></div>
+  <div>
+    <div class="kpi-value">{{ n_alertas_stock or 0 }}</div>
+    <div class="kpi-label">{{ tr('page.panel.kpi_stock') }}</div>
+  </div>
+</div>
+{% endif %}
+
+</div>
+
+<div class="quick-strip">
+  {% if not reservas_only %}
+  <a href="{{ url_for('admin.calendario_admin') }}" class="btn btn-sm btn-outline-info"><i class="bi bi-calendar3 me-1"></i>{{ tr('page.panel.q_cal') }}</a>
+  {% endif %}
+  <a href="/visualizar" class="btn btn-sm btn-outline-dark"><i class="bi bi-grid-3x3-gap me-1"></i>{{ tr('page.panel.q_live') }}</a>
+  <a href="/editar_salon" class="btn btn-sm btn-outline-dark"><i class="bi bi-pencil-square me-1"></i>{{ tr('page.panel.q_editor') }}</a>
+  <a href="{{ url_for('admin.panel_web_estadisticas') }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-graph-up-arrow me-1"></i>Web · estadísticas</a>
+  <a href="{{ url_for('admin.panel_web_carta') }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-journal-text me-1"></i>Web · carta</a>
+  {% if not reservas_only %}
+  <a href="{{ url_for('admin.inventario_index') }}" class="btn btn-sm btn-outline-warning"><i class="bi bi-box-seam me-1"></i>{{ tr('page.panel.q_inv') }}</a>
+  <a href="/horarios" class="btn btn-sm btn-outline-secondary"><i class="bi bi-calendar-week me-1"></i>{{ tr('page.panel.q_hor') }}</a>
+  <a href="/libro_firmas" class="btn btn-sm btn-outline-secondary"><i class="bi bi-journal-text me-1"></i>{{ tr('page.panel.q_libro') }}</a>
+  <a href="{{ url_for('admin.rrhh_peticiones') }}" class="btn btn-sm {% if n_rrhh_pend_total %}btn-warning{% else %}btn-outline-secondary{% endif %}">
+    <i class="bi bi-inbox-fill me-1"></i>{{ tr('page.panel.q_rrhh') }}{% if n_rrhh_pend_total %} ({{ n_rrhh_pend_total }}){% endif %}
+  </a>
+  {% endif %}
+</div>
+
+</div>
+
+{% if not reservas_only %}
+<!-- EQUIPO DEL DÍA (HORARIOS) -->
+
+<div class="section">
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 shift-section-head">
+  <div>
+    <div class="section-title">
+      <i class="bi bi-person-badge"></i>
+      {{ tr('page.panel.team_title') }}
+    </div>
+    <p class="small text-muted mb-0" style="font-size:0.82rem;">
+      {{ tr('page.panel.team_lead') }}
+      {% if equipo_turno_hoy|length %}
+      {% if equipo_turno_hoy|length == 1 %}<span class="text-dark fw-semibold">{{ tr('page.panel.team_lines_1') }}</span>{% else %}<span class="text-dark fw-semibold">{{ tr('page.panel.team_lines_n', n=equipo_turno_hoy|length) }}</span>{% endif %}
+      {% endif %}
+    </p>
+  </div>
+  <a href="/horarios?fecha={{ fecha_hoy }}" class="btn btn-sm btn-outline-primary">
+    <i class="bi bi-calendar-week me-1"></i>{{ tr('page.panel.btn_edit_hor') }}
+  </a>
+</div>
+
+{% if equipo_turno_hoy|length %}
+<div class="shift-grid mt-2">
+  {% for p in equipo_turno_hoy %}
+  <a href="{% if p.empleado_id %}/empleado/{{ p.empleado_id }}{% else %}#{% endif %}" class="shift-card">
+    <div class="shift-avatar" aria-hidden="true">{{ (p.empleado or '?')[:1]|upper }}</div>
+    <div class="shift-body">
+      <div class="shift-name text-truncate">{{ p.empleado or tr('page.panel.no_name') }}</div>
+      <div class="shift-slot">
+        <i class="bi bi-clock me-1"></i>{{ p.hora_inicio or '—' }} – {{ p.hora_fin or '—' }}
+      </div>
+      <div class="shift-meta text-truncate">
+        {% if p.turno %}<span class="text-capitalize">{{ p.turno }}</span>{% if p.puesto %} · {% endif %}{% endif %}
+        {% if p.puesto %}{{ p.puesto }}{% elif not p.turno %}—{% endif %}
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="shift-empty mt-2">
+  <i class="bi bi-calendar-x"></i>
+  {{ tr('page.panel.no_shifts') }}
+  <div class="mt-2">
+    <a href="/horarios?fecha={{ fecha_hoy }}" class="btn btn-sm btn-primary">{{ tr('page.panel.go_hor') }}</a>
+  </div>
+</div>
+{% endif %}
+
+</div>
+{% endif %}
+
+<!-- ACTIVIDAD RECIENTE (HOY) -->
+
+<div class="section section-activity">
+
+<div class="activity-head">
+<div class="section-title mb-0">
+  <i class="bi bi-activity"></i>
+  {{ tr('page.panel.act_title') }}
+</div>
+<p class="small text-muted mb-0 mt-1" style="font-size:0.82rem;">{{ tr('page.panel.act_sub') }}</p>
+</div>
+
+<div class="row g-0">
+<div class="activity-col {% if reservas_only %}col-12{% else %}col-12 col-md-6{% endif %}">
+  <div class="activity-sub"><i class="bi bi-calendar-plus me-1"></i>{{ tr('page.panel.feed_res') }}</div>
+  <div class="feed-list">
+    {% for r in reservas_recientes %}
+    <a href="/reservas" class="feed-item">
+      <div class="feed-time">{{ r.hora or '—' }}</div>
+      <div class="flex-grow-1 feed-item-main">
+        <div class="feed-title text-truncate">{{ r.nombre or tr('page.panel.no_name') }}</div>
+        <div class="feed-meta">
+          {{ r.personas or '—' }} {{ tr('page.panel.pax') }}
+          {% if r.mesa %}· {{ tr('page.panel.table') }} {{ r.mesa }}{% else %}· {{ tr('page.panel.no_table') }}{% endif %}
+          {% if r.estado %}<span class="feed-badge ms-1">{{ r.estado }}</span>{% endif %}
+        </div>
+      </div>
+    </a>
+    {% else %}
+    <div class="feed-empty">
+      <i class="bi bi-inbox"></i>
+      {{ tr('page.panel.feed_empty_res') }}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% if not reservas_only %}
+<div class="col-12 col-md-6 activity-col">
+  <div class="activity-sub"><i class="bi bi-fingerprint me-1"></i>{{ tr('page.panel.feed_fich') }}</div>
+  <div class="feed-list">
+    {% for f in fichajes_recientes %}
+    <div class="feed-item" style="cursor:default;">
+      <div class="feed-time">{{ f.hora or '—' }}</div>
+      <div class="flex-grow-1 feed-item-main">
+        <div class="feed-title text-truncate">{{ f.empleado or 'Empleado' }}</div>
+        <div class="feed-meta text-capitalize">{{ f.tipo or '—' }}</div>
+      </div>
+    </div>
+    {% else %}
+    <div class="feed-empty">
+      <i class="bi bi-clock-history"></i>
+      {{ tr('page.panel.feed_empty_fich') }}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+</div>
+
+</div>
+
+<!-- MODULOS -->
+
+<div class="section">
+
+<div class="section-title">
+  <i class="bi bi-box-seam"></i>
+  {{ tr('page.panel.modules_title') }}
+</div>
+
+<div class="module-list">
+
+<a href="/reservas" class="module-row">
+<div class="module-lead">
+<div class="module-icon m-res"><i class="bi bi-calendar-check"></i></div>
+<div>
+<div class="module-name">{{ tr('page.panel.mod.reservas_n') }}</div>
+<div class="module-desc">{{ tr('page.panel.mod.reservas_d') }}</div>
+</div>
+</div>
+<div class="module-action">
+<span class="module-cta">{{ tr('page.panel.cta_enter') }} <i class="bi bi-arrow-right-short" aria-hidden="true"></i></span>
+</div>
+</a>
+
+<a href="/visualizar" class="module-row">
+<div class="module-lead">
+<div class="module-icon m-viz"><i class="bi bi-eye"></i></div>
+<div>
+<div class="module-name">{{ tr('page.panel.mod.viz_n') }}</div>
+<div class="module-desc">{{ tr('page.panel.mod.viz_d') }}</div>
+</div>
+</div>
+<div class="module-action">
+<span class="module-cta">{{ tr('page.panel.cta_enter') }} <i class="bi bi-arrow-right-short" aria-hidden="true"></i></span>
+</div>
+</a>
+
+<a href="/editar_salon" class="module-row">
+<div class="module-lead">
+<div class="module-icon m-viz"><i class="bi bi-pencil-square"></i></div>
+<div>
+<div class="module-name">{{ tr('page.panel.mod.editor_n') }}</div>
+<div class="module-desc">{{ tr('page.panel.mod.editor_d') }}</div>
+</div>
+</div>
+<div class="module-action">
+<span class="module-cta">{{ tr('page.panel.cta_enter') }} <i class="bi bi-arrow-right-short" aria-hidden="true"></i></span>
+</div>
+</a>
+
+{% if not reservas_only %}
+<a href="/empleados" class="module-row">
+<div class="module-lead">
+<div class="module-icon m-emp"><i class="bi bi-person-badge"></i></div>
+<div>
+<div class="module-name">{{ tr('page.panel.mod.emp_n') }}</div>
+<div class="module-desc">{{ tr('page.panel.mod.emp_d') }}</div>
+</div>
+</div>
+<div class="module-action">
+<span class="module-cta">{{ tr('page.panel.cta_enter') }} <i class="bi bi-arrow-right-short" aria-hidden="true"></i></span>
+</div>
+</a>
+{% endif %}
+
+{% if not reservas_only %}
+<a href="{{ url_for('admin.vacaciones_jornada_resumen') }}" class="module-row">
+<div class="module-lead">
+<div class="module-icon m-emp" style="background:linear-gradient(135deg,#15803d,#166534);"><i class="bi bi-umbrella-fill"></i></div>
+<div>
+<div class="module-name">{{ tr('page.panel.mod.vac_n') }}</div>
+<div class="module-desc">{{ tr('page.panel.mod.vac_d') }}</div>
+</div>
+</div>
+<div class="module-action">
+<span class="module-cta">{{ tr('page.panel.cta_view_table') }} <i class="bi bi-arrow-right-short" aria-hidden="true"></i></span>
+</div>
+</a>
+{% endif %}
+
+{% if not reservas_only %}
+<a href="{{ url_for('admin.rrhh_peticiones') }}" class="module-row">
+<div class="module-lead">
+<div class="module-icon m-emp" style="background:linear-gradient(135deg,#1e40af,#1e3a8a);"><i class="bi bi-inbox-fill"></i></div>
+<div>
+<div class="module-name">{{ tr('page.panel.mod.rrhh_n') }}</div>
+<div class="module-desc">{{ tr('page.panel.mod.rrhh_d') }}</div>
+</div>
+</div>
+<div class="module-action">
+<span class="module-cta">{{ tr('page.panel.cta_manage') }}{% if n_rrhh_pend_total %} <span class="badge bg-warning text-dark">{{ n_rrhh_pend_total }}</span>{% endif %} <i class="bi bi-arrow-right-short" aria-hidden="true"></i></span>
+</div>
+</a>
+{% endif %}
+
+{% if not reservas_only %}
+<a href="/fichaje" class="module-row">
+<div class="module-lead">
+<div class="module-icon m-fic"><i class="bi bi-fingerprint"></i></div>
+<div>
+<div class="module-name">{{ tr('page.panel.mod.fich_n') }}</div>
+<div class="module-desc">{{ tr('page.panel.mod.fich_d') }}</div>
+</div>
+</div>
+<div class="module-action">
+<span class="module-cta">{{ tr('page.panel.cta_enter') }} <i class="bi bi-arrow-right-short" aria-hidden="true"></i></span>
+</div>
+</a>
+{% endif %}
+
+{% if not reservas_only %}
+<a href="/horarios" class="module-row">
+<div class="module-lead">
+<div class="module-icon m-hor"><i class="bi bi-calendar-week"></i></div>
+<div>
+<div class="module-name">{{ tr('page.panel.mod.hor_n') }}</div>
+<div class="module-desc">{{ tr('page.panel.mod.hor_d') }}</div>
+</div>
+</div>
+<div class="module-action">
+<span class="module-cta">{{ tr('page.panel.cta_enter') }} <i class="bi bi-arrow-right-short" aria-hidden="true"></i></span>
+</div>
+</a>
+{% endif %}
+
+<a href="{{ url_for('admin.configuracion_empresa') }}" class="module-row">
+<div class="module-lead">
+<div class="module-icon m-emp" style="background:linear-gradient(135deg,#334155,#1e293b);"><i class="bi bi-building-gear"></i></div>
+<div>
+<div class="module-name">{{ tr('page.panel.mod.cfg_n') }}</div>
+<div class="module-desc">{{ tr('page.panel.mod.cfg_d') }}</div>
+</div>
+</div>
+<div class="module-action">
+<span class="module-cta">{{ tr('page.panel.cta_config') }} <i class="bi bi-arrow-right-short" aria-hidden="true"></i></span>
+</div>
+</a>
+
+<a href="{{ url_for('admin.configuracion_reservas_web') }}" class="module-row">
+<div class="module-lead">
+<div class="module-icon m-emp" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);"><i class="bi bi-globe2"></i></div>
+<div>
+<div class="module-name">Reservas web</div>
+<div class="module-desc">Franjas horarias, cupo online y confirmación por correo.</div>
+</div>
+</div>
+<div class="module-action">
+<span class="module-cta">{{ tr('page.panel.cta_config') }} <i class="bi bi-arrow-right-short" aria-hidden="true"></i></span>
+</div>
+</a>
+
+<a href="{{ url_for('admin.panel_web_estadisticas') }}" class="module-row">
+<div class="module-lead">
+<div class="module-icon m-emp" style="background:linear-gradient(135deg,#0ea5e9,#0284c7);"><i class="bi bi-graph-up-arrow"></i></div>
+<div>
+<div class="module-name">Estadísticas de la web</div>
+<div class="module-desc">Visitas a páginas y reservas por origen (web, teléfono/manual, walk-in).</div>
+</div>
+</div>
+<div class="module-action">
+<span class="module-cta">{{ tr('page.panel.cta_open') }} <i class="bi bi-arrow-right-short" aria-hidden="true"></i></span>
+</div>
+</a>
+
+<a href="{{ url_for('admin.panel_web_carta') }}" class="module-row">
+<div class="module-lead">
+<div class="module-icon m-emp" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);"><i class="bi bi-journal-text"></i></div>
+<div>
+<div class="module-name">Carta pública (web)</div>
+<div class="module-desc">Editar platos y precios que muestra el sitio Next (menú / QR).</div>
+</div>
+</div>
+<div class="module-action">
+<span class="module-cta">{{ tr('page.panel.cta_manage') }} <i class="bi bi-arrow-right-short" aria-hidden="true"></i></span>
+</div>
+</a>
+
+{% if not reservas_only %}
+<a href="{{ url_for('admin.libro_firmas') }}" class="module-row">
+<div class="module-lead">
+<div class="module-icon m-fic" style="background:linear-gradient(135deg,#0d9488,#0f766e);"><i class="bi bi-journal-bookmark"></i></div>
+<div>
+<div class="module-name">{{ tr('page.panel.mod.libro_n') }}</div>
+<div class="module-desc">{{ tr('page.panel.mod.libro_d') }}</div>
+</div>
+</div>
+<div class="module-action">
+<span class="module-cta">{{ tr('page.panel.cta_open') }} <i class="bi bi-arrow-right-short" aria-hidden="true"></i></span>
+</div>
+</a>
+{% endif %}
+
+{% if not reservas_only %}
+<a href="{{ url_for('admin.inventario_index') }}" class="module-row">
+<div class="module-lead">
+<div class="module-icon m-esc" style="background:linear-gradient(135deg,#f59e0b,#d97706);"><i class="bi bi-box-seam"></i></div>
+<div>
+<div class="module-name">{{ tr('page.panel.mod.inv_n') }}</div>
+<div class="module-desc">{{ tr('page.panel.mod.inv_d') }}</div>
+</div>
+</div>
+<div class="module-action">
+<span class="module-cta">{{ tr('page.panel.cta_open') }} <i class="bi bi-arrow-right-short" aria-hidden="true"></i></span>
+</div>
+</a>
+
+<a href="{{ url_for('admin.proveedores_index') }}" class="module-row">
+<div class="module-lead">
+<div class="module-icon m-esc" style="background:linear-gradient(135deg,#475569,#334155);"><i class="bi bi-truck"></i></div>
+<div>
+<div class="module-name">{{ tr('page.panel.mod.prov_n') }}</div>
+<div class="module-desc">{{ tr('page.panel.mod.prov_d') }}</div>
+</div>
+</div>
+<div class="module-action">
+<span class="module-cta">{{ tr('page.panel.cta_open') }} <i class="bi bi-arrow-right-short" aria-hidden="true"></i></span>
+</div>
+</a>
+{% endif %}
+
+</div>
+
+</div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block titulo %}Cierre de caja · tablet{% endblock %}
+{% block estilos %}
+<style>
+  .tcc-wrap { max-width: 520px; margin: 0 auto; padding: 1rem 1rem 2.5rem; }
+  .tcc-hero {
+    background: linear-gradient(135deg, #14532d 0%, var(--brand-primary) 100%);
+    color: #fff;
+    border-radius: 18px;
+    padding: 1.25rem 1.2rem;
+    margin-bottom: 1.15rem;
+    text-align: center;
+  }
+  .tcc-hero h1 { font-size: 1.25rem; font-weight: 700; margin: 0 0 0.35rem 0; }
+  .tcc-hero p { margin: 0; font-size: 0.85rem; opacity: 0.92; }
+  .tcc-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.15rem 1.2rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 14px rgba(15,23,42,0.06);
+  }
+  .tcc-tipo .btn { min-height: 52px; font-weight: 600; }
+  .tcc-num { font-size: 1.1rem; font-weight: 600; }
+  .tcc-pin-hint { font-size: 0.78rem; color: #64748b; text-align: center; margin-top: 0.75rem; }
+</style>
+{% endblock %}
+
+{% block contenido %}
+<div class="tcc-wrap">
+  <div class="tcc-hero">
+    <h1><i class="bi bi-cash-stack me-2"></i>Cierre de caja</h1>
+    <p class="mb-0">{{ nombre_local }} — Informe para {% if nombre_dueno %}<strong>{{ nombre_dueno }}</strong>{% else %}el dueño{% endif %}; llega al correo configurado en administración.</p>
+    {% if not smtp_configurado %}
+    <p class="mt-2 mb-0 small bg-dark bg-opacity-25 rounded-2 py-2 px-2">
+      <i class="bi bi-exclamation-triangle me-1"></i>
+      Falta configurar Gmail/SMTP en el panel: <strong>Servicio → Cierre de caja (X / Z)</strong>. El cierre se guardará aunque no se envíe el correo.
+    </p>
+    {% endif %}
+  </div>
+
+  <form id="formCierreTablet" method="post" action="{{ url_for('public.tablet_cierre_caja') }}" autocomplete="off">
+    <div class="tcc-card">
+      <label class="form-label fw-semibold mb-2">Tipo de cierre</label>
+      <div class="d-grid gap-2 tcc-tipo">
+        <input type="radio" class="btn-check" name="tipo" id="tX" value="X" checked>
+        <label class="btn btn-outline-success rounded-3" for="tX">
+          <span class="d-block">Cierre X</span>
+          <small class="text-muted fw-normal">Lectura intermedia / arqueo</small>
+        </label>
+        <input type="radio" class="btn-check" name="tipo" id="tZ" value="Z">
+        <label class="btn btn-outline-dark rounded-3" for="tZ">
+          <span class="d-block">Cierre Z</span>
+          <small class="text-muted fw-normal">Cierre de jornada</small>
+        </label>
+      </div>
+    </div>
+
+    <div class="tcc-card">
+      <h2 class="h6 text-muted text-uppercase small mb-3">Importes (€)</h2>
+      <div class="mb-3">
+        <label class="form-label">Efectivo al abrir / base caja</label>
+        <input type="text" name="efectivo_apertura" class="form-control form-control-lg tcc-num" value="0" inputmode="decimal">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Ventas en efectivo (este periodo)</label>
+        <input type="text" name="ventas_efectivo" class="form-control form-control-lg tcc-num" value="0" inputmode="decimal">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Ventas tarjeta (referencia)</label>
+        <input type="text" name="ventas_tarjeta" class="form-control form-control-lg tcc-num" value="0" inputmode="decimal">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Otros ingresos efectivo</label>
+        <input type="text" name="otros_ingresos" class="form-control form-control-lg tcc-num" value="0" inputmode="decimal">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Retiros / salidas de caja</label>
+        <input type="text" name="retiros_caja" class="form-control form-control-lg tcc-num" value="0" inputmode="decimal">
+      </div>
+      <div class="mb-0">
+        <label class="form-label">Efectivo contado en cajón (real)</label>
+        <input type="text" name="efectivo_contado" class="form-control form-control-lg tcc-num" value="0" inputmode="decimal">
+      </div>
+    </div>
+
+    {% set form_id = 'formCierreTablet' %}
+    {% include 'partials/calculadora_caja.html' %}
+
+    <div class="tcc-card">
+      <label class="form-label">Observaciones</label>
+      <textarea name="observaciones" class="form-control" rows="3" placeholder="Diferencias, incidencias…"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-success btn-lg w-100 py-3 rounded-3 shadow-sm">
+      <i class="bi bi-send-fill me-2"></i>{% if nombre_dueno %}Registrar y enviar a {{ nombre_dueno }}{% else %}Registrar y enviar al dueño{% endif %}
+    </button>
+    {% if not nombre_dueno %}
+    <p class="small text-muted text-center mt-2 mb-0">Puedes poner el nombre en <strong>Empresa</strong> (panel admin) para personalizar este texto.</p>
+    {% endif %}
+  </form>
+
+  <p class="tcc-pin-hint">
+    <i class="bi bi-shield-lock me-1"></i> El acceso a esta pantalla está protegido con el PIN de administrador. La autorización dura unos minutos; si pasa el tiempo, volverá a pedirse el PIN.
+  </p>
+
+</div>
+{% endblock %}

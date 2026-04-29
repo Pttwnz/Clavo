@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block titulo %}Peticiones RRHH{% endblock %}
+
+{% block estilos %}
+<style>
+/* .app-page, .app-hero en base.html */
+.rp-card.app-surface {
+  padding: 1.25rem 1.35rem;
+  margin-bottom: 1.25rem;
+}
+.rp-card h2 {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.rp-item {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+  background: #fafbfc;
+}
+.rp-item:last-child { margin-bottom: 0; }
+.rp-meta { font-size: 0.78rem; color: #64748b; margin-bottom: 0.5rem; }
+.rp-body { font-size: 0.92rem; color: #0f172a; white-space: pre-wrap; margin-bottom: 0.75rem; }
+.rp-ia {
+  background: #fff;
+  border-left: 3px solid #3b82f6;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.85rem;
+  color: #334155;
+  margin-bottom: 0.75rem;
+  border-radius: 0 8px 8px 0;
+}
+.rp-actions label { font-size: 0.8rem; font-weight: 600; color: #475569; }
+.rp-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+</style>
+{% endblock %}
+
+{% block contenido %}
+
+<div class="app-page">
+
+  <div class="rp-hero app-hero">
+    <h1><i class="bi bi-inbox-fill me-2"></i>Solicitudes de empleados (RRHH)</h1>
+    <p class="sub mb-0">
+      Misma bandeja para <strong>encargado</strong> y <strong>dirección</strong> (acceso con PIN de administración).
+      Gestiona mensajes al chat RRHH y solicitudes formales (vacaciones, permisos…).
+    </p>
+  </div>
+
+  <div class="rp-card app-surface">
+    <h2><i class="bi bi-chat-dots text-primary"></i> Mensajes al departamento (chat RRHH)</h2>
+    {% if mensajes|length %}
+      {% for m in mensajes %}
+      <div class="rp-item">
+        <div class="rp-meta">
+          <strong>{{ m.empleado_nombre|default('Empleado', true)|trim }}</strong>
+          {% if m.empleado_puesto %}<span class="text-muted">· {{ m.empleado_puesto }}</span>{% endif %}
+          · <span class="font-monospace">#{{ m.id }}</span>
+          · {{ m.creado_en|default('', true) }}
+        </div>
+        <div class="fw-semibold small text-muted mb-1">Mensaje del empleado</div>
+        <div class="rp-body">{{ m.mensaje|default('', true) }}</div>
+        {% if m.respuesta_ia %}
+        <div class="small text-muted mb-1">Nota histórica (respuesta automática previa)</div>
+        <div class="rp-ia" style="white-space:pre-wrap;">{{ m.respuesta_ia }}</div>
+        {% endif %}
+        {% set eg = (m.estado_gestion|default('Pendiente', true))|trim %}
+        {% if eg|lower == 'pendiente' %}
+        <span class="badge rounded-pill text-bg-warning text-dark mb-2">Pendiente de gestión</span>
+        <form method="post" class="rp-actions border-top pt-3 mt-2">
+          <input type="hidden" name="tipo" value="mensaje">
+          <input type="hidden" name="mensaje_id" value="{{ m.id }}">
+          <label class="d-block mb-1">Nota o explicación para el empleado</label>
+          <textarea name="respuesta_responsable" class="form-control form-control-sm mb-2" rows="2"
+            placeholder="Opcional si confirmas; obligatoria si deniegas (motivo)."></textarea>
+          <div class="d-flex flex-wrap gap-2">
+            <button type="submit" name="accion" value="aprobar" class="btn btn-sm btn-success">
+              <i class="bi bi-check-lg me-1"></i>Confirmar
+            </button>
+            <button type="submit" name="accion" value="denegar" class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-x-lg me-1"></i>Denegar
+            </button>
+          </div>
+        </form>
+        {% else %}
+        <span class="badge rounded-pill {% if (eg|lower) == 'aprobada' %}text-bg-success{% else %}text-bg-danger{% endif %} mb-2">
+          {{ eg }}
+        </span>
+        {% if m.respuesta_responsable %}
+        <div class="small mt-1"><strong>Respuesta a empleado:</strong></div>
+        <div class="rp-body mb-0" style="font-size:0.88rem;">{{ m.respuesta_responsable }}</div>
+        {% endif %}
+        {% if m.gestionado_en %}<div class="small text-muted mt-1">Gestionado: {{ m.gestionado_en }}</div>{% endif %}
+        {% endif %}
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="rp-empty border rounded-3 bg-light"><i class="bi bi-chat d-block mb-2 fs-3 opacity-50"></i>No hay mensajes registrados.</div>
+    {% endif %}
+  </div>
+
+  <div class="rp-card app-surface">
+    <h2><i class="bi bi-calendar-plus text-success"></i> Solicitudes formales (vacaciones, permisos…)</h2>
+    {% if solicitudes|length %}
+      {% for s in solicitudes %}
+      <div class="rp-item">
+        <div class="rp-meta">
+          <strong>{{ s.empleado_nombre|default('Empleado', true)|trim }}</strong>
+          {% if s.empleado_puesto %}<span class="text-muted">· {{ s.empleado_puesto }}</span>{% endif %}
+          · <span class="font-monospace">#{{ s.id }}</span>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mb-2">
+          <span class="badge bg-secondary">{{ s.tipo|default('—', true) }}</span>
+          <span class="small text-muted">{{ s.fecha_inicio|default('—', true) }} → {{ s.fecha_fin|default('—', true) }}</span>
+        </div>
+        {% if s.comentario %}<div class="small mb-2"><strong>Comentario:</strong> {{ s.comentario }}</div>{% endif %}
+        {% set st = (s.estado|default('Pendiente', true))|trim|lower %}
+        {% if st == 'pendiente' %}
+        <span class="badge rounded-pill text-bg-warning text-dark mb-2">Pendiente</span>
+        <form method="post" class="rp-actions border-top pt-3 mt-2">
+          <input type="hidden" name="tipo" value="solicitud">
+          <input type="hidden" name="solicitud_id" value="{{ s.id }}">
+          <label class="d-block mb-1">Nota o explicación para el empleado</label>
+          <textarea name="respuesta_responsable" class="form-control form-control-sm mb-2" rows="2"
+            placeholder="Opcional al aprobar; obligatorio al rechazar (explicación)."></textarea>
+          <div class="d-flex flex-wrap gap-2">
+            <button type="submit" name="accion" value="aprobar" class="btn btn-sm btn-success">
+              <i class="bi bi-check-lg me-1"></i>Aprobar
+            </button>
+            <button type="submit" name="accion" value="denegar" class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-x-lg me-1"></i>Rechazar
+            </button>
+          </div>
+        </form>
+        {% else %}
+        <span class="badge rounded-pill {% if 'aprob' in st %}text-bg-success{% else %}text-bg-danger{% endif %} mb-2">
+          {{ s.estado|default('—', true) }}
+        </span>
+        {% if s.respuesta_responsable %}
+        <div class="small mt-1"><strong>Respuesta a empleado:</strong></div>
+        <div class="rp-body mb-0" style="font-size:0.88rem;">{{ s.respuesta_responsable }}</div>
+        {% endif %}
+        {% if s.revisado_en %}<div class="small text-muted mt-1">Revisado: {{ s.revisado_en }}</div>{% endif %}
+        {% endif %}
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="rp-empty border rounded-3 bg-light"><i class="bi bi-inbox d-block mb-2 fs-3 opacity-50"></i>No hay solicitudes formales.</div>
+    {% endif %}
+  </div>
+
+  <p class="text-center small text-muted mb-4">
+    <a href="{{ url_for('admin.panel') }}" class="text-decoration-none">← Volver al panel</a>
+  </p>
+
+</div>
+
+{% endblock %}

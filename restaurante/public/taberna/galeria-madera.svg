@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 200" role="img" aria-label="Motivo decorativo madera">
+  <defs>
+    <linearGradient id="m" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#3d2a22"/>
+      <stop offset="40%" stop-color="#5c4033"/>
+      <stop offset="100%" stop-color="#2d1818"/>
+    </linearGradient>
+  </defs>
+  <rect width="480" height="200" fill="url(#m)"/>
+  <g opacity="0.18" fill="none" stroke="#e8c87a" stroke-width="1.2">
+    <path d="M0 40 H480 M0 80 H480 M0 120 H480 M0 160 H480"/>
+    <path d="M40 0 V200 M120 0 V200 M200 0 V200 M280 0 V200 M360 0 V200"/>
+  </g>
+  <ellipse cx="380" cy="100" rx="120" ry="70" fill="#8f1d1d" opacity="0.15"/>
+</svg>

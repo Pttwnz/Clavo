@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block titulo %}Editar Reserva{% endblock %}
+
+{% block estilos %}
+<style>#edit_cliente_alerta:empty { display: none; }</style>
+{% endblock %}
+
+{% block contenido %}
+<div style="max-width: 700px; margin: 0 auto;">
+    
+    <div class="card p-4">
+        
+        <h4 class="mb-4 text-center">Editar reserva</h4>
+        {% if reserva.cliente_id %}
+        <p class="text-center small mb-3">
+          <a href="{{ url_for('admin.cliente_ficha', cid=reserva.cliente_id) }}"><i class="bi bi-person-lines-fill me-1"></i>{{ tr('page.clientes.detail_title') }}</a>
+        </p>
+        {% endif %}
+        
+        <form method="post" action="/actualizar/{{ reserva.id }}?fecha={{ fecha }}{% if next_url %}&next={{ next_url | urlencode }}{% endif %}">
+            
+            <div class="mb-3 position-relative cliente-ac-wrap" id="edit_cliente_autowrap">
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Nombre</label>
+                        <input name="nombre" id="reserva_edit_nombre" value="{{ reserva.nombre }}" class="form-control" required autocomplete="off">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Teléfono</label>
+                        <input name="telefono" id="reserva_edit_telefono" value="{{ reserva.telefono }}" class="form-control" required inputmode="tel" autocomplete="off">
+                    </div>
+                </div>
+                <div id="edit_cliente_suggest" class="cliente-ac-suggest list-group d-none" aria-live="polite"></div>
+            </div>
+            <div class="mb-3" id="edit_cliente_alerta"></div>
+            
+            <div class="mb-3">
+                <label class="form-label">Personas</label>
+                <input name="personas" type="number" id="reserva_edit_personas" value="{{ reserva.personas }}" class="form-control" required min="1">
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Fecha</label>
+                <input type="date" name="fecha" id="reserva_edit_fecha" value="{{ reserva.fecha }}" class="form-control" required>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Hora</label>
+                <input type="time" name="hora" id="reserva_edit_hora" value="{{ reserva.hora }}" class="form-control" required>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Mesa</label>
+                <select name="mesa" id="reserva_edit_mesa" class="form-select" required>
+                  {% for m in mesas_select %}
+                  <option value="{{ m.nombre }}" {% if reserva.mesa == m.nombre %}selected{% endif %}>{{ tr('page.reservas.mesa_with_pax', nombre=m.nombre, n=m.capacidad) }}</option>
+                  {% endfor %}
+                  {% if reserva.mesa and reserva.mesa not in mesas_nombres_plano %}
+                  <option value="{{ reserva.mesa }}" selected>{{ reserva.mesa }} (actual)</option>
+                  {% endif %}
+                </select>
+                <div class="form-text">Listado del plano activo en Editor de salón. {{ tr('page.reservas.mesa_filtro_hint') }}</div>
+            </div>
+
+            <div class="mb-3 d-none" id="reserva_edit_union_sug" role="status">
+                <div class="alert alert-info py-2 mb-0 small">
+                    <div class="fw-semibold mb-1">{{ tr('page.reservas.union_sug_title', min_pax=sugerencia_union_desde_pax) }}</div>
+                    <div class="d-flex flex-wrap gap-1" id="reserva_edit_union_sug_btns"></div>
+                    <div class="text-muted mt-1 d-none" id="reserva_edit_union_sug_empty">{{ tr('page.reservas.union_sug_empty') }}</div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Notas</label>
+                <textarea name="notas" class="form-control">{{ reserva.notas }}</textarea>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <a href="{% if next_url and (next_url.startswith('/visualizar') or next_url.startswith('/reservas')) %}{{ next_url }}{% else %}/reservas?fecha={{ fecha }}{% endif %}" class="btn btn-secondary">Volver</a>
+                <button class="btn btn-primary">Guardar cambios</button>
+            </div>
+            
+        </form>
+        
+    </div>
+    
+</div>
+{% if mesas_select %}
+<script>
+(function () {
+  var fechaEl = document.getElementById('reserva_edit_fecha');
+  var horaEl = document.getElementById('reserva_edit_hora');
+  var mesaSel = document.getElementById('reserva_edit_mesa');
+  var paxEl = document.getElementById('reserva_edit_personas');
+  var unionBox = document.getElementById('reserva_edit_union_sug');
+  var unionBtns = document.getElementById('reserva_edit_union_sug_btns');
+  var unionEmpty = document.getElementById('reserva_edit_union_sug_empty');
+  if (!fechaEl || !horaEl || !mesaSel) return;
+  var MARGEN_SEG = {{ margen_solapamiento_mesa_seg|default(7200) }};
+  var excludeId = {{ reserva.id }};
+  var MIN_PAX_UNION_SUG = {{ sugerencia_union_desde_pax | int }};
+  var unionTimer = null;
+  var cache = {};
+  cache[{{ reserva.fecha|tojson }}] = {{ ocupacion_mesas_dia|default({})|tojson }};
+  function normalizaNombreMesa(s) {
+    return String(s || '').replace(/\ufeff|\u200b/g, '').trim().replace(/\s+/g, ' ').toLowerCase();
+  }
+  function horasParaMesa(occ, nombreMesa) {
+    if (!occ || typeof occ !== 'object') return [];
+    var nk = normalizaNombreMesa(nombreMesa);
+    if (!nk) return [];
+    if (Object.prototype.hasOwnProperty.call(occ, nk) && occ[nk] != null) return occ[nk];
+    for (var key in occ) {
+      if (!Object.prototype.hasOwnProperty.call(occ, key)) continue;
+      if (normalizaNombreMesa(key) === nk) return occ[key] || [];
+    }
+    return [];
+  }
+  function minutosReloj(s) {
+    if (s == null || s === '') return null;
+    var t = String(s).trim();
+    if (t.indexOf('T') !== -1) t = t.split('T').pop();
+    if (t.indexOf(' ') !== -1) {
+      var parts = t.split(/\s+/);
+      t = parts[parts.length - 1];
+    }
+    t = t.length >= 5 ? t.substring(0, 5) : t;
+    var p = t.split(':');
+    var h = parseInt(p[0], 10);
+    var mi = parseInt(p[1] || '0', 10);
+    if (isNaN(h) || isNaN(mi)) return null;
+    return h * 60 + mi;
+  }
+  function conflicto(horaNueva, horasOtras) {
+    var mn = minutosReloj(horaNueva);
+    if (mn === null) return false;
+    for (var i = 0; i < horasOtras.length; i++) {
+      var mo = minutosReloj(horasOtras[i]);
+      if (mo === null) continue;
+      if (Math.abs(mn - mo) * 60 < MARGEN_SEG) return true;
+    }
+    return false;
+  }
+  var mesaOptionsTemplate = [];
+  for (var i = 0; i < mesaSel.options.length; i++) {
+    var o = mesaSel.options[i];
+    mesaOptionsTemplate.push({ v: o.value, t: o.textContent });
+  }
+  function appendOpt(v, t) {
+    var opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = t;
+    mesaSel.appendChild(opt);
+  }
+  function rebuildAllMesas() {
+    mesaSel.innerHTML = '';
+    mesaOptionsTemplate.forEach(function (o) { appendOpt(o.v, o.t); });
+  }
+  function restoreSelection(selVal) {
+    for (var j = 0; j < mesaSel.options.length; j++) {
+      if (mesaSel.options[j].value === selVal) {
+        mesaSel.selectedIndex = j;
+        return;
+      }
+    }
+    mesaSel.selectedIndex = 0;
+  }
+  function fetchOcc(fecha) {
+    if (cache[fecha]) return Promise.resolve(cache[fecha]);
+    var u = '/api/ocupacion_mesas?fecha=' + encodeURIComponent(fecha) + '&exclude_reserva_id=' + encodeURIComponent(String(excludeId));
+    return fetch(u, { credentials: 'same-origin' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('ocupacion');
+        return r.json();
+      })
+      .then(function (j) {
+        if (j == null || typeof j !== 'object' || j.error) throw new Error('ocupacion');
+        cache[fecha] = j;
+        return j;
+      });
+  }
+  function scheduleUnionSug() {
+    if (unionTimer) clearTimeout(unionTimer);
+    unionTimer = setTimeout(runUnionSug, 400);
+  }
+  function runUnionSug() {
+    if (!unionBox || !unionBtns || !paxEl) return;
+    var mx = parseInt(paxEl.value, 10) || 0;
+    var fecha = fechaEl.value;
+    var hora = (horaEl.value || '').trim();
+    if (mx < MIN_PAX_UNION_SUG || !fecha || !hora) {
+      unionBox.classList.add('d-none');
+      unionBtns.innerHTML = '';
+      if (unionEmpty) unionEmpty.classList.add('d-none');
+      return;
+    }
+    var u = '/api/sugerencias_union_mesa?pax=' + encodeURIComponent(String(mx))
+      + '&fecha=' + encodeURIComponent(fecha) + '&hora=' + encodeURIComponent(hora)
+      + '&exclude_reserva_id=' + encodeURIComponent(String(excludeId));
+    fetch(u, { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || !j.ok) {
+          unionBox.classList.add('d-none');
+          return;
+        }
+        unionBtns.innerHTML = '';
+        if (!j.activo || !j.uniones || !j.uniones.length) {
+          unionBox.classList.add('d-none');
+          if (unionEmpty) {
+            if (j.motivo === 'sin_opciones' && mx >= MIN_PAX_UNION_SUG) {
+              unionEmpty.classList.remove('d-none');
+              unionBox.classList.remove('d-none');
+            } else {
+              unionEmpty.classList.add('d-none');
+            }
+          }
+          return;
+        }
+        if (unionEmpty) unionEmpty.classList.add('d-none');
+        j.uniones.forEach(function (u2) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'btn btn-sm btn-outline-primary';
+          b.textContent = u2.nombre + ' (' + u2.capacidad + 'p)';
+          b.addEventListener('click', function () {
+            var found = false;
+            for (var i = 0; i < mesaSel.options.length; i++) {
+              if (mesaSel.options[i].value === u2.nombre) {
+                mesaSel.selectedIndex = i;
+                found = true;
+                break;
+              }
+            }
+            if (!found) {
+              appendOpt(u2.nombre, u2.nombre + ' (' + u2.capacidad + ' pax)');
+              mesaSel.selectedIndex = mesaSel.options.length - 1;
+            }
+          });
+          unionBtns.appendChild(b);
+        });
+        unionBox.classList.remove('d-none');
+      })
+      .catch(function () { unionBox.classList.add('d-none'); });
+  }
+  function refresh() {
+    var fecha = fechaEl.value;
+    var hora = (horaEl.value || '').trim();
+    var selVal = mesaSel.value;
+    if (!hora) {
+      rebuildAllMesas();
+      restoreSelection(selVal);
+      scheduleUnionSug();
+      return;
+    }
+    function aplicarOcupacion(occ) {
+      mesaSel.innerHTML = '';
+      for (var k = 0; k < mesaOptionsTemplate.length; k++) {
+        var o = mesaOptionsTemplate[k];
+        var horasMes = horasParaMesa(occ, o.v);
+        var bloqueada = conflicto(hora, horasMes) && o.v !== selVal;
+        appendOpt(o.v, o.t);
+        if (bloqueada) {
+          mesaSel.options[mesaSel.options.length - 1].disabled = true;
+        }
+      }
+      restoreSelection(selVal);
+      var si = mesaSel.selectedIndex;
+      if (si >= 0 && mesaSel.options[si] && mesaSel.options[si].disabled) {
+        for (var j = 0; j < mesaSel.options.length; j++) {
+          if (!mesaSel.options[j].disabled) {
+            mesaSel.selectedIndex = j;
+            break;
+          }
+        }
+      }
+    }
+    fetchOcc(fecha).then(function (occ) {
+      aplicarOcupacion(occ);
+      scheduleUnionSug();
+    }).catch(function () {
+      var prev = cache[fecha];
+      if (prev && typeof prev === 'object' && !prev.error) aplicarOcupacion(prev);
+      else {
+        rebuildAllMesas();
+        restoreSelection(selVal);
+      }
+      scheduleUnionSug();
+    });
+  }
+  fechaEl.addEventListener('change', refresh);
+  horaEl.addEventListener('change', refresh);
+  horaEl.addEventListener('input', refresh);
+  horaEl.addEventListener('blur', refresh);
+  if (paxEl) {
+    paxEl.addEventListener('input', scheduleUnionSug);
+    paxEl.addEventListener('change', scheduleUnionSug);
+  }
+  refresh();
+})();
+</script>
+{% endif %}
+{% set ac_wrap_id = 'edit_cliente_autowrap' %}
+{% set ac_suggest_id = 'edit_cliente_suggest' %}
+{% set ac_alert_id = 'edit_cliente_alerta' %}
+{% set ac_nombre_id = 'reserva_edit_nombre' %}
+{% set ac_tel_id = 'reserva_edit_telefono' %}
+{% include 'partials/cliente_autocomplete_reserva.html' %}
+{% endblock %}

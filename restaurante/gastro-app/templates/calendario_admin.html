@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ tr('page.cal.meta_title') }}{% endblock %}
+
+{% block estilos %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.css" rel="stylesheet">
+<style>
+/* .app-page, .app-hero-light en base.html */
+.cal-legend {
+  display: flex; flex-wrap: wrap; gap: 10px 16px;
+  font-size: 0.78rem; font-weight: 600;
+  margin-bottom: 1rem;
+}
+.cal-legend span {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: #475569;
+}
+.cal-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+#cal-admin { margin-bottom: 1.5rem; }
+.fc .fc-toolbar-title { font-size: 1.1rem !important; }
+.cal-forms {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+@media (min-width: 992px) {
+  .cal-forms { grid-template-columns: 1fr 1fr; }
+}
+.cal-card.app-surface {
+  padding: 1rem 1.15rem;
+  border-radius: 12px;
+}
+.cal-card h3 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #64748b; margin: 0 0 0.75rem 0; }
+.cal-help { font-size: 0.8rem; color: #64748b; margin-top: 0.75rem; line-height: 1.45; }
+.cal-tables { margin-top: 1.25rem; }
+.cal-tables table { font-size: 0.85rem; }
+</style>
+{% endblock %}
+
+{% block contenido %}
+
+<div class="app-page">
+  <div class="cal-hero app-hero-light">
+    <h1><i class="bi bi-calendar3 me-2 text-primary"></i>{{ tr('page.cal.h1') }}</h1>
+    <p>{{ tr('page.cal.subtitle') }}</p>
+  </div>
+
+  <div class="cal-legend">
+    <span><i class="cal-dot" style="background:#64748b;"></i>{{ tr('page.cal.legend_fest') }}</span>
+    <span><i class="cal-dot" style="background:#a855f7;"></i>{{ tr('page.cal.legend_sol') }}</span>
+    <span><i class="cal-dot" style="background:#6366f1;"></i>{{ tr('page.cal.legend_msg') }}</span>
+    <span><i class="cal-dot" style="background:#f59e0b;"></i>{{ tr('page.cal.legend_aviso') }}</span>
+    <span><i class="cal-dot" style="background:#0ea5e9;"></i>{{ tr('page.cal.legend_prov') }}</span>
+    <span><i class="cal-dot" style="background:#e11d48;"></i>{{ tr('page.cal.legend_carga') }}</span>
+    <span><i class="cal-dot" style="background:#c026d3;"></i>{{ tr('page.cal.legend_evprox') }}</span>
+  </div>
+
+  <div id="cal-admin"></div>
+
+  <div class="cal-card app-surface mb-3">
+    <h3>{{ tr('page.cal.preset_title') }}</h3>
+    <p class="small text-muted mb-2">{{ tr('page.cal.preset_hint') }}</p>
+    <form method="post" action="{{ url_for('admin.calendario_carga_preset') }}" class="row g-2 align-items-end">
+      <div class="col-md-6 col-lg-5">
+        <label class="form-label small mb-0" for="preset_id">{{ tr('page.cal.preset_select') }}</label>
+        <select class="form-select form-select-sm" name="preset_id" id="preset_id" required>
+          {% for pid, plabel in carga_presets.items() %}
+          <option value="{{ pid }}">{{ plabel }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <label class="form-label small mb-0" for="year_carga">{{ tr('page.cal.preset_year') }}</label>
+        <input type="number" class="form-control form-control-sm" name="year" id="year_carga" min="2020" max="2050" value="{{ ano_actual }}" required>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-sm btn-outline-danger">{{ tr('page.cal.preset_btn') }}</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="cal-card app-surface mb-3">
+    <h3>{{ tr('page.cal.official_title') }}</h3>
+    <p class="small text-muted mb-2">{{ tr('page.cal.official_hint') }}</p>
+    <form method="post" action="{{ url_for('admin.calendario_festivos_oficiales') }}" class="row g-2 align-items-end">
+      <div class="col-md-6 col-lg-6">
+        <label class="form-label small mb-0" for="subdiv_oficial">{{ tr('page.cal.official_select') }}</label>
+        <select class="form-select form-select-sm" name="subdiv" id="subdiv_oficial" required>
+          {% for code, label_key in official_subdiv_specs %}
+          <option value="{{ code }}"{% if loop.first %} selected{% endif %}>{{ tr(label_key) }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <label class="form-label small mb-0" for="year_oficial">{{ tr('page.cal.official_year') }}</label>
+        <input type="number" class="form-control form-control-sm" name="year" id="year_oficial" min="2000" max="2100" value="{{ ano_actual }}" required>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-sm btn-primary">{{ tr('page.cal.official_btn') }}</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="cal-forms">
+    <div class="cal-card app-surface">
+      <h3>{{ tr('page.cal.form_fest_title') }}</h3>
+      <form method="post" action="{{ url_for('admin.calendario_festivo_crear') }}" class="row g-2">
+        <div class="col-md-4">
+          <label class="form-label small mb-0">{{ tr('page.cal.form_fest_date') }}</label>
+          <input type="date" name="fecha" class="form-control form-control-sm" required>
+        </div>
+        <div class="col-md-8">
+          <label class="form-label small mb-0">{{ tr('page.cal.form_fest_name') }}</label>
+          <input type="text" name="titulo" class="form-control form-control-sm" required maxlength="120">
+        </div>
+        <div class="col-12">
+          <label class="form-label small mb-0">{{ tr('page.cal.form_fest_notes') }}</label>
+          <input type="text" name="notas" class="form-control form-control-sm" maxlength="200">
+        </div>
+        <div class="col-12">
+          <button type="submit" class="btn btn-sm btn-primary">{{ tr('page.cal.form_fest_btn') }}</button>
+        </div>
+      </form>
+    </div>
+    <div class="cal-card app-surface">
+      <h3>{{ tr('page.cal.form_aviso_title') }}</h3>
+      <form method="post" action="{{ url_for('admin.calendario_aviso_crear') }}" class="row g-2">
+        <div class="col-12">
+          <label class="form-label small mb-0">{{ tr('page.cal.form_aviso_name') }}</label>
+          <input type="text" name="titulo" class="form-control form-control-sm" required maxlength="120">
+        </div>
+        <div class="col-12">
+          <label class="form-label small mb-0">{{ tr('page.cal.form_aviso_body') }}</label>
+          <textarea name="cuerpo" class="form-control form-control-sm" rows="2" maxlength="500"></textarea>
+        </div>
+        <div class="col-6">
+          <label class="form-label small mb-0">{{ tr('page.cal.form_aviso_from') }}</label>
+          <input type="date" name="fecha_ini" class="form-control form-control-sm" required>
+        </div>
+        <div class="col-6">
+          <label class="form-label small mb-0">{{ tr('page.cal.form_aviso_to') }}</label>
+          <input type="date" name="fecha_fin" class="form-control form-control-sm" required>
+        </div>
+        <div class="col-12">
+          <button type="submit" class="btn btn-sm btn-warning text-dark">{{ tr('page.cal.form_aviso_btn') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <p class="cal-help">{{ tr('page.cal.help_prov') }}</p>
+
+  <div class="cal-tables row g-3">
+    <div class="col-12">
+      <div class="cal-card app-surface">
+        <h3>{{ tr('page.cal.list_carga') }}</h3>
+        {% if cargas %}
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead><tr><th>{{ tr('page.cal.th_title') }}</th><th>{{ tr('page.cal.th_range') }}</th><th>{{ tr('page.cal.th_notes') }}</th><th></th></tr></thead>
+            <tbody>
+              {% for c in cargas %}
+              <tr>
+                <td>{{ c.titulo }}</td>
+                <td class="small text-muted text-nowrap">{{ c.fecha_ini }} → {{ c.fecha_fin }}</td>
+                <td class="small text-muted" style="max-width:22rem;">{{ c.notas or '—' }}</td>
+                <td class="text-end">
+                  <form method="post" action="{{ url_for('admin.calendario_carga_borrar', cid=c.id) }}" class="d-inline" onsubmit="return confirm('OK?');">
+                    <button type="submit" class="btn btn-link btn-sm text-danger p-0">{{ tr('page.cal.btn_delete') }}</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted small mb-0">—</p>
+        {% endif %}
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="cal-card app-surface">
+        <h3>{{ tr('page.cal.list_fest') }}</h3>
+        {% if festivos %}
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead><tr><th>{{ tr('page.cal.th_date') }}</th><th>{{ tr('page.cal.th_title') }}</th><th>{{ tr('page.cal.th_notes') }}</th><th></th></tr></thead>
+            <tbody>
+              {% for f in festivos %}
+              <tr>
+                <td class="text-nowrap">{{ f.fecha }}</td>
+                <td>{{ f.titulo }}</td>
+                <td class="small text-muted" style="max-width:22rem;">{{ f.notas or '—' }}</td>
+                <td class="text-end">
+                  <form method="post" action="{{ url_for('admin.calendario_festivo_borrar', fid=f.id) }}" class="d-inline" onsubmit="return confirm('OK?');">
+                    <button type="submit" class="btn btn-link btn-sm text-danger p-0">{{ tr('page.cal.btn_delete') }}</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted small mb-0">—</p>
+        {% endif %}
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="cal-card app-surface">
+        <h3>{{ tr('page.cal.list_aviso') }}</h3>
+        {% if avisos %}
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead><tr><th>{{ tr('page.cal.th_title') }}</th><th>{{ tr('page.cal.th_range') }}</th><th></th></tr></thead>
+            <tbody>
+              {% for a in avisos %}
+              <tr>
+                <td>{{ a.titulo }}</td>
+                <td class="small text-muted text-nowrap">{{ a.fecha_ini }} → {{ a.fecha_fin }}</td>
+                <td class="text-end">
+                  <form method="post" action="{{ url_for('admin.calendario_aviso_borrar', aid=a.id) }}" class="d-inline" onsubmit="return confirm('OK?');">
+                    <button type="submit" class="btn btn-link btn-sm text-danger p-0">{{ tr('page.cal.btn_delete') }}</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted small mb-0">—</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/locales-all.min.js"></script>
+<script>
+(function(){
+  var el = document.getElementById('cal-admin');
+  if (!el || typeof FullCalendar === 'undefined') return;
+  var lang = {{ current_lang|tojson }};
+  var loc = (lang === 'en') ? 'en' : (lang === 'ca' || lang === 'va') ? 'ca' : 'es';
+  var calendar = new FullCalendar.Calendar(el, {
+    locale: loc,
+    initialView: 'dayGridMonth',
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,listWeek'
+    },
+    height: 'auto',
+    navLinks: true,
+    events: function(info, successCallback, failureCallback) {
+      var u = {{ url_for('admin.api_calendario_eventos')|tojson }} + '?start=' + encodeURIComponent(info.startStr) + '&end=' + encodeURIComponent(info.endStr);
+      fetch(u, { credentials: 'same-origin' })
+        .then(function(r) { return r.json(); })
+        .then(successCallback)
+        .catch(failureCallback);
+    },
+    eventClick: function(info) {
+      if (info.event.url) {
+        info.jsEvent.preventDefault();
+        window.location.href = info.event.url;
+      }
+    },
+    eventDidMount: function(info) {
+      var xp = info.event.extendedProps || {};
+      var n = xp.notas || xp.cuerpo;
+      if (n) {
+        info.el.setAttribute('title', (info.event.title || '') + '\n\n' + n);
+      }
+    }
+  });
+  calendar.render();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block titulo %}Proveedores{% endblock %}
+{% block estilos %}
+<style>
+/* .app-hero en base.html */
+.prov-kpi {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  padding: 0.55rem 1rem;
+  min-width: 100px;
+  text-align: center;
+}
+.prov-kpi .n { font-size: 1.25rem; font-weight: 700; }
+.prov-kpi .l { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.8; }
+.prov-card.app-surface {
+  padding: 1.25rem 1.35rem;
+  margin-bottom: 1.25rem;
+}
+.prov-card h2 {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin: 0 0 1rem 0;
+}
+.prov-table-wrap { border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; }
+.prov-table { margin: 0; font-size: 0.875rem; }
+.prov-table thead th {
+  background: #f8fafc;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #475569;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+  padding: 0.65rem 0.75rem;
+}
+.prov-table tbody td { padding: 0.65rem 0.75rem; vertical-align: middle; border-color: #f1f5f9; }
+.prov-table tbody tr:hover { background: #fafbfc; }
+.prov-nombre { font-weight: 600; color: #0f172a; }
+.prov-prod { max-width: 280px; font-size: 0.82rem; color: #475569; }
+.prov-actions .btn { padding: 0.2rem 0.45rem; }
+</style>
+{% endblock %}
+
+{% block contenido %}
+{% include 'partials/volver_bar.html' %}
+<div class="app-page">
+
+  <div class="prov-hero app-hero">
+    <div>
+      <h1><i class="bi bi-truck me-2"></i>Proveedores</h1>
+      <p class="sub mb-0">
+        Directorio de compras: contacto rápido, qué os suministran, día de pedido habitual y condiciones.
+        Útil para cocina, encargado o quien haga los pedidos.
+      </p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <div class="prov-kpi"><div class="n">{{ total_proveedores }}</div><div class="l">Total</div></div>
+      <div class="prov-kpi"><div class="n text-success">{{ proveedores_activos }}</div><div class="l">Activos</div></div>
+    </div>
+  </div>
+
+  <div class="prov-card app-surface">
+    <h2><i class="bi bi-plus-circle me-1"></i> Nuevo proveedor</h2>
+    <form method="post" action="{{ url_for('admin.proveedores_crear') }}" class="row g-2">
+      <div class="col-md-5">
+        <label class="form-label small mb-0">Nombre comercial / razón *</label>
+        <input type="text" name="nombre" class="form-control form-control-sm" required placeholder="Ej. Distribuciones Norte">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small mb-0">Teléfono</label>
+        <input type="tel" name="telefono" class="form-control form-control-sm" placeholder="+34…">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small mb-0">Email</label>
+        <input type="email" name="email" class="form-control form-control-sm">
+      </div>
+      <div class="col-12">
+        <label class="form-label small mb-0">Productos / servicios que os suministran</label>
+        <input type="text" name="productos" class="form-control form-control-sm" placeholder="Ej. Carnes frescas, embutidos, hielo…">
+      </div>
+      <div class="col-12 d-flex flex-wrap align-items-end gap-2">
+        <div class="form-check mb-0">
+          <input class="form-check-input" type="checkbox" name="activo" id="nuevoActivo" value="1" checked>
+          <label class="form-check-label small" for="nuevoActivo">Activo</label>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-check-lg me-1"></i> Guardar y completar después</button>
+      </div>
+    </form>
+    <p class="small text-muted mb-0 mt-2">Para todos los datos (web, CIF, día de pedido, plazos…) usa <strong>Editar</strong> en la tabla.</p>
+  </div>
+
+  <div class="prov-card app-surface">
+    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-end mb-3">
+      <h2 class="mb-0"><i class="bi bi-list-ul me-1"></i> Directorio</h2>
+      <div style="min-width:220px;max-width:100%;">
+        <label class="form-label small text-muted mb-0">Buscar</label>
+        <input type="search" class="form-control form-control-sm" id="provBuscar" placeholder="Nombre, teléfono, productos…">
+      </div>
+    </div>
+
+    {% if proveedores|length %}
+    <div class="prov-table-wrap table-responsive">
+      <table class="table prov-table mb-0" id="tablaProveedores">
+        <thead>
+          <tr>
+            <th>Proveedor</th>
+            <th>Contacto</th>
+            <th class="d-none d-lg-table-cell">Productos / suministros</th>
+            <th class="d-none d-md-table-cell">Pedido / entrega</th>
+            <th class="text-center">Estado</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in proveedores %}
+          {% set filtro = ((p.nombre or '') ~ ' ' ~ (p.persona_contacto or '') ~ ' ' ~ (p.telefono or '') ~ ' ' ~ (p.productos or '') ~ ' ' ~ (p.notas or ''))|lower %}
+          <tr data-prov-filter="{{ filtro }}">
+            <td>
+              <div class="prov-nombre">{{ p.nombre }}</div>
+              {% if p.cif %}<div class="small text-muted">CIF/NIF {{ p.cif }}</div>{% endif %}
+            </td>
+            <td class="small">
+              {% if p.persona_contacto %}<div>{{ p.persona_contacto }}</div>{% endif %}
+              {% if p.telefono %}
+              <a href="tel:{{ p.telefono|replace(' ', '') }}" class="text-decoration-none"><i class="bi bi-telephone me-1 opacity-50"></i>{{ p.telefono }}</a>
+              {% endif %}
+              {% if p.email %}
+              <div><a href="mailto:{{ p.email }}" class="text-truncate d-inline-block" style="max-width:180px">{{ p.email }}</a></div>
+              {% endif %}
+              {% if p.web %}
+              <div><a href="{{ p.web if p.web.startswith('http') else 'https://' ~ p.web }}" target="_blank" rel="noopener" class="small">Web <i class="bi bi-box-arrow-up-right"></i></a></div>
+              {% endif %}
+            </td>
+            <td class="d-none d-lg-table-cell prov-prod text-truncate" title="{{ p.productos or '' }}">{{ p.productos or '—' }}</td>
+            <td class="d-none d-md-table-cell small">
+              {% if p.dia_habitual_pedido %}<div><i class="bi bi-calendar-week me-1 opacity-50"></i>{{ p.dia_habitual_pedido }}</div>{% endif %}
+              {% if p.plazo_entrega %}<div class="text-muted">{{ p.plazo_entrega }}</div>{% elif not p.dia_habitual_pedido %}—{% endif %}
+            </td>
+            <td class="text-center">
+              {% if (p.activo|default(1))|int == 1 %}
+              <span class="badge bg-success-subtle text-success border border-success-subtle">Activo</span>
+              {% else %}
+              <span class="badge bg-secondary-subtle text-secondary border">Inactivo</span>
+              {% endif %}
+            </td>
+            <td class="text-end prov-actions">
+              <a href="{{ url_for('admin.proveedores_editar', pid=p.id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+              <form method="post" action="{{ url_for('admin.proveedores_eliminar', pid=p.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar este proveedor del directorio?');">
+                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">Aún no hay proveedores. Usa el formulario de arriba para dar de alta el primero.</p>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+(function () {
+  var inp = document.getElementById('provBuscar');
+  var rows = document.querySelectorAll('#tablaProveedores tbody tr');
+  if (!inp || !rows.length) return;
+  inp.addEventListener('input', function () {
+    var q = (inp.value || '').trim().toLowerCase();
+    rows.forEach(function (tr) {
+      var hay = !q || (tr.getAttribute('data-prov-filter') || '').indexOf(q) !== -1;
+      tr.style.display = hay ? '' : 'none';
+    });
+  });
+})();
+</script>
+{% endblock %}

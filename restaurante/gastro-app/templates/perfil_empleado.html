@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+
+{% block titulo %}Ficha empleado{% endblock %}
+
+{% block estilos %}
+<style>
+.ficha-hero {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #fff;
+  border-radius: 16px;
+  padding: 24px 28px;
+  margin-bottom: 24px;
+}
+.ficha-hero h1 { font-size: 1.5rem; font-weight: 700; margin: 0 0 6px 0; }
+.ficha-hero .muted { color: #94a3b8; font-size: 0.95rem; }
+.card-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: 1px solid #e2e8f0;
+}
+.card-section h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 14px 0;
+  color: #0f172a;
+}
+.dl-row { display: grid; grid-template-columns: 160px 1fr; gap: 8px 16px; font-size: 0.92rem; }
+.dl-row dt { color: #64748b; margin: 0; }
+.dl-row dd { margin: 0; font-weight: 500; }
+.stat-pill {
+  display: inline-block;
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin-right: 10px;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+.stat-pill strong { font-size: 1.15rem; display: block; color: #0f172a; }
+.actions-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+.table-sm td, .table-sm th { font-size: 0.88rem; vertical-align: middle; }
+.hor-emp-wrap { border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; }
+.hor-emp-table thead th {
+  background: #f8fafc;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+}
+.hor-emp-table tbody td { vertical-align: middle; padding: 0.65rem 0.75rem; border-color: #f1f5f9; }
+.hor-emp-table tbody tr:hover { background: #fafbfc; }
+.hor-perfil-week { margin-bottom: 1.25rem; }
+.hor-perfil-week:last-child { margin-bottom: 0; }
+.hor-perfil-week h3 {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 0 0 10px 0;
+}
+.hor-perfil-table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid #e2e8f0; }
+.hor-perfil-table { margin: 0; font-size: 0.82rem; }
+.hor-perfil-table thead th {
+  background: #f8fafc;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #64748b;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  border-bottom: 2px solid #e2e8f0;
+}
+.hor-perfil-table thead th.hoy { background: #e0f2fe; color: #0369a1; }
+.hor-perfil-table tbody td {
+  vertical-align: top;
+  padding: 0.5rem 0.55rem;
+  border-color: #f1f5f9;
+  min-width: 6.5rem;
+}
+.hor-perfil-table tbody td.pasado { background: #fafafa; }
+.hor-perfil-table tbody td.hoy { background: #f0f9ff; }
+.hor-perfil-compact-wrap {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #fafbfc;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+}
+.hor-perfil-compact {
+  margin: 0;
+  width: 100%;
+  border-collapse: collapse;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+.hor-perfil-compact th,
+.hor-perfil-compact td {
+  padding: 6px 5px;
+  text-align: center;
+  border-bottom: 1px solid #e2e8f0;
+}
+.hor-perfil-compact thead th {
+  font-weight: 700;
+  color: #475569;
+  border-bottom: 2px solid #cbd5e1;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+}
+.hor-perfil-compact td.hpc-h { text-align: right; font-weight: 600; color: #1e293b; }
+.hor-perfil-compact thead th.hpc-hh { text-align: right; }
+.hor-perfil-slot {
+  padding: 0.35rem 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+.hor-perfil-slot:last-child { border-bottom: none; }
+.hor-perfil-slot .font-monospace { font-size: 0.76rem; }
+</style>
+{% endblock %}
+
+{% block contenido %}
+
+<div class="actions-bar">
+  <a href="/empleados" class="btn btn-outline-secondary btn-sm">← Volver al listado</a>
+  {% if not reservas_only %}
+  <a href="/horarios" class="btn btn-primary btn-sm"><i class="bi bi-calendar3"></i> Horarios</a>
+  {% endif %}
+  <a href="/libro_firmas" class="btn btn-outline-primary btn-sm"><i class="bi bi-journal-text"></i> Libro de firmas</a>
+  <a href="/pdf_trabajador?empleado_id={{ empleado['id'] }}&mes={{ mes_actual }}" class="btn btn-outline-dark btn-sm"><i class="bi bi-file-pdf"></i> PDF fichajes (mes actual)</a>
+</div>
+
+<div class="ficha-hero">
+  <h1>{{ empleado['nombre']|default('', true)|trim }} {{ empleado['apellido']|default('', true)|trim }}</h1>
+  <div class="muted">
+    {{ empleado['puesto']|default('Empleado', true) }}
+    {% if 'activo' in empleado %} · {% if empleado['activo'] %}Activo{% else %}Inactivo{% endif %}{% endif %}
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card-section">
+      <h2><i class="bi bi-person-badge text-primary"></i> Datos personales y contacto</h2>
+      <dl class="dl-row">
+        <dt>DNI</dt><dd>{{ empleado['dni']|default('—', true) }}</dd>
+        <dt>Teléfono</dt><dd>{{ empleado['telefono']|default('—', true) }}</dd>
+        <dt>Nº SS</dt><dd>{{ empleado['numero_ss']|default('—', true) }}</dd>
+      </dl>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card-section">
+      <h2><i class="bi bi-file-earmark-text text-success"></i> Contrato y RRHH</h2>
+      <dl class="dl-row">
+        <dt>Horas contrato</dt><dd>{{ empleado['horas_contrato']|default('—', true) }}</dd>
+        <dt>Tipo contrato</dt><dd>{{ empleado['tipo_contrato']|default('—', true) }}</dd>
+        <dt>Saldo horas</dt><dd>{{ empleado['saldo_horas']|default('—', true) }}</dd>
+        <dt>Fecha alta</dt><dd>{{ empleado['fecha_alta']|default('—', true) }}</dd>
+      </dl>
+      {% if empleado['observaciones']|default('', true) %}
+      <p class="small text-muted mt-2 mb-0"><strong>Observaciones:</strong> {{ empleado['observaciones'] }}</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="card-section" style="border-left: 4px solid #22c55e;">
+  <h2><i class="bi bi-umbrella-fill text-success"></i> Jornada y vacaciones (referencia)</h2>
+  <p class="small text-muted mb-3">Cifras desde fichajes y contrato; orientativo. Vista global y criterios: <a href="{{ url_for('admin.vacaciones_jornada_resumen') }}">Vacaciones y jornada (resumen)</a> en administración.</p>
+  <dl class="dl-row">
+    <dt>Contrato (h/semana)</dt>
+    <dd><strong>{{ '%.1f'|format(jornada_vacaciones.horas_semana_contrato) }}</strong></dd>
+    <dt>Horas trabajadas</dt>
+    <dd><strong>{{ '%.2f'|format(jornada_vacaciones.horas_trabajadas) }}</strong> h</dd>
+    <dt>Vacaciones ref. / ≈ semanas</dt>
+    <dd><strong class="text-success">{{ '%.2f'|format(jornada_vacaciones.horas_vacaciones_generadas) }}</strong> h · <strong>{{ '%.2f'|format(jornada_vacaciones.semanas_vacacion_equiv) }}</strong> sem.</dd>
+    <dt>Antigüedad</dt>
+    <dd>{{ jornada_vacaciones.texto_antiguedad }}</dd>
+  </dl>
+</div>
+
+<div class="card-section">
+  <h2><i class="bi bi-clock-history text-warning"></i> Fichajes (resumen)</h2>
+  <div>
+    <span class="stat-pill"><strong>{{ horas_hoy }}</strong> Movimientos hoy</span>
+    <span class="stat-pill"><strong>{{ horas_semana }}</strong> Movimientos 7 días</span>
+    <span class="stat-pill"><strong>{{ dias_trabajados }}</strong> Días con fichaje</span>
+  </div>
+  {% if ultimos_fichajes %}
+  <div class="table-responsive mt-3">
+    <table class="table table-sm table-striped mb-0">
+      <thead><tr><th>Fecha</th><th>Hora</th><th>Tipo</th></tr></thead>
+      <tbody>
+        {% for f in ultimos_fichajes %}
+        <tr>
+          <td>{{ f['fecha'] }}</td>
+          <td>{{ f['hora'] }}</td>
+          <td><span class="badge bg-secondary">{{ f['tipo'] }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="text-muted small mb-0">Sin registros de fichaje.</p>
+  {% endif %}
+</div>
+
+{% if not reservas_only %}
+<div class="card-section">
+  <h2><i class="bi bi-calendar-week text-info"></i> Horarios</h2>
+  <p class="small text-muted mb-3">Próximas semanas en vista tipo planning (lun–dom). Se muestran seis semanas a partir de la semana actual.</p>
+  {% if semanas_horario|length %}
+  {% for sem in semanas_horario %}
+  <div class="hor-perfil-week">
+    <h3><i class="bi bi-calendar3 me-1 text-primary"></i>{{ sem.titulo_semana }}</h3>
+    {% if sem.row_compact and sem.dias_letras %}
+    <div class="hor-perfil-compact-wrap">
+      <table class="hor-perfil-compact" aria-label="Resumen semanal compacto">
+        <thead>
+          <tr>
+            {% for letter in sem.dias_letras %}
+            <th scope="col">{{ letter }}</th>
+            {% endfor %}
+            <th scope="col" class="hpc-hh">horas</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            {% for c in sem.row_compact.cols %}
+            <td>{{ c }}</td>
+            {% endfor %}
+            <td class="hpc-h">{{ sem.row_compact.horas_semana_txt }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+    <div class="hor-perfil-table-wrap">
+      <table class="table table-bordered table-sm mb-0 hor-perfil-table">
+        <thead>
+          <tr>
+            {% for d in sem.dias %}
+            <th class="{% if d.es_hoy %}hoy{% endif %}">{{ d.label }}<br><span class="text-muted fw-normal">{{ d.num }}</span></th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            {% for d in sem.dias %}
+            {% set ck = d.fecha %}
+            <td class="{% if d.es_hoy %}hoy{% elif d.es_pasado %}pasado{% endif %}">
+              {% if sem.celdas.get(ck) %}
+                {% for t in sem.celdas[ck] %}
+                <div class="hor-perfil-slot">
+                  <div class="font-monospace text-dark">{{ (t.hora_inicio or '')[:5] }}–{{ (t.hora_fin or '')[:5] }}</div>
+                  {% if t.turno %}<div><span class="badge bg-light text-dark border" style="font-size:0.65rem;">{{ t.turno }}</span></div>{% endif %}
+                  {% set st = (t.estado or '')|lower %}
+                  <div class="mt-1">
+                    {% if 'cancel' in st %}
+                    <span class="badge text-bg-secondary" style="font-size:0.65rem;">{{ t.estado }}</span>
+                    {% else %}
+                    <span class="badge text-bg-success" style="font-size:0.65rem;">{{ t.estado or 'Programado' }}</span>
+                    {% endif %}
+                  </div>
+                </div>
+                {% endfor %}
+              {% else %}
+                <span class="text-muted small">—</span>
+              {% endif %}
+            </td>
+            {% endfor %}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="text-center text-muted py-4 px-2 border rounded-3 bg-light small">
+    <i class="bi bi-calendar-x d-block mb-2" style="font-size:1.5rem;opacity:.5;"></i>
+    No hay datos de horarios para este empleado (tabla no disponible o sin registros).
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if solicitudes %}
+<div class="card-section">
+  <h2><i class="bi bi-inbox text-danger"></i> Solicitudes (vacaciones, permisos…)</h2>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead>
+        <tr>
+          <th>Tipo</th><th>Desde</th><th>Hasta</th><th>Estado</th><th>Comentario</th><th>Nota dirección</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in solicitudes %}
+        <tr>
+          <td>{{ s['tipo'] if s['tipo'] is defined else '—' }}</td>
+          <td>{{ s['fecha_inicio'] if s['fecha_inicio'] is defined else '—' }}</td>
+          <td>{{ s['fecha_fin'] if s['fecha_fin'] is defined else '—' }}</td>
+          <td><span class="badge bg-warning text-dark">{{ s['estado'] if s['estado'] is defined else '—' }}</span></td>
+          <td class="small">{{ s['comentario'] if s['comentario'] is defined else '' }}</td>
+          <td class="small">{{ s['respuesta_responsable'] if s['respuesta_responsable'] is defined else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

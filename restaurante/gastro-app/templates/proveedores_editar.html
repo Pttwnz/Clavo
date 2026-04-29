@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block titulo %}Editar proveedor{% endblock %}
+{% block estilos %}
+<style>
+/* .app-page, .app-hero-light en base.html */
+.pe-card.app-surface {
+  padding: 1.35rem 1.4rem;
+  margin-bottom: 1rem;
+}
+.pe-card h2 {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin: 0 0 0.85rem 0;
+}
+</style>
+{% endblock %}
+
+{% block contenido %}
+<div class="app-page">
+  <div class="pe-hero app-hero-light d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div>
+      <h1><i class="bi bi-pencil-square text-primary me-2"></i>{{ p.nombre }}</h1>
+      <p class="text-muted small mb-0">Ficha completa del proveedor: contacto, suministros y condiciones de compra.</p>
+    </div>
+    <a href="{{ url_for('admin.proveedores_index') }}" class="btn btn-outline-secondary btn-sm">← Volver al directorio</a>
+  </div>
+
+  <form method="post" action="{{ url_for('admin.proveedores_editar', pid=p.id) }}">
+    <div class="pe-card app-surface">
+      <h2>Identificación</h2>
+      <div class="row g-3">
+        <div class="col-md-8">
+          <label class="form-label">Nombre comercial / razón social *</label>
+          <input type="text" name="nombre" class="form-control" value="{{ p.nombre or '' }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">CIF / NIF</label>
+          <input type="text" name="cif" class="form-control" value="{{ p.cif or '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Persona de contacto</label>
+          <input type="text" name="persona_contacto" class="form-control" value="{{ p.persona_contacto or '' }}" placeholder="Nombre del comercial">
+        </div>
+        <div class="col-md-6">
+          <div class="form-check mt-4">
+            <input class="form-check-input" type="checkbox" name="activo" id="activo" value="1" {% if (p.activo|default(1))|int == 1 %}checked{% endif %}>
+            <label class="form-check-label" for="activo">Proveedor activo (aparece en listados)</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pe-card app-surface">
+      <h2>Contacto</h2>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Teléfono</label>
+          <input type="tel" name="telefono" class="form-control" value="{{ p.telefono or '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" class="form-control" value="{{ p.email or '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Web</label>
+          <input type="url" name="web" class="form-control" value="{{ p.web or '' }}" placeholder="https://">
+        </div>
+        <div class="col-12">
+          <label class="form-label">Dirección / almacén</label>
+          <textarea name="direccion" class="form-control" rows="2" placeholder="Dirección de facturación o de reparto">{{ p.direccion or '' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="pe-card app-surface">
+      <h2>Compras y suministros</h2>
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label">Productos o servicios que os suministran</label>
+          <textarea name="productos" class="form-control" rows="4" placeholder="Ej. vacuno nacional, pollo, hortalizas de temporada, bebidas…">{{ p.productos or '' }}</textarea>
+          <div class="form-text">Lista lo que pedís habitualmente; ayuda al equipo a localizar quién suministra qué.</div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Día / hora habitual de pedido</label>
+          <input type="text" name="dia_habitual_pedido" class="form-control" value="{{ p.dia_habitual_pedido or '' }}" placeholder="Ej. Martes antes de 11:00">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Plazo de entrega habitual</label>
+          <input type="text" name="plazo_entrega" class="form-control" value="{{ p.plazo_entrega or '' }}" placeholder="Ej. 24–48 h">
+        </div>
+        <div class="col-12">
+          <label class="form-label">Condiciones de compra</label>
+          <textarea name="condiciones_compra" class="form-control" rows="3" placeholder="Forma de pago, mínimos de pedido, portes, descuentos por volumen…">{{ p.condiciones_compra or '' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="pe-card app-surface">
+      <h2>Notas internas</h2>
+      <textarea name="notas" class="form-control" rows="4" placeholder="Incidencias, alternativas, quién suele llamar…">{{ p.notas or '' }}</textarea>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i> Guardar cambios</button>
+      <a href="{{ url_for('admin.proveedores_index') }}" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

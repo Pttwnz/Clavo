@@ -1,0 +1,1588 @@
+{% extends "base.html" %}
+
+{% block titulo %}Horarios{% endblock %}
+
+{% block estilos %}
+<style>
+/* .app-page-tint, .app-page, .app-hero en base.html */
+.hor-guide-box {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.65rem 1rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.hor-guide-box details { margin: 0; }
+.hor-guide-box summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: #334155;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.hor-guide-box summary::-webkit-details-marker { display: none; }
+.hor-guide-box summary::before {
+  content: "▸";
+  display: inline-block;
+  transition: transform 0.15s;
+  color: #64748b;
+  font-size: 0.75rem;
+}
+.hor-guide-box details[open] summary::before { transform: rotate(90deg); }
+.hor-guide-list {
+  margin: 0.75rem 0 0 0;
+  padding-left: 1.15rem;
+  font-size: 0.84rem;
+  color: #475569;
+  line-height: 1.55;
+}
+.hor-guide-list li { margin-bottom: 0.4rem; }
+.hor-guide-list strong { color: #0f172a; }
+.hor-step-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+.hor-step-strip .sep { color: #cbd5e1; user-select: none; }
+.hor-step-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  color: #475569;
+  font-weight: 500;
+}
+.hor-step-pill b {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 50%;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+.hor-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 0;
+  margin-bottom: 1.35rem;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+}
+.hor-card-inner { padding: 1.15rem 1.35rem 1.35rem; }
+.hor-card .hor-card-head {
+  padding: 1rem 1.35rem;
+  border-bottom: 1px solid #f1f5f9;
+  background: linear-gradient(180deg, #fafbfc 0%, #fff 100%);
+}
+.hor-card h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: #0f172a;
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  line-height: 1.35;
+}
+.hor-card h2 .bi { margin-top: 0.15rem; opacity: 0.85; }
+.hor-kicker {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 0.35rem;
+}
+.hor-card-lead {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0.65rem 0 0 0;
+  line-height: 1.5;
+  max-width: 52rem;
+}
+.hor-details-adv {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fafbfc;
+  margin-top: 0.75rem;
+}
+.hor-details-adv summary {
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.84rem;
+  color: #475569;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.hor-details-adv summary::-webkit-details-marker { display: none; }
+.hor-details-adv summary::before {
+  content: "+";
+  font-weight: 700;
+  color: #94a3b8;
+  width: 1.1rem;
+}
+.hor-details-adv[open] summary::before { content: "−"; }
+.hor-details-adv .hor-details-body { padding: 0 1rem 1rem; border-top: 1px dashed #e2e8f0; }
+.hor-details-soft {
+  border-radius: 10px;
+  border: 1px dashed #cbd5e1;
+  background: #fff;
+  margin-bottom: 0.75rem;
+}
+.hor-details-soft summary {
+  padding: 0.55rem 0.85rem;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+  list-style: none;
+}
+.hor-details-soft summary::-webkit-details-marker { display: none; }
+.hor-details-soft .inset { padding: 0 0.85rem 0.85rem; }
+.hor-nav-day {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 1.25rem;
+}
+.hor-top-collapse {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  padding: 0.35rem 0.55rem;
+}
+.hor-top-collapse > summary {
+  cursor: pointer;
+  list-style: none;
+  color: #e2e8f0;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.hor-top-collapse > summary::-webkit-details-marker { display: none; }
+.hor-top-collapse > summary::before {
+  content: "▸";
+  color: #94a3b8;
+  margin-right: 0.35rem;
+}
+.hor-top-collapse[open] > summary::before { content: "▾"; }
+.hor-top-collapse .hor-top-collapse-body {
+  margin-top: 0.45rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+.hor-nav-day .lbl { font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; width: 100%; }
+@media (min-width: 768px) {
+  .hor-nav-day .lbl { width: auto; margin-right: 0.5rem; }
+}
+.hor-muted-hint {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-top: 0.5rem;
+}
+.hor-hlocal-preview {
+  white-space: pre-wrap;
+  max-height: 6.5rem;
+  overflow: auto;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+.hor-table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid #e2e8f0; }
+.hor-table { margin: 0; font-size: 0.875rem; }
+.hor-table thead th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+  padding: 0.65rem 0.85rem;
+}
+.hor-table tbody td { padding: 0.65rem 0.85rem; vertical-align: middle; border-color: #f1f5f9; }
+.hor-table tbody tr:hover { background: #fafbfc; }
+.hor-ai { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem 1.1rem; }
+.hor-nav { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 1rem; }
+.hor-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+.hor-empty i { font-size: 2rem; display: block; margin-bottom: 0.5rem; opacity: 0.55; }
+.badge-turno { font-weight: 600; font-size: 0.72rem; }
+.hor-vtabs .btn { font-size: 0.85rem; }
+.hor-week-cell {
+  font-size: 0.72rem;
+  vertical-align: top !important;
+  min-width: 6.5rem;
+  max-width: 8rem;
+}
+.hor-week-cell .slot {
+  padding: 2px 0;
+  border-bottom: 1px dashed #e2e8f0;
+}
+.hor-week-cell .slot:last-child { border-bottom: none; }
+.hor-cal { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+.hor-cal th { background: #f8fafc; padding: 0.35rem; text-align: center; border: 1px solid #e2e8f0; }
+.hor-cal td {
+  border: 1px solid #e2e8f0;
+  vertical-align: top;
+  min-height: 4.5rem;
+  width: 14.28%;
+  padding: 0.35rem;
+  background: #fff;
+}
+.hor-cal td.hor-cal-muted { background: #f8fafc; color: #cbd5e1; }
+.hor-cal .d-num { font-weight: 700; color: #0f172a; margin-bottom: 0.25rem; }
+.hor-cal .t-line { font-size: 0.68rem; line-height: 1.25; color: #334155; }
+.bulk-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.bulk-counter { font-size: 0.82rem; color: #64748b; }
+.bulk-check-col { width: 2.5rem; text-align: center; }
+.hor-qa-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.6rem;
+}
+.turno-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+.turno-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.turno-pill {
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+  font-size: 0.72rem;
+  color: #334155;
+}
+.hor-franja-head {
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  margin-bottom: 0.5rem;
+  border-left: 4px solid #94a3b8;
+  background: #f8fafc;
+}
+.hor-franja-head.manana { border-left-color: #f59e0b; background: #fffbeb; }
+.hor-franja-head.tarde { border-left-color: #3b82f6; background: #eff6ff; }
+.hor-franja-head.noche { border-left-color: #6366f1; background: #eef2ff; }
+.hor-franja-head.otro { border-left-color: #94a3b8; }
+.badge-franja { font-size: 0.7rem; font-weight: 600; }
+/* Vista semanal compacta (L–D + horas) — tipografía UI, sin monoespaciado */
+.hor-week-compact-wrap {
+  overflow-x: auto;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+  padding: 0;
+}
+table.hor-week-compact {
+  width: 100%;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #0f172a;
+}
+table.hor-week-compact thead th {
+  background: linear-gradient(180deg, #f1f5f9 0%, #e8eef5 100%);
+  border-bottom: 1px solid #cbd5e1;
+  padding: 0.65rem 0.45rem;
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: #475569;
+  text-transform: none;
+}
+table.hor-week-compact thead th:first-child {
+  border-radius: 14px 0 0 0;
+  padding-left: 1rem;
+}
+table.hor-week-compact thead th:last-child { border-radius: 0 14px 0 0; padding-right: 1rem; }
+table.hor-week-compact tbody td {
+  padding: 0.55rem 0.45rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+  transition: background 0.12s ease;
+}
+table.hor-week-compact tbody tr:hover td {
+  background: rgba(241, 245, 249, 0.65);
+}
+table.hor-week-compact tbody tr:last-child td { border-bottom: none; }
+table.hor-week-compact tbody tr:last-child td:first-child { border-radius: 0 0 0 14px; }
+table.hor-week-compact tbody tr:last-child td:last-child { border-radius: 0 0 14px 0; }
+table.hor-week-compact .wc-name {
+  text-align: left;
+  font-weight: 600;
+  white-space: nowrap;
+  padding-left: 1rem !important;
+  padding-right: 0.5rem !important;
+  color: #0f172a;
+  font-size: 0.84rem;
+}
+table.hor-week-compact .wc-cell {
+  text-align: center;
+  min-width: 3.75rem;
+  color: #334155;
+  font-weight: 500;
+  font-size: 0.8rem;
+}
+table.hor-week-compact .wc-cell.wc-empty { color: #94a3b8; font-weight: 400; }
+table.hor-week-compact .wc-hours {
+  text-align: right;
+  font-weight: 700;
+  padding-right: 1rem !important;
+  padding-left: 0.5rem !important;
+  min-width: 3.25rem;
+  color: #1d4ed8;
+  font-variant-numeric: tabular-nums;
+}
+table.hor-week-compact thead th.wc-hours-h { text-align: right; }
+.hor-week-meta { font-size: 0.8rem; color: #64748b; margin-bottom: 0.75rem; }
+
+/* Cobertura del día: Mañana / Tarde × sector */
+.hor-coverage-card {
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: linear-gradient(135deg, #fffbeb 0%, #fff 45%, #eff6ff 100%);
+  box-shadow: 0 2px 16px rgba(15, 23, 42, 0.05);
+  padding: 1rem 1.15rem;
+  margin-bottom: 1.25rem;
+}
+.hor-coverage-card h3 {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin: 0 0 0.35rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.hor-coverage-card .hor-cov-lead {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 0 0 0.85rem 0;
+  line-height: 1.4;
+}
+.hor-coverage-table-wrap { overflow-x: auto; border-radius: 10px; }
+table.hor-coverage-table {
+  width: 100%;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.84rem;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+table.hor-coverage-table thead th {
+  padding: 0.55rem 0.75rem;
+  font-weight: 700;
+  font-size: 0.75rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+table.hor-coverage-table thead th.hc-sector {
+  text-align: left;
+  width: 6.5rem;
+  color: #475569;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 10px 0 0 0;
+}
+table.hor-coverage-table thead th.hc-m {
+  text-align: left;
+  color: #b45309;
+  background: rgba(254, 243, 199, 0.65);
+}
+table.hor-coverage-table thead th.hc-t {
+  text-align: left;
+  color: #1d4ed8;
+  background: rgba(219, 234, 254, 0.65);
+  border-radius: 0 10px 0 0;
+}
+table.hor-coverage-table tbody td {
+  padding: 0.55rem 0.75rem;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+}
+table.hor-coverage-table tbody tr:last-child td { border-bottom: none; }
+table.hor-coverage-table .hc-sec-label {
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 0.8rem;
+}
+table.hor-coverage-table .hc-names {
+  font-weight: 500;
+  line-height: 1.45;
+}
+table.hor-coverage-table .hc-empty { color: #cbd5e1; font-weight: 400; }
+.hor-coverage-note {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin: 0.65rem 0 0 0;
+  line-height: 1.35;
+}
+details.hor-card > summary {
+  list-style: none;
+}
+details.hor-card > summary::-webkit-details-marker { display: none; }
+details.hor-card[open] > summary {
+  border-bottom: 1px solid #f1f5f9;
+}
+/* Niveles de faena: barras + % sobre carga base (100% = normal) */
+.hor-faena-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+@media (max-width: 991px) {
+  .hor-faena-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .hor-faena-grid { grid-template-columns: 1fr; }
+}
+.hor-faena-day {
+  background: linear-gradient(165deg, #f8fafc 0%, #ffffff 55%);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.55rem 0.65rem 0.6rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.hor-faena-day-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin-bottom: 0.4rem;
+}
+.hor-faena-day-name {
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: #475569;
+  letter-spacing: 0.02em;
+}
+.hor-faena-pct {
+  font-size: 0.95rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  transition: color 0.15s ease;
+}
+.hor-faena-pct--low { color: #c2410c; }
+.hor-faena-pct--mid { color: #0369a1; }
+.hor-faena-pct--high { color: #047857; }
+.hor-faena-visual {
+  position: relative;
+  margin-top: 0.15rem;
+}
+.hor-faena-bar-bg {
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 100%);
+  overflow: hidden;
+  margin-bottom: 0.35rem;
+}
+.hor-faena-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #38bdf8 0%, #0ea5e9 45%, #0284c7 100%);
+  width: 50%;
+  transition: width 0.12s ease-out, background 0.15s ease;
+}
+.hor-faena-bar-fill.is-low {
+  background: linear-gradient(90deg, #fdba74 0%, #fb923c 100%);
+}
+.hor-faena-bar-fill.is-high {
+  background: linear-gradient(90deg, #6ee7b7 0%, #10b981 55%, #059669 100%);
+}
+.hor-faena-range-input {
+  width: 100%;
+  height: 1.35rem;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  accent-color: #0ea5e9;
+}
+.hor-faena-range-input:focus {
+  outline: none;
+}
+.hor-faena-range-input:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.hor-faena-leyenda {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  margin-top: 0.35rem;
+  line-height: 1.3;
+}
+</style>
+{% endblock %}
+
+{% macro hor_faena_barras(sfx, show_leyenda=true) %}
+{% set dlabs_faena = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'] %}
+<div class="hor-faena-grid">
+  {% for i in range(7) %}
+  <div class="hor-faena-day">
+    <div class="hor-faena-day-head">
+      <span class="hor-faena-day-name">{{ dlabs_faena[i] }}</span>
+      <span class="hor-faena-pct hor-faena-pct--mid" id="pct_nv_{{ sfx }}_{{ i }}">100%</span>
+    </div>
+    <div class="hor-faena-visual">
+      <div class="hor-faena-bar-bg" aria-hidden="true">
+        <div class="hor-faena-bar-fill" id="fill_nv_{{ sfx }}_{{ i }}"></div>
+      </div>
+      <input type="hidden" name="nivel_dow_{{ i }}" id="h_nv_{{ sfx }}_{{ i }}" value="{{ niveles_carga_dow[i] }}">
+      <input type="range" class="form-range hor-faena-range-input"
+        min="25" max="300" step="25"
+        id="r_nv_{{ sfx }}_{{ i }}"
+        data-hidden="h_nv_{{ sfx }}_{{ i }}"
+        data-fill="fill_nv_{{ sfx }}_{{ i }}"
+        data-pct="pct_nv_{{ sfx }}_{{ i }}"
+        aria-label="Carga de faena {{ dlabs_faena[i] }}, porcentaje sobre lo normal">
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% if show_leyenda %}
+<p class="hor-faena-leyenda mb-0"><strong>100%</strong> = día normal. Ejemplo claro: <strong>75%</strong> menos personal, <strong>125%</strong> algo más de personal, <strong>150%</strong> refuerzo alto. Estas barras se usan para repartir mejor la carga diaria.</p>
+{% endif %}
+{% endmacro %}
+
+{% block contenido %}
+{% include 'partials/volver_bar.html' %}
+
+<div class="app-page-tint">
+<div class="app-page">
+
+<div class="hor-hero app-hero">
+  <div class="flex-grow-1" style="min-width:min(100%, 18rem);">
+    <h1><i class="bi bi-calendar-week me-2"></i>Horarios del equipo</h1>
+    <p class="sub mb-0">Elige el día arriba, cambia de vista con las pestañas y revisa o genera turnos más abajo.</p>
+  </div>
+  <details class="hor-top-collapse">
+    <summary>Navegación rápida</summary>
+    <div class="hor-top-collapse-body">
+      <form method="get" class="d-flex align-items-center gap-2 flex-wrap mb-0">
+        <label class="small mb-0 text-white-50 text-nowrap">Día</label>
+        <input type="hidden" name="vista" value="{{ vista }}">
+        <input type="hidden" name="plan_desde" value="{{ plan_desde }}">
+        <input type="hidden" name="plan_hasta" value="{{ plan_hasta }}">
+        <input type="date" name="fecha" value="{{ fecha }}" class="form-control form-control-sm bg-white"
+               onchange="this.form.submit()" style="width:11rem;" title="Día de referencia">
+      </form>
+      <div class="btn-group btn-group-sm" role="group" aria-label="Día anterior o siguiente">
+        <a href="{{ link_ayer }}" class="btn btn-light text-dark border-0">Ayer</a>
+        <a href="{{ link_hoy_nav }}" class="btn btn-warning text-dark fw-semibold border-0">Hoy</a>
+        <a href="{{ link_manana }}" class="btn btn-light text-dark border-0">Mañana</a>
+      </div>
+      <span class="small text-white-50 font-monospace">{{ plan_desde }} → {{ plan_hasta }}</span>
+    </div>
+  </details>
+</div>
+
+<div class="btn-group hor-vtabs mb-2 flex-wrap" role="group" aria-label="Tipo de vista">
+  <a href="{{ link_vista_lista }}" class="btn btn-sm {% if vista == 'lista' %}btn-primary{% else %}btn-outline-primary{% endif %}"><i class="bi bi-list-ul me-1"></i>Día + planning</a>
+  <a href="{{ link_vista_semana }}" class="btn btn-sm {% if vista == 'semana' %}btn-primary{% else %}btn-outline-primary{% endif %}"><i class="bi bi-table me-1"></i>Semana</a>
+  <a href="{{ link_vista_mes }}" class="btn btn-sm {% if vista == 'mes' %}btn-primary{% else %}btn-outline-primary{% endif %}"><i class="bi bi-calendar3 me-1"></i>Mes</a>
+</div>
+
+<div class="hor-guide-box py-2">
+  <details>
+    <summary class="small"><i class="bi bi-info-circle text-primary"></i> Ayuda breve</summary>
+    <ul class="hor-guide-list mb-0">
+      <li><strong>Día + planning:</strong> turnos del día elegido, listado por fechas y generación automática al final de la página.</li>
+      <li><strong>Semana / Mes:</strong> resumen visual; edición desde los enlaces en cada turno.</li>
+      <li><strong>Generar:</strong> usa <em>Por reglas</em> para un cuadrante predecible y ajustable con cobertura por frentes.</li>
+    </ul>
+  </details>
+</div>
+
+{% if vista == 'lista' %}
+
+{% if config_empresa and config_empresa.get('horario_empresa') %}
+<div class="alert alert-light border py-2 px-3 mb-3 small">
+  <div class="d-flex flex-wrap justify-content-between gap-2 align-items-start mb-1">
+    <span><i class="bi bi-clock text-primary me-1"></i><strong>Horario del local</strong> (lo usan las reglas al generar)</span>
+    <a href="{{ url_for('admin.configuracion_empresa') }}" class="text-nowrap">Editar en Datos de la empresa</a>
+  </div>
+  <div class="text-muted hor-hlocal-preview">{{ config_empresa.horario_empresa }}</div>
+</div>
+{% else %}
+<div class="alert alert-warning border-0 py-2 px-3 mb-3 small mb-3">
+  <i class="bi bi-exclamation-triangle me-1"></i>Definid el <a href="{{ url_for('admin.configuracion_empresa') }}">horario del establecimiento</a> para cuadrantes más fieles al servicio real.
+</div>
+{% endif %}
+
+<div class="alert alert-primary border-0 py-2 px-3 mb-3 small">
+  <i class="bi bi-info-circle me-1"></i>
+  <strong>Flujo recomendado:</strong> 1) configura reglas y genera cuadrante; 2) revisa turnos/planning si hace falta ajuste fino.
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var gen = document.getElementById('generar-cuadrante');
+  var wrap = document.getElementById('turnos-planning-wrap');
+  if (gen && wrap && wrap.parentNode) {
+    wrap.parentNode.insertBefore(gen, wrap);
+  }
+});
+</script>
+
+<details id="turnos-planning-wrap" class="hor-details-soft mb-3">
+  <summary class="small"><i class="bi bi-layout-text-window-reverse me-1"></i>Ver turnos y planning generados</summary>
+  <div class="inset p-0">
+<!-- TURNOS DEL DÍA -->
+<div id="turnos-dia-card" class="hor-card">
+  <div class="hor-card-head">
+    <span class="hor-kicker">1 · Hoy</span>
+    <h2><i class="bi bi-sun text-warning"></i> Turnos del <span class="text-primary">{{ fecha }}</span></h2>
+    <p class="hor-card-lead mb-0">{{ franja_ui.leyenda }} Filtro por franja y borrado múltiple. <a href="{{ url_for('admin.configuracion_empresa') }}#rangos-turnos">Rangos mañana/tarde/noche</a>.</p>
+  </div>
+  <div class="hor-card-inner pt-2">
+  {% if horarios|length %}
+  <form method="post" action="{{ url_for('admin.eliminar_horarios_masivo') }}" class="js-bulk-form" onsubmit="return confirm('¿Eliminar los turnos seleccionados?');">
+    <input type="hidden" name="redirect_to" value="{{ volver_path }}">
+    <div class="turno-toolbar js-turno-panel">
+      <label class="small text-muted mb-0">Filtrar vista:</label>
+      <select class="form-select form-select-sm js-turno-filter" style="width:auto">
+        <option value="all">Todos</option>
+        <option value="manana">Solo {{ franja_ui.label_manana }}</option>
+        {% if franja_ui.mostrar_tarde_filtro %}
+        <option value="tarde">Solo {{ franja_ui.label_tarde }}</option>
+        {% endif %}
+        <option value="noche">Solo {{ franja_ui.label_noche }}</option>
+        <option value="partido">Partido</option>
+        <option value="cobertura">Cobertura</option>
+      </select>
+      <span class="small text-muted js-turno-count"></span>
+      <div class="turno-legend ms-md-auto">
+        {% for pill in franja_ui.pills %}
+        <span class="turno-pill">{{ pill }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="bulk-toolbar">
+      <div class="form-check mb-0">
+        <input type="checkbox" class="form-check-input js-select-all" id="selTodosDia" title="Marcar todos los turnos del día">
+        <label class="form-check-label small text-muted" for="selTodosDia">Todos</label>
+      </div>
+      <button type="submit" class="btn btn-sm btn-danger js-bulk-delete" disabled>
+        <i class="bi bi-trash me-1"></i>Eliminar seleccionados
+      </button>
+      <span class="bulk-counter js-bulk-counter">0 seleccionados</span>
+    </div>
+  {% for bloque in horarios_dia_franjas %}
+  <div class="hor-franja-block mb-4">
+    <div class="hor-franja-head {{ bloque.key }}">
+      <i class="bi {{ bloque.icon }} me-1"></i>
+      <strong>{{ bloque.label }}</strong>
+      <span class="text-muted small ms-2">({{ bloque.hint }}) · {{ bloque.rows|length }} turno(s)</span>
+    </div>
+  <div class="hor-table-wrap">
+    <table class="table hor-table mb-0">
+      <thead>
+        <tr>
+          <th class="bulk-check-col"></th>
+          <th>Empleado</th>
+          <th>Puesto</th>
+          <th>Inicio</th>
+          <th>Fin</th>
+          <th>Horas</th>
+          <th>Turno</th>
+          <th>Estado</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in bloque.rows %}
+        <tr class="js-turno-row" data-franja-key="{{ h.franja_key }}" data-turno-text="{{ h.turno or '' }}" data-hora-inicio="{{ h.hora_inicio or '' }}">
+          <td class="bulk-check-col">
+            <input type="checkbox" name="horario_ids" value="{{ h.id }}" class="form-check-input js-row-check">
+          </td>
+          <td class="fw-semibold text-dark">{{ h.empleado_nombre or '—' }}</td>
+          <td class="text-muted small">{{ h.puesto or '—' }}{% if h.departamento %}<span class="d-block text-secondary">({{ h.departamento }})</span>{% endif %}</td>
+          <td><span class="font-monospace">{{ h.hora_inicio }}</span></td>
+          <td><span class="font-monospace">{{ h.hora_fin }}</span></td>
+          <td class="tabular-nums">{{ '%.2f'|format(h.horas) if h.horas is not none else '—' }}</td>
+          <td>
+            {% if h.turno %}
+            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 badge-turno">{{ h.turno }}</span>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% set st = (h.estado or '')|lower %}
+            {% if 'cancel' in st %}
+            <span class="badge text-bg-secondary">{{ h.estado }}</span>
+            {% else %}
+            <span class="badge text-bg-success">{{ h.estado or 'Programado' }}</span>
+            {% endif %}
+          </td>
+          <td class="text-end text-nowrap">
+            <a class="btn btn-sm btn-outline-primary py-0" href="{{ url_for('admin.editar_horario', hid=h.id) }}?redirect_to={{ redirect_to_q }}">Editar</a>
+            <form method="post" action="{{ url_for('admin.eliminar_horario', hid=h.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar este turno?');">
+              <input type="hidden" name="redirect_to" value="{{ volver_path }}">
+              <button type="submit" class="btn btn-sm btn-outline-danger py-0">Eliminar</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  </div>
+  {% endfor %}
+  </form>
+  {% else %}
+  <div class="hor-empty border rounded-3 bg-light">
+    <i class="bi bi-calendar-x"></i>
+    No hay turnos para <strong>{{ fecha }}</strong>. Podéis <a href="#generar-cuadrante">generar el cuadrante abajo</a> o crear turnos manualmente si tenéis esa opción.
+  </div>
+  {% endif %}
+  </div>
+</div>
+
+<!-- PLANNING GLOBAL -->
+<div class="hor-card">
+  <div class="hor-card-head">
+    <span class="hor-kicker">2 · Periodo</span>
+    <h2><i class="bi bi-people text-success"></i> Planning (todas las fechas del rango)</h2>
+    <p class="hor-card-lead mb-0">Listado de turnos entre <strong>Desde</strong> y <strong>Hasta</strong> (independiente del día del selector superior).</p>
+  </div>
+  <div class="hor-card-inner">
+
+  <details class="hor-details-soft mb-3">
+    <summary class="small">Configurar período</summary>
+    <div class="inset">
+      <form method="get" class="row g-2 align-items-end flex-wrap mb-0">
+        <input type="hidden" name="fecha" value="{{ fecha }}">
+        <input type="hidden" name="vista" value="{{ vista }}">
+        <div class="col-auto">
+          <label class="form-label small mb-1">Desde</label>
+          <input type="date" name="plan_desde" value="{{ plan_desde }}" class="form-control form-control-sm" required>
+        </div>
+        <div class="col-auto">
+          <label class="form-label small mb-1">Hasta</label>
+          <input type="date" name="plan_hasta" value="{{ plan_hasta }}" class="form-control form-control-sm" required>
+        </div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-sm btn-primary">Actualizar tabla</button>
+        </div>
+      </form>
+    </div>
+  </details>
+
+  {% if horarios_planning|length %}
+  <form method="post" action="{{ url_for('admin.eliminar_horarios_masivo') }}" class="js-bulk-form" onsubmit="return confirm('¿Eliminar los turnos seleccionados del planning?');">
+    <input type="hidden" name="redirect_to" value="{{ volver_path }}">
+    <div class="turno-toolbar js-turno-panel">
+      <label class="small text-muted mb-0">Ver turno:</label>
+      <select class="form-select form-select-sm js-turno-filter" style="width:auto">
+        <option value="all">Todos</option>
+        <option value="manana">{{ franja_ui.label_manana }}</option>
+        {% if franja_ui.mostrar_tarde_filtro %}
+        <option value="tarde">{{ franja_ui.label_tarde }}</option>
+        {% endif %}
+        <option value="noche">{{ franja_ui.label_noche }}</option>
+        <option value="partido">Partido</option>
+        <option value="cobertura">Cobertura</option>
+      </select>
+      <span class="small text-muted js-turno-count"></span>
+    </div>
+    <div class="bulk-toolbar">
+      <button type="submit" class="btn btn-sm btn-danger js-bulk-delete" disabled>
+        <i class="bi bi-trash me-1"></i>Eliminar seleccionados
+      </button>
+      <span class="bulk-counter js-bulk-counter">0 seleccionados</span>
+    </div>
+  <div class="hor-table-wrap">
+    <table class="table hor-table mb-0">
+      <thead>
+        <tr>
+          <th class="bulk-check-col">
+            <input type="checkbox" class="form-check-input js-select-all" title="Seleccionar todo">
+          </th>
+          <th>Fecha</th>
+          <th>Día</th>
+          <th>Franja</th>
+          <th>Empleado</th>
+          <th>Puesto</th>
+          <th>Inicio</th>
+          <th>Fin</th>
+          <th>Horas</th>
+          <th>Turno</th>
+          <th>Estado</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in horarios_planning %}
+        <tr class="js-turno-row" data-franja-key="{{ h.franja_key }}" data-turno-text="{{ h.turno or '' }}" data-hora-inicio="{{ h.hora_inicio or '' }}">
+          <td class="bulk-check-col">
+            <input type="checkbox" name="horario_ids" value="{{ h.id }}" class="form-check-input js-row-check">
+          </td>
+          <td class="font-monospace small">{{ h.fecha_fmt }}</td>
+          <td><span class="badge bg-light text-dark border">{{ h.dia_es }}</span></td>
+          <td>
+            {% if h.franja_key == 'manana' %}
+            <span class="badge text-bg-warning text-dark badge-franja">{{ h.franja_label }}</span>
+            {% elif h.franja_key == 'tarde' %}
+            <span class="badge text-bg-primary badge-franja">{{ h.franja_label }}</span>
+            {% elif h.franja_key == 'noche' %}
+            <span class="badge text-bg-dark badge-franja">{{ h.franja_label }}</span>
+            {% else %}
+            <span class="badge text-bg-secondary badge-franja">—</span>
+            {% endif %}
+          </td>
+          <td class="fw-semibold">{{ h.empleado_nombre or '—' }}</td>
+          <td class="text-muted small">{{ h.puesto or '—' }}{% if h.departamento %}<span class="d-block">({{ h.departamento }})</span>{% endif %}</td>
+          <td class="font-monospace">{{ h.hora_inicio }}</td>
+          <td class="font-monospace">{{ h.hora_fin }}</td>
+          <td class="tabular-nums">{{ '%.2f'|format(h.horas) if h.horas is not none else '—' }}</td>
+          <td>
+            {% if h.turno %}
+            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 badge-turno">{{ h.turno }}</span>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% set st = (h.estado or '')|lower %}
+            {% if 'cancel' in st %}
+            <span class="badge text-bg-secondary">{{ h.estado }}</span>
+            {% else %}
+            <span class="badge text-bg-success">{{ h.estado or 'Programado' }}</span>
+            {% endif %}
+          </td>
+          <td class="text-end text-nowrap">
+            <a class="btn btn-sm btn-outline-primary py-0" href="{{ url_for('admin.editar_horario', hid=h.id) }}?redirect_to={{ redirect_to_q }}">Editar</a>
+            <form method="post" action="{{ url_for('admin.eliminar_horario', hid=h.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar este turno?');">
+              <input type="hidden" name="redirect_to" value="{{ volver_path }}">
+              <button type="submit" class="btn btn-sm btn-outline-danger py-0">Eliminar</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  </form>
+  <p class="small text-muted mt-2 mb-0">{{ horarios_planning|length }} registro(s) en el rango seleccionado.</p>
+  {% else %}
+  <div class="hor-empty border rounded-3 bg-light">
+    <i class="bi bi-inbox"></i>
+    No hay turnos entre <strong>{{ plan_desde }}</strong> y <strong>{{ plan_hasta }}</strong>.
+  </div>
+  {% endif %}
+
+  <div class="border rounded-3 p-3 mt-3 bg-light">
+    <div class="fw-semibold text-dark mb-1"><i class="bi bi-file-earmark-pdf text-danger me-1"></i> PDF para el personal</div>
+    <p class="small text-muted mb-2">
+      Un PDF por empleado con turnos en el mismo rango <strong>Desde / Hasta</strong>; queda en el área personal para descargar.
+    </p>
+    <form method="post" action="/horarios/publicar_pdfs_empleados" class="d-flex flex-wrap align-items-end gap-2"
+          onsubmit="return confirm('Se generarán los PDFs y se añadirán al perfil de cada empleado con turnos en este rango. ¿Continuar?');">
+      <input type="hidden" name="plan_desde" value="{{ plan_desde }}">
+      <input type="hidden" name="plan_hasta" value="{{ plan_hasta }}">
+      <button type="submit" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-people me-1"></i>Publicar PDFs en perfiles (rango actual)
+      </button>
+      <span class="small text-muted">Usa las mismas fechas del planning.</span>
+    </form>
+  </div>
+  </div>
+</div>
+  </div>
+</details>
+
+<div id="generar-cuadrante" class="hor-card">
+  <div class="hor-card-head">
+    <span class="hor-kicker">1 · Generador</span>
+    <h2><i class="bi bi-stars text-primary"></i> Generador de horarios por reglas</h2>
+    <p class="hor-card-lead mb-0">
+      Elegid fechas de inicio y fin del periodo. <strong>Por reglas</strong> es el modo principal (predecible y controlable).
+    </p>
+  </div>
+  <div class="hor-card-inner">
+    <details class="hor-details-soft mb-3">
+      <summary class="small">Qué tiene en cuenta el sistema</summary>
+      <div class="inset small text-muted">
+        <ul class="ps-3 mb-2 mb-0">
+          <li>Horario del local{% if franja_empresa_display %} (franja ~{{ franja_empresa_display.ini }}–{{ franja_empresa_display.fin }}){% endif %} y fichas RRHH.</li>
+          <li>Contratos y dotación mínima por Barra / Sala / Cocina.</li>
+          <li class="mb-0">«Priorizar domingos» (por reglas): reparte primero cada domingo de la semana para no agotar el cupo semanal antes de cubrir ese día.</li>
+          <li class="mb-0">«Repartir encargados» (por reglas): detecta encargado/jefe en puesto u observaciones y reparte esos perfiles entre distintos huecos del día.</li>
+          <li class="mb-0">Carga de faena por día: barras con % sobre lo normal; multiplican la dotación base (Barra/Sala/Cocina).</li>
+        </ul>
+        {% if puestos_trabajo and puestos_trabajo|length %}
+        <div class="mt-1"><span class="text-secondary">Puestos detectados:</span> {{ puestos_trabajo|join(', ') }}</div>
+        {% else %}
+        <div class="text-warning mt-1 mb-0">Recomendable tener «puesto» relleno en empleados.</div>
+        {% endif %}
+      </div>
+    </details>
+
+    <form method="post" action="{{ url_for('admin.generar_horarios_reglas') }}">
+      <p class="small text-muted mb-2">Configura en orden: <strong>1. Base</strong> → <strong>2. Cobertura</strong> → <strong>3. Reglas</strong>.</p>
+      <ul class="nav nav-pills nav-fill mb-3" id="genTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#gen-base" type="button">1. Base</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" data-bs-toggle="pill" data-bs-target="#gen-cobertura" type="button">2. Cobertura</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" data-bs-toggle="pill" data-bs-target="#gen-reglas" type="button">3. Reglas</button>
+        </li>
+      </ul>
+
+      <div class="tab-content border rounded-3 p-3 bg-light">
+        <div class="tab-pane fade show active" id="gen-base">
+          <p class="small text-muted mb-2">Define periodo y tipo de jornada general.</p>
+          <div class="row g-2 align-items-end">
+            <div class="col-md-3">
+              <label class="form-label small mb-1">Desde</label>
+              <input type="date" name="fecha_inicio" class="form-control" required value="{{ plan_desde }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small mb-1">Hasta</label>
+              <input type="date" name="fecha_fin" class="form-control" required value="{{ plan_hasta }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small mb-1">Modelo de turnos</label>
+              <select name="modelo_turnos" class="form-select">
+                <option value="flexible" selected>Flexible (Mañana / Tarde / Noche)</option>
+                <option value="manana_noche">Mañana + Noche</option>
+                <option value="manana_tarde">Mañana + Tarde</option>
+                <option value="manana_tarde_noche">Mañana + Tarde + Noche</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-pane fade" id="gen-cobertura">
+          <p class="small text-muted mb-2">Define un único modo de cobertura y ajusta demanda diaria (%).</p>
+          <div class="alert alert-warning py-2 px-3 small mb-2">
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            Obligatorio: <strong>Barra, Sala y Cocina</strong> deben tener servicio configurado.
+          </div>
+          <div class="mb-2">
+            <label class="form-label small mb-1">Modo de cobertura</label>
+            <div class="d-flex flex-column gap-1">
+              <div class="form-check">
+                <input class="form-check-input js-cobertura-modo" type="radio" name="cobertura_modo" id="cobertura_modo_dotacion" value="dotacion" checked>
+                <label class="form-check-label small" for="cobertura_modo_dotacion">
+                  Dotación global por frente (Barra/Sala/Cocina)
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input js-cobertura-modo" type="radio" name="cobertura_modo" id="cobertura_modo_frentes" value="frentes">
+                <label class="form-check-label small" for="cobertura_modo_frentes">
+                  Frentes con horario propio (reglas por línea)
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="row g-2 align-items-end js-cobertura-dotacion">
+            <div class="col-4 col-md-2">
+              <label class="form-label small mb-0 text-muted">Barra</label>
+              <input type="number" name="dotacion_barra" class="form-control form-control-sm js-dotacion-input" min="0" max="20" value="2">
+            </div>
+            <div class="col-4 col-md-2">
+              <label class="form-label small mb-0 text-muted">Sala</label>
+              <input type="number" name="dotacion_sala" class="form-control form-control-sm js-dotacion-input" min="0" max="20" value="2">
+            </div>
+            <div class="col-4 col-md-2">
+              <label class="form-label small mb-0 text-muted">Cocina</label>
+              <input type="number" name="dotacion_cocina" class="form-control form-control-sm js-dotacion-input" min="0" max="20" value="2">
+            </div>
+          </div>
+          <div class="mb-2 mt-2 js-cobertura-frentes" style="display:none;">
+            <label class="form-label small mb-1">Frentes con horario propio</label>
+            <textarea name="sectores_config" class="form-control form-control-sm" rows="3" placeholder="Barra|09:00-24:00|2"></textarea>
+            <div class="form-text">Formato: <code>Frente|HH:MM-HH:MM|mínimo</code> (una línea por frente).</div>
+          </div>
+          {{ hor_faena_barras('main', true) }}
+        </div>
+
+        <div class="tab-pane fade" id="gen-reglas">
+          <p class="small text-muted mb-2">Ajustes finos: horarios por frente, descansos, servicio mínimo y reparto.</p>
+          <div class="hor-qa-grid mb-2">
+            <div>
+              <label class="form-label small mb-1">Mín. personas / turno</label>
+              <input type="number" min="1" step="1" name="min_personal_turno" class="form-control form-control-sm" placeholder="Ej. 2">
+            </div>
+            <div>
+              <label class="form-label small mb-1">Inicio servicio</label>
+              <input type="time" name="pref_inicio" class="form-control form-control-sm">
+            </div>
+            <div>
+              <label class="form-label small mb-1">Fin servicio</label>
+              <input type="time" name="pref_fin" class="form-control form-control-sm">
+            </div>
+          </div>
+          <div class="alert alert-info py-2 px-3 small mb-0">
+            <i class="bi bi-info-circle me-1"></i>
+            En <strong>Servicio mínimo</strong> el sistema prioriza base + encargado y luego apoyos; no fuerza horas de contrato.
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-3">
+        <input type="hidden" name="priorizar_domingo_reglas" value="0">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="priorizar_domingo_reglas" value="1" id="priorizar_domingo_reglas">
+          <label class="form-check-label small" for="priorizar_domingo_reglas">
+            Priorizar domingos al generar por reglas (asigna cada domingo antes que lun–sáb de la misma semana, para no quedarse sin cupo de horas ese día).
+          </label>
+        </div>
+        <input type="hidden" name="diversificar_encargados_reglas" value="0">
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="checkbox" name="diversificar_encargados_reglas" value="1" id="diversificar_encargados_reglas">
+          <label class="form-check-label small" for="diversificar_encargados_reglas">
+            Repartir encargados entre franjas (al generar por reglas: prioriza que quienes figuran como encargado/jefe en ficha no se acumulen en el mismo turno del día y ayuda a cubrir apertura y cierre con distintos perfiles).
+          </label>
+        </div>
+        <input type="hidden" name="rellenar_hasta_contrato_reglas" value="0">
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="checkbox" name="rellenar_hasta_contrato_reglas" value="1" id="rellenar_hasta_contrato_reglas" checked>
+          <label class="form-check-label small" for="rellenar_hasta_contrato_reglas">
+            Intentar rellenar horas hasta contrato (tras cubrir mínimos por reglas, añade refuerzos si hay disponibilidad sin romper descanso, tope diario ni tope semanal).
+          </label>
+        </div>
+        <input type="hidden" name="forzar_horas_contrato_reglas" value="0">
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="checkbox" name="forzar_horas_contrato_reglas" value="1" id="forzar_horas_contrato_reglas" checked>
+          <label class="form-check-label small" for="forzar_horas_contrato_reglas">
+            Forzar uso de horas de contrato por semana (intenta acercar a cada persona a su objetivo semanal usando los % diarios como prioridad).
+          </label>
+        </div>
+        <input type="hidden" name="permitir_partido_cobertura_reglas" value="0">
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="checkbox" name="permitir_partido_cobertura_reglas" value="1" id="permitir_partido_cobertura_reglas">
+          <label class="form-check-label small" for="permitir_partido_cobertura_reglas">
+            Permitir turno partido para cubrir huecos (solo como último recurso si no se puede cubrir de otra forma).
+          </label>
+        </div>
+        <div class="mt-2">
+          <label class="form-label small mb-1" for="descanso_min_partido_min">Descanso mínimo en partido (minutos)</label>
+          <input type="number" min="0" step="30" class="form-control form-control-sm" id="descanso_min_partido_min" name="descanso_min_partido_min" value="180">
+          <div class="form-text">Ejemplo: 180 min permite 13:00–17:00 y 20:00–24:00.</div>
+        </div>
+        <div class="row g-2 mt-1">
+          <div class="col-12 col-md-6">
+            <label class="form-label small mb-1">Hora punta comida</label>
+            <div class="d-flex gap-2">
+              <input type="time" class="form-control form-control-sm" name="hora_punta_comida_inicio" value="13:00" title="Inicio comida">
+              <input type="time" class="form-control form-control-sm" name="hora_punta_comida_fin" value="17:00" title="Fin comida">
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label small mb-1">Hora punta cena</label>
+            <div class="d-flex gap-2">
+              <input type="time" class="form-control form-control-sm" name="hora_punta_cena_inicio" value="20:00" title="Inicio cena">
+              <input type="time" class="form-control form-control-sm" name="hora_punta_cena_fin" value="01:00" title="Fin cena">
+            </div>
+          </div>
+        </div>
+        <div class="form-text">Los partidos de refuerzo priorizan estas ventanas definidas por el cliente.</div>
+        <div class="form-text mt-2">
+          Descanso entre jornadas aplicado automáticamente según legalidad vigente.
+        </div>
+        <input type="hidden" name="regla_cierra_no_abre_reglas" value="0">
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="checkbox" name="regla_cierra_no_abre_reglas" value="1" id="regla_cierra_no_abre_reglas" checked>
+          <label class="form-check-label small" for="regla_cierra_no_abre_reglas">
+            Si cierra, no abre al día siguiente.
+          </label>
+        </div>
+        <input type="hidden" name="permitir_apoyo_sala_en_barra_reglas" value="0">
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="checkbox" name="permitir_apoyo_sala_en_barra_reglas" value="1" id="permitir_apoyo_sala_en_barra_reglas" checked>
+          <label class="form-check-label small" for="permitir_apoyo_sala_en_barra_reglas">
+            Permitir apoyo de Sala en Barra si faltan perfiles de barra.
+          </label>
+        </div>
+        <input type="hidden" name="priorizar_dias_criticos_reglas" value="0">
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="checkbox" name="priorizar_dias_criticos_reglas" value="1" id="priorizar_dias_criticos_reglas" checked>
+          <label class="form-check-label small" for="priorizar_dias_criticos_reglas">
+            Priorizar primero días críticos (más % de demanda y fin de semana) para evitar huecos por descanso en viernes/sábado/domingo.
+          </label>
+        </div>
+        <input type="hidden" name="permitir_cobertura_total_reglas" value="0">
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="checkbox" name="permitir_cobertura_total_reglas" value="1" id="permitir_cobertura_total_reglas" checked>
+          <label class="form-check-label small" for="permitir_cobertura_total_reglas">
+            Cobertura total (último recurso): si faltan perfiles por sector, usar personal disponible de cualquier frente.
+          </label>
+        </div>
+        <input type="hidden" name="modo_por_frentes_reglas" value="0">
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="checkbox" name="modo_por_frentes_reglas" value="1" id="modo_por_frentes_reglas" checked>
+          <label class="form-check-label small" for="modo_por_frentes_reglas">
+            Generar por frentes (asigna por orden de frente para organizar mejor Barra/Sala/Cocina).
+          </label>
+        </div>
+        <div class="mt-2">
+          <label class="form-label small mb-1" for="orden_frentes_reglas">Orden de frentes</label>
+          <select class="form-select form-select-sm" name="orden_frentes_reglas" id="orden_frentes_reglas">
+            <option value="cocina_sala_barra">Cocina → Sala → Barra</option>
+            <option value="sala_barra_cocina" selected>Sala → Barra → Cocina</option>
+            <option value="barra_sala_cocina">Barra → Sala → Cocina</option>
+          </select>
+        </div>
+        <input type="hidden" name="modo_servicio_minimo_reglas" value="0">
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="checkbox" name="modo_servicio_minimo_reglas" value="1" id="modo_servicio_minimo_reglas">
+          <label class="form-check-label small" for="modo_servicio_minimo_reglas">
+            Servicio mínimo: cubrir lo máximo posible sin tratar faltantes como error bloqueante.
+          </label>
+        </div>
+        <input type="hidden" name="preferir_mixto_barra_sala_reglas" value="0">
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="checkbox" name="preferir_mixto_barra_sala_reglas" value="1" id="preferir_mixto_barra_sala_reglas" checked>
+          <label class="form-check-label small" for="preferir_mixto_barra_sala_reglas">
+            Priorizar personal mixto Barra/Sala (polivalente) para cubrir ambos frentes en días o turnos sueltos.
+          </label>
+        </div>
+        <div class="mt-2">
+          <label class="form-label small mb-1" for="preferencia_mixto_barra_sala">Preferencia del personal mixto</label>
+          <select class="form-select form-select-sm" name="preferencia_mixto_barra_sala" id="preferencia_mixto_barra_sala">
+            <option value="sala" selected>Sala</option>
+            <option value="barra">Barra</option>
+            <option value="equilibrado">Equilibrado (ambos)</option>
+          </select>
+          <div class="form-text">Solo aplica si está activa la prioridad de personal mixto.</div>
+        </div>
+      </div>
+
+      <div class="d-flex flex-wrap gap-2 mt-3 align-items-center">
+        <button type="submit" class="btn btn-success">
+          <i class="bi bi-diagram-3 me-1"></i>Generar por reglas
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% elif vista == 'semana' and matriz_semana and matriz_semana.empleados|length %}
+
+<div class="hor-card">
+  <div class="hor-card-head">
+    <span class="hor-kicker">Vista semanal</span>
+    <h2><i class="bi bi-table text-primary"></i> Resumen de la semana</h2>
+    <p class="hor-card-lead mb-0">La fecha del encabezado define la <strong>semana</strong> (lun–dom). Una fila por persona.</p>
+  </div>
+  <div class="hor-card-inner pt-2">
+  <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
+    <a href="{{ link_semana_ant }}" class="btn btn-sm btn-outline-secondary">← Semana anterior</a>
+    <a href="{{ link_semana_sig }}" class="btn btn-sm btn-outline-secondary">Semana siguiente →</a>
+    <span class="small text-muted ms-md-auto font-monospace">{{ plan_desde }} → {{ plan_hasta }}</span>
+  </div>
+  {% if matriz_semana.etiqueta_semana %}
+  <div class="hor-week-meta"><i class="bi bi-calendar-range me-1"></i>{{ matriz_semana.etiqueta_semana }}</div>
+  {% endif %}
+
+  {% if tabla_cobertura_franja %}
+  <div class="hor-coverage-card">
+    <h3><i class="bi bi-people-fill text-warning"></i> Quién cubre cada frente (solo lectura)</h3>
+    <p class="hor-cov-lead mb-0">
+      <strong>«Sector» aquí = frente del local:</strong> Cocina, Barra o Sala (según turno o ficha del empleado). No es lo mismo que la «cobertura» del generador: eso son las <em>reglas</em> de cuánta gente hace falta; esta tabla solo <strong>resume</strong> quién trabaja ese día en mañana o en tarde/noche.
+      Día <strong class="text-dark">{{ fecha_cobertura_label }}</strong> (cámbialo arriba). Nombres tipo <span class="text-muted">nombre/apellido</span>; varias personas separadas por comas.
+    </p>
+    <div class="hor-coverage-table-wrap mt-3">
+      <table class="hor-coverage-table" aria-label="Cobertura por sector mañana y tarde">
+        <thead>
+          <tr>
+            <th class="hc-sector"></th>
+            <th class="hc-m"><i class="bi bi-sun-fill me-1"></i>{{ tabla_cobertura_franja.col_manana }}</th>
+            <th class="hc-t"><i class="bi bi-brightness-high-fill me-1"></i>{{ tabla_cobertura_franja.col_tarde }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in tabla_cobertura_franja.filas %}
+          <tr>
+            <td class="hc-sec-label">{{ f.sector }}</td>
+            <td class="hc-names {% if f.manana == '—' %}hc-empty{% endif %}">{{ f.manana }}</td>
+            <td class="hc-names {% if f.tarde == '—' %}hc-empty{% endif %}">{{ f.tarde }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if tabla_cobertura_franja.nota %}
+    <p class="hor-coverage-note mb-0">{{ tabla_cobertura_franja.nota }}</p>
+    {% endif %}
+    {% if tabla_cobertura_franja_semana and tabla_cobertura_franja_semana|length %}
+    <details class="border rounded-3 p-2 bg-light mt-3">
+      <summary class="fw-semibold small text-primary cursor-pointer user-select-none">
+        Ver cobertura día a día de la semana
+      </summary>
+      <div class="row g-3 mt-1">
+        {% for dtab in tabla_cobertura_franja_semana %}
+        <div class="col-12 col-xxl-6">
+          <div class="border rounded-3 p-2 bg-white h-100">
+            <div class="fw-semibold small text-muted mb-2">{{ dtab.fecha_label }}</div>
+            <div class="hor-coverage-table-wrap">
+              <table class="hor-coverage-table" aria-label="Cobertura por sector {{ dtab.fecha_label }}">
+                <thead>
+                  <tr>
+                    <th class="hc-sector"></th>
+                    <th class="hc-m"><i class="bi bi-sun-fill me-1"></i>{{ dtab.tabla.col_manana }}</th>
+                    <th class="hc-t"><i class="bi bi-brightness-high-fill me-1"></i>{{ dtab.tabla.col_tarde }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for f in dtab.tabla.filas %}
+                  <tr>
+                    <td class="hc-sec-label">{{ f.sector }}</td>
+                    <td class="hc-names {% if f.manana == '—' %}hc-empty{% endif %}">{{ f.manana }}</td>
+                    <td class="hc-names {% if f.tarde == '—' %}hc-empty{% endif %}">{{ f.tarde }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </details>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <div class="hor-week-compact-wrap mb-3">
+    <table class="hor-week-compact" aria-label="Horarios semanales por empleado">
+      <thead>
+        <tr>
+          <th scope="col" class="wc-name"></th>
+          {% for letter in matriz_semana.dias_letras %}
+          <th scope="col" class="wc-cell">{{ letter }}</th>
+          {% endfor %}
+          <th scope="col" class="wc-hours wc-hours-h">horas</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in matriz_semana.filas_compactas %}
+        <tr>
+          <td class="wc-name">{{ row.nombre }}</td>
+          {% for cell in row.cols %}
+          <td class="wc-cell{% if cell == '-' %} wc-empty{% endif %}">{{ cell }}</td>
+          {% endfor %}
+          <td class="wc-hours">{{ row.horas_semana_txt }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <details class="border rounded-3 p-2 bg-light">
+    <summary class="fw-semibold small text-primary cursor-pointer user-select-none">Vista detallada: editar o eliminar turnos</summary>
+    <p class="small text-muted mb-2 mt-2">Misma semana; cada bloque enlaza a edición o borrado.</p>
+    <div class="hor-table-wrap">
+    <table class="table hor-table mb-0 table-bordered">
+      <thead>
+        <tr>
+          <th>Empleado</th>
+          {% for d in matriz_semana.dias %}
+          <th class="text-center small">{{ d.letra }}<br><span class="text-muted fw-normal">{{ d.num }}</span></th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for emp in matriz_semana.empleados %}
+        <tr>
+          <td class="fw-semibold">{{ emp.nombre }}</td>
+          {% for d in matriz_semana.dias %}
+          {% set ck = (emp.id|string) ~ '|' ~ d.fecha %}
+          <td class="hor-week-cell">
+            {% if matriz_semana.celdas.get(ck) %}
+              {% for t in matriz_semana.celdas[ck] %}
+              <div class="slot">
+                <span class="font-monospace">{{ (t.hora_inicio or '')[:5] }}–{{ (t.hora_fin or '')[:5] }}</span>
+                {% if t.turno %}<span class="badge bg-light text-dark border ms-1">{{ t.turno }}</span>{% endif %}
+                <div class="mt-1">
+                  <a class="small" href="{{ url_for('admin.editar_horario', hid=t.id) }}?redirect_to={{ redirect_to_q }}">Editar</a>
+                  <form method="post" action="{{ url_for('admin.eliminar_horario', hid=t.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar?');">
+                    <input type="hidden" name="redirect_to" value="{{ volver_path }}">
+                    <button type="submit" class="btn btn-link btn-sm text-danger p-0 small">Eliminar</button>
+                  </form>
+                </div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </details>
+  </div>
+</div>
+
+{% elif vista == 'semana' %}
+<div class="hor-card border-warning">
+  <div class="hor-card-inner">
+  <p class="mb-0 small">No hay empleados activos o no se pudo cargar la tabla semanal.</p>
+  </div>
+</div>
+
+{% elif vista == 'mes' and grid_mes %}
+
+<div class="hor-card">
+  <div class="hor-card-head">
+    <span class="hor-kicker">Vista mensual</span>
+    <h2><i class="bi bi-calendar3 text-primary"></i> Calendario</h2>
+    <p class="hor-card-lead mb-0">La fecha del encabezado elige el <strong>mes</strong>.</p>
+  </div>
+  <div class="hor-card-inner pt-2">
+  <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+    <a href="{{ link_mes_ant }}" class="btn btn-sm btn-outline-secondary">← Mes anterior</a>
+    <h3 class="h5 mb-0 flex-grow-1 text-center">{{ titulo_mes }}</h3>
+    <a href="{{ link_mes_sig }}" class="btn btn-sm btn-outline-secondary">Mes siguiente →</a>
+  </div>
+  <div class="d-flex flex-wrap gap-2 mb-3 justify-content-end">
+    <form method="post" action="{{ url_for('admin.eliminar_horarios_mes') }}" class="d-inline" onsubmit="return confirm('¿Eliminar TODOS los turnos de {{ titulo_mes }}? Esta acción no se puede deshacer.');">
+      <input type="hidden" name="mes" value="{{ mes_param }}">
+      <input type="hidden" name="redirect_to" value="{{ volver_path }}">
+      <button type="submit" class="btn btn-sm btn-outline-danger">
+        <i class="bi bi-trash"></i> Borrar todo el mes
+      </button>
+    </form>
+  </div>
+  <div class="hor-table-wrap">
+    <table class="hor-cal">
+      <thead>
+        <tr>
+          <th>Lun</th><th>Mar</th><th>Mié</th><th>Jue</th><th>Vie</th><th>Sáb</th><th>Dom</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for semana in grid_mes %}
+        <tr>
+          {% for cel in semana %}
+          <td class="{% if not cel %}hor-cal-muted{% endif %}">
+            {% if cel %}
+            <div class="d-num">{{ cel.dia }}</div>
+            {% if cel.turnos|length %}
+            {% for t in cel.turnos %}
+            <div class="t-line">
+              <strong>{{ (t.empleado_nombre or '?')[:14] }}</strong>
+              {{ (t.hora_inicio or '')[:5] }}–{{ (t.hora_fin or '')[:5] }}
+              <a class="small ms-1" href="{{ url_for('admin.editar_horario', hid=t.id) }}?redirect_to={{ redirect_to_q }}" title="Editar">✎</a>
+              <form method="post" action="{{ url_for('admin.eliminar_horario', hid=t.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar este turno?');">
+                <input type="hidden" name="redirect_to" value="{{ volver_path }}">
+                <button type="submit" class="btn btn-link btn-sm text-danger p-0 small align-baseline" title="Eliminar">×</button>
+              </form>
+            </div>
+            {% endfor %}
+            {% else %}
+            <span class="text-muted small">—</span>
+            {% endif %}
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  </div>
+</div>
+
+{% endif %}
+
+</div>
+</div>
+
+<script>
+function clasificarTurno(turnoTxt, horaInicio) {
+  var t = (turnoTxt || '').toLowerCase();
+  if (t.indexOf('cobertura') !== -1) return 'cobertura';
+  if (t.indexOf('partido') !== -1) return 'partido';
+  if (t.indexOf('mañ') !== -1 || t.indexOf('man') !== -1) return 'manana';
+  if (t.indexOf('tarde') !== -1) return 'tarde';
+  if (t.indexOf('noche') !== -1) return 'noche';
+  var hh = parseInt((horaInicio || '00:00').slice(0, 2), 10);
+  if (isNaN(hh)) return 'manana';
+  if (hh < 14) return 'manana';
+  if (hh < 20) return 'tarde';
+  return 'noche';
+}
+
+document.querySelectorAll('.js-bulk-form').forEach(function(form) {
+  var turnoFilter = form.querySelector('.js-turno-filter');
+  var turnoCount = form.querySelector('.js-turno-count');
+  var turnoRows = Array.from(form.querySelectorAll('.js-turno-row'));
+  var selectAll = form.querySelector('.js-select-all');
+  var rowChecks = Array.from(form.querySelectorAll('.js-row-check'));
+  var counter = form.querySelector('.js-bulk-counter');
+  var deleteBtn = form.querySelector('.js-bulk-delete');
+
+  turnoRows.forEach(function(row) {
+    var fk = row.getAttribute('data-franja-key');
+    if (fk) {
+      row.dataset.turnoBucket = fk;
+    } else {
+      row.dataset.turnoBucket = clasificarTurno(row.dataset.turnoText || '', row.dataset.horaInicio || '');
+    }
+  });
+
+  function applyTurnoFilter() {
+    var bucket = turnoFilter ? turnoFilter.value : 'all';
+    var vis = 0;
+    turnoRows.forEach(function(row) {
+      var show = bucket === 'all' || row.dataset.turnoBucket === bucket;
+      row.style.display = show ? '' : 'none';
+      if (show) vis++;
+    });
+    if (turnoCount) turnoCount.textContent = vis + ' visibles';
+  }
+
+  function updateState() {
+    var selectedCount = rowChecks.filter(function(ch) { return ch.checked; }).length;
+    counter.textContent = selectedCount + ' seleccionados';
+    deleteBtn.disabled = selectedCount === 0;
+    if (!rowChecks.length) {
+      selectAll.checked = false;
+      selectAll.indeterminate = false;
+      return;
+    }
+    selectAll.checked = selectedCount === rowChecks.length;
+    selectAll.indeterminate = selectedCount > 0 && selectedCount < rowChecks.length;
+  }
+
+  selectAll.addEventListener('change', function() {
+    rowChecks.forEach(function(ch) { ch.checked = selectAll.checked; });
+    updateState();
+  });
+
+  rowChecks.forEach(function(ch) {
+    ch.addEventListener('change', updateState);
+  });
+
+  if (turnoFilter) {
+    turnoFilter.addEventListener('change', applyTurnoFilter);
+  }
+  applyTurnoFilter();
+  updateState();
+});
+
+(function initHorFaenaBarras() {
+  function snapPct(mult) {
+    var m = parseFloat(mult);
+    if (isNaN(m) || m <= 0) m = 1;
+    var p = Math.round(m * 100);
+    p = Math.round(p / 25) * 25;
+    return Math.max(25, Math.min(300, p));
+  }
+  function paintPct(el, n) {
+    el.textContent = n + '%';
+    el.classList.remove('hor-faena-pct--low', 'hor-faena-pct--mid', 'hor-faena-pct--high');
+    if (n < 100) el.classList.add('hor-faena-pct--low');
+    else if (n <= 115) el.classList.add('hor-faena-pct--mid');
+    else el.classList.add('hor-faena-pct--high');
+  }
+  function paintFill(fillEl, n) {
+    if (!fillEl) return;
+    var w = Math.max(8, Math.min(100, (n / 300) * 100));
+    fillEl.style.width = w + '%';
+    fillEl.classList.remove('is-low', 'is-high');
+    if (n < 100) fillEl.classList.add('is-low');
+    else if (n > 115) fillEl.classList.add('is-high');
+  }
+  document.querySelectorAll('.hor-faena-range-input').forEach(function(range) {
+    var hid = document.getElementById(range.getAttribute('data-hidden'));
+    var pct = document.getElementById(range.getAttribute('data-pct'));
+    var fill = document.getElementById(range.getAttribute('data-fill'));
+    if (!hid || !pct) return;
+    function fromHidden() {
+      range.value = String(snapPct(hid.value));
+      var n = parseInt(range.value, 10);
+      paintPct(pct, n);
+      paintFill(fill, n);
+    }
+    function fromRange() {
+      var n = parseInt(range.value, 10);
+      hid.value = (n / 100).toFixed(2);
+      paintPct(pct, n);
+      paintFill(fill, n);
+    }
+    range.addEventListener('input', fromRange);
+    range.addEventListener('change', fromRange);
+    fromHidden();
+  });
+})();
+
+(function initCoberturaModo() {
+  var radios = Array.from(document.querySelectorAll('.js-cobertura-modo'));
+  var blockDot = document.querySelector('.js-cobertura-dotacion');
+  var blockFrentes = document.querySelector('.js-cobertura-frentes');
+  var dotInputs = Array.from(document.querySelectorAll('.js-dotacion-input'));
+  if (!radios.length || !blockDot || !blockFrentes) return;
+  function getMode() {
+    var active = radios.find(function(r) { return r.checked; });
+    return active ? active.value : 'dotacion';
+  }
+  function refresh() {
+    var useDotacion = getMode() === 'dotacion';
+    blockDot.style.display = useDotacion ? '' : 'none';
+    blockFrentes.style.display = useDotacion ? 'none' : '';
+    dotInputs.forEach(function(inp) { inp.disabled = !useDotacion; });
+  }
+  radios.forEach(function(r) { r.addEventListener('change', refresh); });
+  refresh();
+})();
+</script>
+
+{% endblock %}

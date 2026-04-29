@@ -1,0 +1,15 @@
+# Monorepo raíz (secretos locales Docker en deploy)
+deploy/.env
+
+# Copia legacy con su propio .git (no submódulo)
+gastro-source/
+
+# Bases SQLite locales / cookies de prueba
+restaurante/**/*.db
+restaurante/gastro-app/cookies*.txt
+**/.pytest_cache/
+**/__pycache__/
+*.py[cod]
+.venv/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,2244 @@
+{% extends "base.html" %}
+{% block titulo %}{{ tr('page.salon.meta_live') }}{% endblock %}
+
+{% block body_extra_class %}visualizar-live {% endblock %}
+{% block content_container_class %}app-content-shell app-content-shell--sala app-content-shell--sala-live mt-1 mt-md-3{% endblock %}
+
+{% block estilos %}
+<style>
+  /* Pantalla completa: sin franjas claras a los lados */
+  body.visualizar-live {
+    background: #050810 !important;
+  }
+  body.visualizar-live .main {
+    background: #050810;
+  }
+  body.visualizar-live .topbar {
+    background: rgba(15, 23, 42, 0.92);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+    box-shadow: none;
+  }
+  body.visualizar-live .topbar .form-control {
+    background: rgba(2, 6, 23, 0.55);
+    border-color: rgba(148, 163, 184, 0.2);
+    color: #f1f5f9;
+  }
+  body.visualizar-live .topbar .form-control::placeholder {
+    color: #64748b;
+  }
+  body.visualizar-live .footer {
+    background: #0a0f1a;
+    color: #94a3b8;
+    border-top: 1px solid rgba(148, 163, 184, 0.12);
+    position: relative;
+    z-index: 1;
+  }
+  body.visualizar-live .nav-volver-bar {
+    margin-bottom: 0.5rem !important;
+  }
+  @media (min-width: 768px) {
+    body.visualizar-live .nav-volver-bar { margin-bottom: 1rem !important; }
+  }
+  body.visualizar-live .app-content-shell--sala-live {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  :root {
+    --slv-bg: #050a14;
+    --slv-surface: #0c1222;
+    --slv-card: rgba(18, 28, 51, 0.92);
+    --slv-border: rgba(148, 163, 184, 0.2);
+    --slv-text: #f1f5f9;
+    --slv-muted: #94a3b8;
+    --slv-accent: #38bdf8;
+    --slv-ok: #34d399;
+    --slv-warn: #fbbf24;
+    --slv-danger: #f87171;
+    --slv-glass: linear-gradient(145deg, rgba(30, 41, 59, 0.55) 0%, rgba(15, 23, 42, 0.75) 100%);
+    --slv-safe-b: env(safe-area-inset-bottom, 0px);
+    --slv-safe-x: env(safe-area-inset-left, 0px);
+    --slv-safe-r: env(safe-area-inset-right, 0px);
+  }
+
+  .slv-page {
+    background:
+      radial-gradient(ellipse 100% 80% at 50% -20%, rgba(56, 189, 248, 0.14), transparent 55%),
+      radial-gradient(ellipse 80% 50% at 100% 30%, rgba(129, 140, 248, 0.1), transparent 50%),
+      radial-gradient(ellipse 60% 40% at 0% 80%, rgba(16, 185, 129, 0.06), transparent 45%),
+      var(--slv-bg);
+    color: var(--slv-text);
+    min-height: calc(100dvh - 110px);
+    margin: 0;
+    padding: 0.5rem max(0.35rem, var(--slv-safe-x)) max(5.5rem, calc(4.75rem + var(--slv-safe-b))) max(0.35rem, var(--slv-safe-r));
+    box-sizing: border-box;
+  }
+  @media (min-width: 992px) {
+    .slv-page {
+      padding: 0.75rem 0 1.5rem;
+      min-height: auto;
+      padding-left: 0;
+      padding-right: 0;
+    }
+  }
+
+  .slv-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.85rem;
+    margin-bottom: 1rem;
+    padding: 0.85rem 1rem;
+    background: var(--slv-glass);
+    border: 1px solid var(--slv-border);
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+  }
+  .slv-top h1 {
+    font-size: clamp(1.25rem, 3.5vw, 1.65rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin: 0 0 0.25rem;
+    color: #fff;
+  }
+  .slv-top .lead {
+    margin: 0;
+    color: var(--slv-muted);
+    font-size: 0.9rem;
+    max-width: 42rem;
+  }
+  .slv-top-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  @media (max-width: 767.98px) {
+    .slv-top-actions {
+      flex-wrap: nowrap;
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+      gap: 0.4rem;
+    }
+    .slv-top-actions::-webkit-scrollbar { display: none; }
+    .slv-top-actions .slv-btn,
+    .slv-top-actions > a.slv-btn {
+      flex: 0 0 auto;
+    }
+    .slv-top-actions .slv-live-pill { flex: 0 0 auto; }
+    .slv-top-actions #slv-srv-clock {
+      flex: 0 0 auto;
+      font-size: 0.72rem !important;
+    }
+  }
+  .slv-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-height: 44px;
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border: 1px solid var(--slv-border);
+    background: rgba(255,255,255,0.06);
+    color: var(--slv-text);
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .slv-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  .slv-btn--primary {
+    background: linear-gradient(135deg, #0ea5e9, #6366f1);
+    border-color: transparent;
+    color: #fff;
+  }
+  .slv-btn--primary:hover { filter: brightness(1.06); color: #fff; }
+  .slv-btn--ghost { background: transparent; }
+
+  .slv-live-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(52, 211, 153, 0.12);
+    border: 1px solid rgba(52, 211, 153, 0.35);
+    color: #a7f3d0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .slv-live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #34d399;
+    box-shadow: 0 0 12px #34d399;
+    animation: slv-pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes slv-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.65; transform: scale(0.85); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .slv-live-dot { animation: none; }
+  }
+
+  .slv-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  @media (min-width: 480px) {
+    .slv-stats { grid-template-columns: repeat(4, 1fr); }
+  }
+  .slv-stat {
+    background: var(--slv-card);
+    border: 1px solid var(--slv-border);
+    border-radius: 16px;
+    padding: 0.75rem 0.85rem;
+    text-align: center;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.2);
+  }
+  .slv-stat .v {
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: #fff;
+  }
+  .slv-stat .k {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--slv-muted);
+    margin-top: 0.2rem;
+  }
+  .slv-stat--ok .v { color: #6ee7b7; }
+  .slv-stat--busy .v { color: #fcd34d; }
+
+  .slv-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding: 0.65rem 0.75rem;
+    background: var(--slv-glass);
+    border: 1px solid var(--slv-border);
+    border-radius: 18px;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.18);
+  }
+  .slv-date-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--slv-card);
+    border: 1px solid var(--slv-border);
+    border-radius: 14px;
+    padding: 0.35rem 0.5rem;
+  }
+  .slv-date-nav a {
+    color: var(--slv-text);
+    text-decoration: none;
+    min-width: 48px;
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 1.35rem;
+    font-weight: 700;
+  }
+  .slv-date-nav a:hover { background: rgba(255,255,255,0.08); }
+  .slv-date-nav span {
+    font-weight: 700;
+    font-size: 1rem;
+  }
+  .slv-turns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .slv-turns a {
+    flex: 1 1 auto;
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.65rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border: 1px solid var(--slv-border);
+    color: var(--slv-muted);
+    background: rgba(255,255,255,0.03);
+  }
+  .slv-turns a.active {
+    background: linear-gradient(135deg, rgba(14,165,233,0.35), rgba(99,102,241,0.35));
+    border-color: rgba(56, 189, 248, 0.45);
+    color: #fff;
+  }
+
+  .slv-alta-shell {
+    margin-bottom: 1rem;
+    flex-shrink: 0;
+  }
+  .slv-alta-shell .slv-alta-salon {
+    border-radius: 16px;
+    border: 1px solid rgba(56, 189, 248, 0.38);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    border-bottom: none;
+  }
+  .slv-alta-salon--cta {
+    border: 1px solid rgba(251, 191, 36, 0.45) !important;
+    background: linear-gradient(180deg, rgba(45, 35, 20, 0.98) 0%, rgba(15, 23, 42, 0.96) 100%) !important;
+  }
+  .slv-alta-salon--cta .slv-alta-salon-head {
+    color: #fde68a;
+  }
+
+  .slv-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  @media (min-width: 1100px) {
+    .slv-layout {
+      grid-template-columns: minmax(300px, 380px) 1fr;
+    }
+  }
+
+  .slv-panel {
+    background: var(--slv-card);
+    border: 1px solid var(--slv-border);
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 280px;
+    max-height: min(70vh, 640px);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 28px rgba(0, 0, 0, 0.22);
+  }
+  @media (max-width: 1099px) {
+    .slv-panel {
+      max-height: min(42dvh, 420px);
+      min-height: 200px;
+    }
+    .slv-layout .slv-map-col { order: -1; }
+  }
+  @media (max-width: 575.98px) {
+    .slv-panel { max-height: min(38dvh, 360px); border-radius: 18px; }
+  }
+  .slv-panel-h {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--slv-border);
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--slv-muted);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: linear-gradient(180deg, rgba(18, 28, 51, 0.98) 0%, rgba(15, 23, 42, 0.95) 100%);
+  }
+  .slv-reservas-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.75rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .slv-rcard {
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid var(--slv-border);
+    border-radius: 14px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.6rem;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.12s;
+  }
+  .slv-rcard:active { transform: scale(0.99); }
+  .slv-rcard:hover { border-color: rgba(56, 189, 248, 0.35); }
+  .slv-rcard.estado-Pendiente { border-left: 4px solid #fbbf24; }
+  .slv-rcard.estado-Confirmada { border-left: 4px solid #38bdf8; }
+  .slv-rcard.estado-Llegó { border-left: 4px solid #34d399; }
+  .slv-rcard.estado-Finalizada { border-left: 4px solid #64748b; }
+  .slv-rcard.estado-Cancelada { border-left: 4px solid #f87171; }
+  .slv-rname { font-weight: 800; font-size: 1rem; margin-bottom: 0.25rem; }
+  .slv-rmeta { font-size: 0.8rem; color: var(--slv-muted); display: flex; flex-wrap: wrap; gap: 0.65rem; }
+  .slv-rmesa { font-size: 0.75rem; color: var(--slv-accent); margin-top: 0.35rem; }
+  .slv-ractions { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.6rem; }
+  .slv-chip {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.35rem 0.55rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    color: #fff;
+  }
+  .slv-chip:disabled { opacity: 0.45; cursor: not-allowed; }
+  .slv-chip-p { background: #d97706; }
+  .slv-chip-c { background: #0284c7; }
+  .slv-chip-l { background: #059669; }
+  .slv-chip-f { background: #475569; }
+  .slv-chip-x { background: #b91c1c; }
+  .slv-chip.on { outline: 2px solid #fff; outline-offset: 1px; }
+  .slv-assign-mini {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #a5b4fc;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  .slv-map-col {
+    background: var(--slv-card);
+    border: 1px solid var(--slv-border);
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 360px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 6px 32px rgba(0, 0, 0, 0.28);
+  }
+  @media (max-width: 1099px) {
+    .slv-map-col { min-height: min(52dvh, 560px); border-radius: 18px; }
+  }
+  @media (min-width: 768px) and (max-width: 1099.98px) {
+    .slv-map-col { min-height: min(58dvh, 620px); }
+  }
+  .slv-map-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 0.75rem;
+    border-bottom: 1px solid var(--slv-border);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(7, 11, 20, 0.92) 100%);
+    position: sticky;
+    top: 0;
+    z-index: 8;
+  }
+
+  .slv-legend-track {
+    display: flex;
+    align-items: stretch;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 6px 10px 8px;
+    border-bottom: 1px solid var(--slv-border);
+    background: rgba(2, 6, 23, 0.45);
+    scrollbar-width: thin;
+  }
+  .slv-legend-track::-webkit-scrollbar { height: 4px; }
+  .slv-legend-track::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.35);
+    border-radius: 4px;
+  }
+  .slv-legend-item {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    max-width: 9.5rem;
+    padding: 5px 10px 5px 8px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.055);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    border-left-width: 3px;
+    border-left-style: solid;
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+    color: #e2e8f0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .slv-map-toolbar .form-check {
+    margin: 0;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    padding-left: 2.5rem;
+  }
+  .slv-map-toolbar .form-check-label { color: var(--slv-muted); font-size: 0.8rem; }
+  .slv-map-toolbar .form-check-input {
+    width: 2.5rem;
+    height: 1.35rem;
+    margin-top: 0;
+  }
+  .slv-zoom .btn {
+    min-width: 48px;
+    min-height: 44px;
+    border-radius: 10px;
+  }
+
+  .viz-mapa {
+    position: relative;
+    flex: 1;
+    min-height: 280px;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-x pan-y;
+    background-color: #060a12;
+    background-image:
+      radial-gradient(ellipse 120% 80% at 50% 35%, rgba(30, 64, 120, 0.22), transparent 55%),
+      radial-gradient(ellipse 70% 50% at 80% 90%, rgba(88, 28, 135, 0.08), transparent),
+      linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+  .viz-mapa.viz-mapa--solo-mesas .viz-decor-arq,
+  .viz-mapa.viz-mapa--solo-mesas .viz-decor-mob { display: none !important; }
+
+  .mapa-inner { position: relative; transform-origin: 0 0; }
+
+  .viz-decor {
+    position: absolute;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.85;
+  }
+  .viz-decor-img { width: 100%; height: 100%; object-fit: contain; border-radius: 4px; }
+  .viz-arch {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+  .viz-arch--pared {
+    background: linear-gradient(180deg, #57534e 0%, #44403c 100%);
+    border: 2px solid #292524;
+  }
+  .viz-arch--separador {
+    background: repeating-linear-gradient(90deg, #57534e 0 5px, #44403c 5px 10px);
+    border: 1px solid #44403c;
+  }
+  .viz-arch--columna {
+    border-radius: 6px;
+    background: linear-gradient(135deg, #78716c, #57534e);
+    border: 2px solid #292524;
+  }
+  .viz-arch--puerta {
+    background: linear-gradient(180deg, #92400e 0%, #451a03 100%);
+    border: 2px solid #292524;
+    border-radius: 4px 4px 2px 2px;
+  }
+  .viz-arch--ventana {
+    background: linear-gradient(180deg, #38bdf8 0%, #0369a1 100%);
+    border: 2px solid #64748b;
+  }
+  .viz-arch--bano {
+    background: repeating-linear-gradient(-45deg, #334155, #334155 4px, #1e293b 4px, #1e293b 8px);
+    border: 2px solid #475569;
+    border-radius: 6px;
+  }
+  .viz-arch--bano::after {
+    content: "WC";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 800;
+    color: #94a3b8;
+  }
+
+  .viz-mesa-wrap {
+    position: absolute;
+    z-index: 10;
+    display: block;
+    cursor: pointer;
+    transform-origin: center center;
+    -webkit-tap-highlight-color: rgba(56, 189, 248, 0.25);
+  }
+  .viz-mesa-body { position: relative; width: 100%; height: 100%; border-radius: 12px; overflow: visible; }
+  .viz-mesa-foto-stack {
+    position: absolute;
+    inset: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .viz-mesa-foto-tag {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 4;
+    pointer-events: none;
+    min-width: 26px;
+    height: 22px;
+    padding: 0 8px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.88);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+  }
+  .viz-mesa-foto-img {
+    width: 96%;
+    height: 96%;
+    object-fit: contain;
+    pointer-events: none;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+  }
+  .plano-mesa {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.35));
+  }
+  .plano-mesa-tablero {
+    position: relative;
+    z-index: 2;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(165deg, #f8fafc 0%, #e2e8f0 100%);
+    border: 1.5px solid rgba(71, 85, 105, 0.35);
+  }
+  .plano-mesa--redonda .plano-mesa-tablero {
+    width: 52%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+  }
+  .plano-mesa--cuadrada .plano-mesa-tablero {
+    width: 58%;
+    height: 52%;
+    border-radius: 10px;
+  }
+  .plano-mesa-centro {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 4px;
+    z-index: 3;
+    pointer-events: none;
+  }
+  .plano-mesa-nombre {
+    text-align: center;
+    font-size: clamp(9px, 2vmin, 12px);
+    font-weight: 700;
+    color: #0f172a;
+    max-width: 95%;
+  }
+  .viz-mesa-ring {
+    position: absolute;
+    inset: 2px;
+    border-radius: 14px;
+    pointer-events: none;
+    border: 2px solid transparent;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .mesa-libre .viz-mesa-ring {
+    border-color: rgba(100, 116, 139, 0.35);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  }
+  .mesa-Pendiente .viz-mesa-ring { border-color: #fbbf24; box-shadow: 0 0 12px rgba(251,191,36,0.35); }
+  .mesa-Confirmada .viz-mesa-ring { border-color: #38bdf8; box-shadow: 0 0 12px rgba(56,189,248,0.35); }
+  .mesa-Llegó .viz-mesa-ring {
+    border-color: #34d399;
+    box-shadow: 0 0 14px rgba(52,211,153,0.45);
+    animation: slv-ring 2s infinite;
+  }
+  .mesa-Finalizada .viz-mesa-ring { border-color: #64748b; }
+  .mesa-Cancelada .viz-mesa-ring { border-color: #f87171; }
+  @keyframes slv-ring {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.75; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mesa-Llegó .viz-mesa-ring { animation: none; }
+  }
+
+  .mesa-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 8px;
+    background: #020617;
+    color: #f8fafc;
+    border-radius: 10px;
+    padding: 10px 14px;
+    white-space: nowrap;
+    font-size: 12px;
+    z-index: 100;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.45);
+    pointer-events: none;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .viz-mesa-wrap:hover .mesa-tooltip { display: block; }
+  .mesa-tooltip strong { display: block; font-size: 13px; margin-bottom: 4px; }
+  .mesa-tooltip span { color: #cbd5e1; display: block; line-height: 1.5; }
+
+  /* Contador tiempo en mesa (estado Llegó) */
+  .viz-mesa-timer {
+    position: absolute;
+    left: 50%;
+    bottom: -2px;
+    transform: translate(-50%, 100%);
+    z-index: 12;
+    pointer-events: none;
+    min-width: 44px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 9px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    color: #ecfdf5;
+    background: linear-gradient(165deg, rgba(6, 78, 59, 0.95), rgba(4, 47, 46, 0.98));
+    border: 1px solid rgba(52, 211, 153, 0.45);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    white-space: nowrap;
+  }
+  .viz-mesa-timer[hidden] { display: none !important; }
+  .mesa-Llegó .viz-mesa-timer { color: #d1fae5; }
+
+  .slv-rmesa-time {
+    margin-top: 4px;
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+    color: #6ee7b7;
+    font-weight: 600;
+  }
+  .slv-rmesa-time .slv-live-timer { color: inherit; }
+
+  .slv-empty {
+    text-align: center;
+    color: var(--slv-muted);
+    padding: 2rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .mesa-modal-overlay,
+  .slv-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.72);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    backdrop-filter: blur(4px);
+  }
+  .mesa-modal-overlay.visible,
+  .slv-modal-overlay.visible { display: flex; }
+  /*
+   * Walk-in: el contenedor flex no captura clics (evita que backdrop-filter + overlay bloqueen el mapa).
+   * El atenuado va en .slv-wi-scrim; en modo map-pick el scrim deja pasar los clics al plano.
+   */
+  #slv-walkin-modal.slv-wi-overlay {
+    background: transparent !important;
+    backdrop-filter: none !important;
+    pointer-events: none;
+  }
+  #slv-walkin-modal.slv-wi-overlay .slv-wi-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: rgba(2, 6, 23, 0.72);
+    backdrop-filter: blur(4px);
+    pointer-events: auto;
+  }
+  #slv-walkin-modal.slv-wi-overlay.slv-walkin--map-pick .slv-wi-scrim {
+    pointer-events: none;
+    background: transparent;
+    backdrop-filter: none;
+  }
+  #slv-walkin-modal.slv-wi-overlay > .slv-modal {
+    position: relative;
+    z-index: 1;
+    pointer-events: auto;
+  }
+  /* Los FAB van después en el DOM y z-index 1600: sin esto roban el clic al plano al atravesar el walk-in. */
+  body.slv-wi-picking-map .slv-fab-stack {
+    pointer-events: none !important;
+  }
+  .mesa-modal, .slv-modal {
+    background: #0f172a;
+    border: 1px solid var(--slv-border);
+    border-radius: 18px;
+    padding: 1.25rem 1.35rem;
+    min-width: min(100%, 380px);
+    max-width: 420px;
+    width: 100%;
+    color: var(--slv-text);
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  }
+  .mesa-modal h4, .slv-modal h4 { margin: 0 0 0.35rem; font-size: 1.2rem; color: #fff; }
+  .mesa-modal .subtitle, .slv-modal .subtitle { color: var(--slv-muted); font-size: 0.85rem; margin-bottom: 1rem; }
+  .mesa-modal .info-row, .slv-modal .row-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--slv-border);
+    font-size: 0.9rem;
+  }
+  .slv-field { margin-bottom: 0.85rem; }
+  .slv-field label { display: block; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--slv-muted); margin-bottom: 0.35rem; }
+  .slv-field input, .slv-field select, .slv-field textarea {
+    width: 100%;
+    min-height: 48px;
+    border-radius: 12px;
+    border: 1px solid var(--slv-border);
+    background: rgba(0,0,0,0.35);
+    color: #fff;
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
+  }
+  .slv-field textarea { min-height: 72px; resize: vertical; }
+  .slv-modal-actions { display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; }
+  .slv-modal-actions .slv-btn { flex: 1; }
+  .wi-mesas-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .wi-mesas-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    flex: 1;
+    min-height: 2.25rem;
+    align-items: center;
+  }
+  .wi-mesa-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.45rem 0.25rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(56, 189, 248, 0.18);
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #e0f2fe;
+  }
+  .wi-mesa-chip button {
+    border: none;
+    background: rgba(0, 0, 0, 0.35);
+    color: #fff;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 50%;
+    line-height: 1;
+    padding: 0;
+    cursor: pointer;
+    font-size: 0.95rem;
+  }
+  .wi-mesas-cap {
+    font-size: 0.78rem;
+    color: var(--slv-muted);
+    margin-bottom: 0.65rem;
+    min-height: 1.2rem;
+  }
+
+  .mesa-modal .modal-estados { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .mesa-modal .btn-estado {
+    font-size: 0.65rem;
+    padding: 0.45rem 0.55rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #fff !important;
+    border: none;
+    min-height: 40px;
+  }
+  .mesa-modal .btn-estado.activo { outline: 2px solid #fff; }
+  .mesa-modal .modal-gestion-extra {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 0.65rem;
+  }
+  .mesa-modal .modal-gestion-extra.d-none { display: none !important; }
+  .mesa-modal .modal-gestion-extra a,
+  .mesa-modal .modal-gestion-extra button {
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.4rem 0.65rem;
+    border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    color: #e2e8f0 !important;
+    background: rgba(15, 23, 42, 0.55);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .slv-rsecondary {
+    margin-top: 0.45rem;
+    font-size: 0.78rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem 0.65rem;
+  }
+  .slv-rsecondary a { color: #93c5fd; }
+  .slv-rsecondary button.slv-textlink-btn {
+    color: #93c5fd;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: inherit;
+  }
+  .slv-assign-hint { color: var(--slv-muted); margin-top: 0.35rem !important; line-height: 1.35; }
+
+  .slv-alta-salon {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--slv-border);
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.95) 100%);
+    flex-shrink: 0;
+  }
+  .slv-alta-salon-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #e2e8f0;
+    margin-bottom: 0.2rem;
+  }
+  .slv-alta-salon-hint {
+    color: var(--slv-muted);
+    margin: 0 0 0.75rem 0;
+    line-height: 1.35;
+    font-size: 0.82rem;
+  }
+  .slv-alta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem 0.75rem;
+  }
+  @media (max-width: 640px) {
+    .slv-alta-grid { grid-template-columns: 1fr; }
+  }
+  .slv-alta-field label {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--slv-muted);
+    margin-bottom: 0.3rem;
+  }
+  .slv-alta-field input,
+  .slv-alta-field select,
+  .slv-alta-field textarea {
+    width: 100%;
+    min-height: 44px;
+    border-radius: 10px;
+    border: 1px solid var(--slv-border);
+    background: rgba(0, 0, 0, 0.35);
+    color: #fff;
+    padding: 0.45rem 0.65rem;
+    font-size: 0.95rem;
+  }
+  .slv-alta-field textarea { min-height: 64px; resize: vertical; }
+  .slv-alta-field--full { grid-column: 1 / -1; }
+  .slv-alta-actions { margin-top: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .slv-alta-actions .slv-btn { min-height: 44px; }
+
+  .btn-Pendiente  { background: #d97706; }
+  .btn-Confirmada { background: #0284c7; }
+  .btn-Llegó      { background: #059669; }
+  .btn-Finalizada { background: #475569; }
+  .btn-Cancelada  { background: #b91c1c; }
+  .mesa-modal .btn-cerrar {
+    display: block; text-align: center; margin-top: 14px; color: var(--slv-muted);
+    font-size: 0.85rem; cursor: pointer; background: none; border: none; width: 100%;
+  }
+
+  .slv-fab-stack {
+    position: fixed;
+    right: max(0.75rem, var(--slv-safe-r));
+    bottom: max(0.75rem, var(--slv-safe-b));
+    z-index: 1600;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.4rem;
+    width: auto;
+    max-width: calc(100vw - 1.25rem);
+    padding: 0.35rem;
+    border-radius: 18px;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+  @media (min-width: 992px) {
+    .slv-fab-stack {
+      bottom: max(1rem, var(--slv-safe-b));
+      right: max(1rem, var(--slv-safe-r));
+      padding: 0.4rem;
+      border-radius: 20px;
+    }
+  }
+  .slv-fab {
+    min-height: 38px;
+    height: 38px;
+    padding: 0 0.65rem 0 0.55rem;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    cursor: pointer;
+    color: #fff;
+    background: linear-gradient(145deg, #0d9488 0%, #0ea5e9 100%);
+    box-shadow: 0 4px 14px rgba(14, 165, 233, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+    width: auto;
+    max-width: 100%;
+    box-sizing: border-box;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+  }
+  .slv-fab.visible { display: inline-flex; }
+  .slv-fab:hover {
+    filter: brightness(1.06);
+    box-shadow: 0 6px 18px rgba(14, 165, 233, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+  .slv-fab:active {
+    transform: scale(0.97);
+  }
+  .slv-fab > i {
+    font-size: 1rem;
+    opacity: 0.95;
+  }
+  .slv-fab--reserve {
+    background: linear-gradient(145deg, #0284c7 0%, #6366f1 100%);
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+  .slv-fab--reserve:hover {
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+  @media (max-width: 380px) {
+    .slv-fab__label { display: none; }
+    .slv-fab { padding: 0 0.55rem; min-width: 38px; }
+  }
+  .slv-modal--wide {
+    max-width: min(96vw, 480px) !important;
+    max-height: min(90vh, 720px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .slv-modal--wide .slv-alta-grid { margin-top: 0.25rem; }
+
+  /* —— Móvil / tablet: modales tipo hoja, más aire táctil —— */
+  @media (max-width: 767.98px) {
+    body.visualizar-live .slv-modal-overlay.visible,
+    body.visualizar-live .mesa-modal-overlay.visible {
+      align-items: flex-end;
+      justify-content: stretch;
+      padding: 0;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+    body.visualizar-live .slv-modal-overlay .slv-modal,
+    body.visualizar-live .mesa-modal-overlay .mesa-modal {
+      width: 100%;
+      max-width: none;
+      min-width: 0;
+      border-radius: 22px 22px 0 0;
+      max-height: min(92dvh, 880px);
+      padding: 1.15rem 1.15rem max(1.1rem, env(safe-area-inset-bottom, 12px));
+      margin: 0;
+      box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.45);
+    }
+    body.visualizar-live #slv-walkin-modal.slv-wi-overlay > .slv-modal {
+      border-radius: 22px 22px 0 0;
+    }
+    .slv-chip {
+      min-height: 40px;
+      padding: 0.4rem 0.65rem;
+      font-size: 0.68rem;
+    }
+    .slv-rcard { padding: 1rem 1.05rem; }
+  }
+
+  @media (min-width: 768px) and (max-width: 1099.98px) {
+    .slv-top { padding: 1rem 1.1rem; }
+  }
+
+  /* Franja superior: referencia visual clara de la versión de UI (y contraste con fondo oscuro). */
+  #slv-live-root::before {
+    content: "";
+    display: block;
+    height: 3px;
+    width: 100%;
+    max-width: min(100%, 720px);
+    margin: 0 auto 0.65rem;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #22d3ee, #818cf8, #34d399);
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.35);
+  }
+</style>
+{% endblock %}
+
+{% block contenido %}
+{% include 'partials/volver_bar.html' %}
+
+<div class="slv-page" id="slv-live-root">
+  <div class="slv-top">
+    <div>
+      <h1><i class="bi bi-broadcast-pin text-info me-2"></i>{{ tr('page.salon.live_title') }}</h1>
+      <p class="lead">{{ tr('page.salon.live_subtitle') }}</p>
+    </div>
+    <div class="slv-top-actions">
+      <span class="slv-live-pill"><span class="slv-live-dot"></span>{{ tr('page.salon.live_sync_live') }}</span>
+      <span class="text-secondary small" id="slv-srv-clock" title="{{ tr('page.salon.clock_label') }}">{{ sala_server_time or '—' }}</span>
+      {% if puede('mod.salon') %}
+      <a href="{{ url_for('admin.editar_sala') }}" class="slv-btn slv-btn--ghost"><i class="bi bi-pencil-square"></i>{{ tr('page.salon.btn_editor_map') }}</a>
+      {% endif %}
+      <a href="{{ url_for('admin.reservas') }}?fecha={{ fecha }}" class="slv-btn"><i class="bi bi-calendar-event"></i>{{ tr('page.salon.live_reservations_day') }}</a>
+      <span class="slv-btn slv-btn--ghost" style="cursor:default;opacity:0.85" id="sala-sync-badge">{{ tr('page.salon.live_sync_hint') }}</span>
+    </div>
+  </div>
+
+  <div class="slv-stats" id="slv-stats">
+    <div class="slv-stat slv-stat--ok"><div class="v" id="stat-libres">{{ totales.libres }}</div><div class="k">{{ tr('page.salon.stat_free') }}</div></div>
+    <div class="slv-stat slv-stat--busy"><div class="v" id="stat-ocupadas">{{ totales.ocupadas }}</div><div class="k">{{ tr('page.salon.stat_busy') }}</div></div>
+    <div class="slv-stat"><div class="v" id="stat-lista">{{ totales.reservas_lista }}</div><div class="k">{{ tr('page.salon.stat_list') }}</div></div>
+    <div class="slv-stat"><div class="v" id="stat-pct">{{ totales.pct_ocupacion|default(0) }}%</div><div class="k">{{ tr('page.salon.stat_occupancy') }}</div></div>
+  </div>
+
+  <div class="slv-controls">
+    <div class="slv-date-nav">
+      <a href="/visualizar?fecha={{ ayer }}&turno={{ turno }}" aria-label="Día anterior">&#8249;</a>
+      <span>
+        {% set meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'] %}
+        {% set fd = fecha.split('-') %}
+        {{ fd[2] }} {{ meses[fd[1]|int - 1] }} {{ fd[0] }}
+      </span>
+      <a href="/visualizar?fecha={{ manana }}&turno={{ turno }}" aria-label="Día siguiente">&#8250;</a>
+    </div>
+    <div class="slv-turns">
+      <a href="/visualizar?fecha={{ fecha }}&turno=manana" class="{% if turno == 'manana' %}active{% endif %}">{{ tr('page.reservas.shift_morning') }}</a>
+      <a href="/visualizar?fecha={{ fecha }}&turno=mediodia" class="{% if turno == 'mediodia' %}active{% endif %}">{{ tr('page.reservas.shift_mid') }}</a>
+      <a href="/visualizar?fecha={{ fecha }}&turno=noche" class="{% if turno == 'noche' %}active{% endif %}">{{ tr('page.reservas.shift_night') }}</a>
+      <a href="/visualizar?fecha={{ fecha }}&turno=todos" class="{% if turno == 'todos' %}active{% endif %}">24h</a>
+    </div>
+  </div>
+
+  {% if not (sala_live_gestion and mesas|length) %}
+  <div class="slv-alta-shell">
+    {% if sala_live_gestion %}
+      <div class="slv-alta-salon">
+        <p class="slv-alta-salon-hint mb-0">{{ tr('page.reservas.tablet_map_help') }}</p>
+      </div>
+    {% elif mostrar_nav %}
+      <div class="slv-alta-salon slv-alta-salon--cta">
+        <div class="slv-alta-salon-head"><i class="bi bi-lock text-warning"></i>{{ tr('page.salon.alta_no_permiso_title') }}</div>
+        <p class="slv-alta-salon-hint mb-0">{{ tr('page.salon.alta_no_permiso_body') }}</p>
+      </div>
+    {% else %}
+      <div class="slv-alta-salon slv-alta-salon--cta">
+        <div class="slv-alta-salon-head"><i class="bi bi-person-badge text-warning"></i>{{ tr('page.salon.alta_login_title') }}</div>
+        <p class="slv-alta-salon-hint">{{ tr('page.salon.alta_login_body') }}</p>
+        <div class="slv-alta-actions">
+          <a class="slv-btn slv-btn--primary" href="{{ url_for('public.inicio', next=next_visualizar) }}">{{ tr('page.salon.alta_login_btn') }}</a>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <div class="slv-layout">
+    <div class="slv-panel">
+      <div class="slv-panel-h">{{ tr('page.salon.live_this_shift') }}</div>
+      <div class="slv-reservas-scroll" id="slv-reservas-list"></div>
+    </div>
+
+    <div class="slv-map-col">
+      <div class="slv-map-toolbar mapa-toolbar">
+        {% if decor|length %}
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" id="viz-toggle-plano">
+          <label class="form-check-label" for="viz-toggle-plano">{{ tr('page.salon.show_walls_short') }}</label>
+        </div>
+        {% endif %}
+        <div class="slv-map-toolbar-end ms-auto d-flex flex-wrap align-items-center gap-2">
+          <div class="btn-group slv-zoom" role="group">
+            <button type="button" class="btn btn-outline-light" onclick="vizZoom(-0.12)" title="−">−</button>
+            <button type="button" class="btn btn-outline-light" onclick="vizZoom(0.12)" title="+">+</button>
+            <button type="button" class="btn btn-outline-light" onclick="vizZoomReset()">1:1</button>
+          </div>
+        </div>
+      </div>
+      <div class="slv-legend-track" role="list" aria-label="{{ sala_legend_title }}">
+        {% for chip in sala_legend_chips %}
+        <span class="slv-legend-item" role="listitem" style="border-left-color: {{ chip.color }}" title="{{ chip.label }}">{{ chip.label }}</span>
+        {% endfor %}
+      </div>
+      <div class="viz-mapa flex-grow-1 position-relative" id="viz-mapa-root">
+        <div class="mapa-inner" id="viz-map-zoom" style="transform-origin:0 0; min-width: {{ plano_ancho|int }}px; min-height: {{ plano_alto|int }}px;">
+          {% for d in decor %}
+          {% set dt = (d.tipo or '')|lower %}
+          {% set arq_d = dt in ['pared', 'separador', 'columna', 'puerta', 'ventana', 'bano'] %}
+          <div class="viz-decor {% if arq_d %}viz-decor-arq{% else %}viz-decor-mob{% endif %} viz-decor-{{ dt }}"
+               style="left: {{ d.x }}px; top: {{ d.y }}px; width: {{ d.width }}px; height: {{ d.height }}px; transform: rotate({{ d.rotacion }}deg);">
+            {% if arq_d %}
+            <div class="viz-arch viz-arch--{{ dt }}" aria-hidden="true"></div>
+            {% else %}
+            <img class="viz-decor-img" src="{{ url_for('static', filename=d.imagen) }}" alt="">
+            {% endif %}
+          </div>
+          {% endfor %}
+          {% for m in mesas %}
+            {% set r = m.reserva %}
+            {% set estado_clase = ('mesa-' ~ r.estado) if r else 'mesa-libre' %}
+            <div class="viz-mesa-wrap {{ estado_clase }}"
+                 data-mesa-id="{{ m.id }}"
+                 data-mesa-nombre="{{ m.nombre }}"
+                 data-capacidad="{{ m.capacidad|default(4) }}"
+                 style="left: {{ m.x }}px; top: {{ m.y }}px; width: {{ m.width|default(72) }}px; height: {{ m.height|default(72) }}px; transform: rotate({{ m.rotacion|default(0) }}deg);"
+                 onclick="onMesaClick(this)">
+              <div class="viz-mesa-body">
+                <div class="viz-mesa-ring"></div>
+                {% if m.mesa_foto_rel or m.imagen %}
+                <div class="viz-mesa-foto-stack">
+                  <img class="viz-mesa-foto-img" src="{{ url_for('static', filename=(m.mesa_foto_rel or m.imagen)) }}" alt="">
+                </div>
+                <span class="viz-mesa-foto-tag">{{ m.nombre_corto|default(m.nombre) }}</span>
+                {% else %}
+                {% set o = m %}
+                {% set mesa_compacto = true %}
+                {% include '_mesa_vector.html' %}
+                {% endif %}
+                <div class="mesa-tooltip" data-tooltip></div>
+                <span class="viz-mesa-timer slv-live-timer" data-mesa-timer hidden data-hora=""></span>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if sala_live_gestion and mesas|length %}
+<div class="slv-fab-stack" role="group" aria-label="{{ tr('page.salon.fab_actions_label') }}">
+  <button type="button" class="slv-fab slv-fab--reserve visible" id="slv-fab-reserva" aria-label="{{ tr('page.salon.fab_reserve') }}">
+    <i class="bi bi-calendar-plus" aria-hidden="true"></i><span class="slv-fab__label">{{ tr('page.salon.fab_reserve') }}</span>
+  </button>
+  <button type="button" class="slv-fab visible" id="slv-fab-walkin" aria-label="{{ tr('page.salon.walkin') }}">
+    <i class="bi bi-person-plus-fill" aria-hidden="true"></i><span class="slv-fab__label">{{ tr('page.salon.walkin') }}</span>
+  </button>
+</div>
+{% endif %}
+
+<div class="mesa-modal-overlay" id="modal" onclick="cerrarModal(event)" role="dialog" aria-modal="true" aria-labelledby="modal-nombre">
+  <div class="mesa-modal" id="modal-contenido" onclick="event.stopPropagation()">
+    <h4 id="modal-nombre"></h4>
+    <div class="subtitle" id="modal-mesa">—</div>
+    <div class="info-row"><span class="text-secondary">Hora</span><span id="modal-hora" class="fw-semibold"></span></div>
+    <div class="info-row"><span class="text-secondary">Personas</span><span id="modal-personas" class="fw-semibold"></span></div>
+    <div class="info-row"><span class="text-secondary">Estado</span><span id="modal-estado" class="fw-semibold"></span></div>
+    <div class="info-row d-none" id="modal-tiempo-wrap">
+      <span class="text-secondary">{{ tr('page.reservas.time_at_table') }}</span>
+      <span id="modal-tiempo-val" class="fw-semibold slv-live-timer" data-hora=""></span>
+    </div>
+    <div class="modal-estados" id="modal-btns"></div>
+    <div id="modal-gestion-extra" class="modal-gestion-extra d-none"></div>
+    <button type="button" class="btn-cerrar" onclick="cerrarModal()">{{ tr('page.salon.modal_close') }}</button>
+  </div>
+</div>
+
+{% if sala_live_gestion and mesas|length %}
+<div class="slv-modal-overlay" id="slv-reserva-modal" onclick="slvCloseReserva(event)">
+  <div class="slv-modal slv-modal--wide" onclick="event.stopPropagation()">
+    <h4><i class="bi bi-calendar-check text-info me-2"></i>{{ tr('page.salon.alta_en_salon_title') }}</h4>
+    <p class="subtitle mb-0">{{ tr('page.salon.alta_en_salon_hint') }}</p>
+    <form method="post" action="{{ url_for('admin.crear') }}" id="slv-form-alta-reserva" class="mt-3" autocomplete="on">
+      <input type="hidden" name="next" value="{{ next_visualizar }}">
+      <div class="slv-alta-grid">
+        <div class="slv-alta-field slv-alta-field--full">
+          <label for="slv-alta-fecha">{{ tr('page.salon.alta_reserva_fecha') }} *</label>
+          <input type="date" name="fecha" id="slv-alta-fecha" required value="{{ fecha }}">
+        </div>
+        <div class="slv-alta-field">
+          <label for="slv-alta-nombre">{{ tr('page.reservas.ph_name') }} *</label>
+          <input type="text" name="nombre" id="slv-alta-nombre" required maxlength="120" placeholder="{{ tr('page.reservas.ph_name') }}" autocomplete="name">
+        </div>
+        <div class="slv-alta-field">
+          <label for="slv-alta-tel">{{ tr('page.reservas.ph_phone') }} *</label>
+          <input type="tel" name="telefono" id="slv-alta-tel" required inputmode="tel" maxlength="40" placeholder="{{ tr('page.reservas.ph_phone') }}" autocomplete="tel">
+        </div>
+        <div class="slv-alta-field">
+          <label for="slv-alta-pax">{{ tr('page.reservas.ph_people') }} *</label>
+          <input type="number" name="personas" id="slv-alta-pax" required min="1" max="99" value="2" placeholder="{{ tr('page.reservas.ph_people') }}">
+        </div>
+        <div class="slv-alta-field">
+          <label for="slv-alta-hora">{{ tr('page.salon.walkin_time') }} *</label>
+          <input type="time" name="hora" id="slv-alta-hora" required>
+        </div>
+        <div class="slv-alta-field slv-alta-field--full">
+          <label for="slv-alta-mesa">{{ tr('page.salon.walkin_mesa') }} *</label>
+          <select name="mesa" id="slv-alta-mesa" required>
+            <option value="" disabled selected>{{ tr('page.salon.assign_select') }}</option>
+            {% for m in mesas %}
+            <option value="{{ m.nombre }}">{{ m.nombre }} ({{ m.capacidad|default(4) }} p.)</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="slv-alta-field slv-alta-field--full">
+          <label for="slv-alta-notas">{{ tr('page.reservas.ph_notes') }}</label>
+          <textarea name="notas" id="slv-alta-notas" rows="2" maxlength="2000" placeholder="—"></textarea>
+        </div>
+      </div>
+      <div class="slv-modal-actions mt-3">
+        <button type="button" class="slv-btn" onclick="slvCloseReserva()">{{ tr('page.salon.modal_close') }}</button>
+        <button type="submit" class="slv-btn slv-btn--primary">{{ tr('page.reservas.btn_create') }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<div class="slv-modal-overlay slv-wi-overlay" id="slv-walkin-modal">
+  <div class="slv-wi-scrim" id="wi-scrim" onclick="slvCloseWalkin(event)" aria-hidden="true"></div>
+  <div class="slv-modal" onclick="event.stopPropagation()">
+    <h4>{{ tr('page.salon.walkin_title') }}</h4>
+    <p class="subtitle mb-1">{{ tr('page.salon.walkin_mesas_hint') }}</p>
+    <div class="slv-field">
+      <label>{{ tr('page.salon.walkin_mesa') }}</label>
+      <div class="wi-mesas-row">
+        <div class="wi-mesas-chips" id="wi-mesas-chips"></div>
+        <button type="button" class="slv-btn btn-sm" id="wi-mesa-add" title="{{ tr('page.salon.walkin_add_mesa') }}">{{ tr('page.salon.walkin_add_mesa') }}</button>
+        <button type="button" class="slv-btn btn-sm" id="wi-mesa-clear">{{ tr('page.salon.walkin_clear_mesas') }}</button>
+      </div>
+      <p class="wi-mesas-cap" id="wi-mesas-cap"></p>
+      <div id="wi-extra-wrap" class="slv-field d-none">
+        <label for="wi-mesa-extra">{{ tr('page.salon.walkin_pick_list') }}</label>
+        <select id="wi-mesa-extra" autocomplete="off"></select>
+      </div>
+    </div>
+    <div class="slv-field">
+      <label for="wi-pax">{{ tr('page.salon.walkin_party') }}</label>
+      <input type="number" id="wi-pax" min="1" max="99" value="2">
+    </div>
+    <div class="slv-field">
+      <label for="wi-name">{{ tr('page.salon.walkin_name') }}</label>
+      <input type="text" id="wi-name" placeholder="Walk-in" autocomplete="off">
+    </div>
+    <div class="slv-field">
+      <label for="wi-time">{{ tr('page.salon.walkin_time') }}</label>
+      <input type="time" id="wi-time">
+    </div>
+    <div class="slv-field">
+      <label for="wi-notes">{{ tr('page.salon.walkin_notes') }}</label>
+      <textarea id="wi-notes" placeholder="—"></textarea>
+    </div>
+    <div class="slv-modal-actions">
+      <button type="button" class="slv-btn" onclick="slvCloseWalkin()">{{ tr('page.salon.modal_close') }}</button>
+      <button type="button" class="slv-btn slv-btn--primary" id="wi-submit">{{ tr('page.salon.walkin_save') }}</button>
+    </div>
+  </div>
+</div>
+
+<div class="slv-modal-overlay" id="slv-assign-modal" onclick="slvCloseAssign(event)">
+  <div class="slv-modal" onclick="event.stopPropagation()">
+    <h4>{{ tr('page.salon.assign_title') }}</h4>
+    <p class="subtitle" id="as-rname"></p>
+    <div class="slv-field">
+      <label for="as-mesa">{{ tr('page.salon.assign_select') }}</label>
+      <select id="as-mesa"></select>
+    </div>
+    <p class="subtitle small slv-assign-hint mb-0">{{ tr('page.salon.assign_union_hint') }}</p>
+    <div class="slv-modal-actions">
+      <button type="button" class="slv-btn" onclick="slvCloseAssign()">{{ tr('page.salon.modal_close') }}</button>
+      <button type="button" class="slv-btn slv-btn--primary" id="as-submit">{{ tr('page.salon.assign_save') }}</button>
+    </div>
+  </div>
+</div>
+
+<script type="application/json" id="sala-viz-next">{{ next_visualizar | tojson }}</script>
+<script type="application/json" id="sala-viz-token">{{ sync_token | tojson }}</script>
+<script type="application/json" id="sala-viz-api-query">{"fecha":{{ fecha | tojson }},"turno":{{ turno | tojson }}}</script>
+<script type="application/json" id="slv-initial-payload">{{ {'reservas': reservas, 'mesas': mesas, 'totales': totales, 'sync_token': sync_token, 'server_time_sec': sala_server_time_sec, 'server_time': sala_server_time_hm} | tojson }}</script>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const VIZ_NEXT = JSON.parse(document.getElementById('sala-viz-next').textContent || '""');
+  const SLV_GESTION = {{ sala_live_gestion | tojson }};
+  const SLV_ERR_MESA = {{ tr('page.salon.err_table_busy') | tojson }};
+  const SLV_ERR_PIN = {{ tr('page.salon.err_pin_cancel') | tojson }};
+  const SLV_NO_MESA = {{ tr('page.salon.no_table') | tojson }};
+  const SLV_ASSIGN = {{ tr('page.salon.assign_table') | tojson }};
+  const SLV_WI = {{ tr('page.salon.walkin') | tojson }};
+  const SLV_WI_PRESS_PLUS = {{ tr('page.salon.walkin_press_plus') | tojson }};
+  const SLV_WI_CAP_UNION = {{ tr('page.salon.walkin_cap_union') | tojson }};
+  const SLV_WI_CAP_SINGLE = {{ tr('page.salon.walkin_cap_single') | tojson }};
+  const SLV_WI_DUP = {{ tr('page.salon.walkin_dup_mesa') | tojson }};
+  const SLV_NO_FREE = {{ tr('page.salon.no_free_tables') | tojson }};
+  const SLV_UNION_FAIL = {{ tr('page.salon.err_union_save') | tojson }};
+  const SLV_EDIT = {{ tr('page.salon.edit_reservation') | tojson }};
+  const SLV_CHANGE_MESA = {{ tr('page.salon.change_mesa') | tojson }};
+  const SLV_MESA_ACTUAL = {{ tr('page.salon.mesa_actual_mark') | tojson }};
+  const SLV_TIME_AT_TABLE = {{ tr('page.reservas.time_at_table') | tojson }};
+
+  let __slvPayload = null;
+  try {
+    __slvPayload = JSON.parse(document.getElementById('slv-initial-payload').textContent || '{}');
+  } catch (e) { __slvPayload = {}; }
+
+  let salaSyncToken = '';
+  try {
+    salaSyncToken = JSON.parse(document.getElementById('sala-viz-token').textContent || '""') || '';
+  } catch (e) {}
+
+  const qEl = document.getElementById('sala-viz-api-query');
+  let salaQuery = { fecha: '{{ fecha }}', turno: '{{ turno }}' };
+  try { if (qEl) salaQuery = JSON.parse(qEl.textContent || '{}'); } catch (e) {}
+
+  const ESTADOS = ['Pendiente', 'Confirmada', 'Llegó', 'Finalizada', 'Cancelada'];
+  const MESA_EST = ['mesa-libre', 'mesa-Pendiente', 'mesa-Confirmada', 'mesa-Llegó', 'mesa-Finalizada', 'mesa-Cancelada'];
+
+  function esc(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function findReserva(id) {
+    if (!__slvPayload || !__slvPayload.reservas) return null;
+    const n = parseInt(id, 10);
+    return __slvPayload.reservas.find(function (x) { return parseInt(x.id, 10) === n; }) || null;
+  }
+
+  function normalizeLlegadaIso(hora) {
+    if (hora == null || hora === '') return '';
+    let s = String(hora).trim();
+    if (!s) return '';
+    if (s.indexOf('T') === -1 && s.indexOf(' ') !== -1) s = s.replace(' ', 'T');
+    return s;
+  }
+
+  function formatTiempoEnMesa(isoRaw) {
+    const iso = normalizeLlegadaIso(isoRaw);
+    if (!iso) return '';
+    const llegada = new Date(iso);
+    if (isNaN(llegada.getTime())) return '';
+    const diff = Math.floor((Date.now() - llegada.getTime()) / 1000);
+    if (diff < 0) return '00:00';
+    const h = Math.floor(diff / 3600);
+    const m = Math.floor((diff % 3600) / 60);
+    const sec = diff % 60;
+    if (h > 0) {
+      return String(h) + ':' + String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+    }
+    return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+  }
+
+  function refreshMesaTimers() {
+    document.querySelectorAll('.slv-live-timer[data-hora]').forEach(function (node) {
+      const raw = node.getAttribute('data-hora');
+      if (!raw) return;
+      node.textContent = formatTiempoEnMesa(raw);
+    });
+  }
+
+  function setMesaTooltip(el, m, res) {
+    const tip = el.querySelector('[data-tooltip]');
+    if (!tip) return;
+    if (res) {
+      let extra = '';
+      if (res.estado === 'Llegó' && res.hora_llegada) {
+        extra = '<span>' + esc(SLV_TIME_AT_TABLE) + ': <span class="slv-live-timer" data-hora="' + esc(normalizeLlegadaIso(res.hora_llegada)) + '">' + esc(formatTiempoEnMesa(res.hora_llegada)) + '</span></span>';
+      }
+      tip.innerHTML = '<strong>' + esc(res.nombre) + '</strong><span>' + esc(res.hora) + '</span><span>' + esc(res.personas) + ' pers.</span><span>' + esc(res.estado) + '</span>' + extra;
+    } else {
+      tip.innerHTML = '<strong>' + esc(m.nombre) + '</strong><span>Libre · ' + esc(m.capacidad || 4) + ' p.</span>';
+    }
+  }
+
+  function applyMesaDom(m) {
+    const el = document.querySelector('.viz-mesa-wrap[data-mesa-id="' + m.id + '"]');
+    if (!el) return;
+    MESA_EST.forEach(function (c) { el.classList.remove(c); });
+    const res = m.reserva || null;
+    if (res && res.estado) el.classList.add('mesa-' + res.estado);
+    else el.classList.add('mesa-libre');
+    el.dataset.reservaId = res ? String(res.id) : '';
+    const tmr = el.querySelector('[data-mesa-timer]');
+    if (tmr) {
+      if (res && res.estado === 'Llegó' && res.hora_llegada) {
+        const iso = normalizeLlegadaIso(res.hora_llegada);
+        tmr.setAttribute('data-hora', iso);
+        tmr.removeAttribute('hidden');
+        tmr.textContent = formatTiempoEnMesa(res.hora_llegada);
+      } else {
+        tmr.removeAttribute('data-hora');
+        tmr.setAttribute('hidden', '');
+        tmr.textContent = '';
+      }
+    }
+    setMesaTooltip(el, m, res);
+  }
+
+  function renderReservasList() {
+    const box = document.getElementById('slv-reservas-list');
+    if (!box || !__slvPayload) return;
+    const list = __slvPayload.reservas || [];
+    if (!list.length) {
+      box.innerHTML = '<div class="slv-empty"><i class="bi bi-inbox d-block mb-2 fs-2 opacity-50"></i>{{ tr("page.salon.live_no_reservations")|e }}</div>';
+      return;
+    }
+    let html = '';
+    list.forEach(function (r) {
+      const st = r.estado || 'Pendiente';
+      const mesaTxt = (r.mesa && String(r.mesa).trim()) ? esc(r.mesa) : '';
+      html += '<div class="slv-rcard estado-' + esc(st) + '" data-rid="' + esc(r.id) + '">';
+      html += '<div class="slv-rname">' + esc(r.nombre) + (mesaTxt ? ' <span class="text-secondary fw-normal small">· ' + mesaTxt + '</span>' : '') + '</div>';
+      html += '<div class="slv-rmeta"><span><i class="bi bi-clock"></i> ' + esc(r.hora) + '</span><span><i class="bi bi-people"></i> ' + esc(r.personas) + '</span></div>';
+      if (st === 'Llegó' && r.hora_llegada) {
+        const hl = normalizeLlegadaIso(r.hora_llegada);
+        html += '<div class="slv-rmesa-time"><i class="bi bi-hourglass-split me-1"></i><span class="slv-live-timer" data-hora="' + esc(hl) + '">' + esc(formatTiempoEnMesa(r.hora_llegada)) + '</span></div>';
+      }
+      if (!mesaTxt) {
+        html += '<div class="slv-rmesa text-warning"><i class="bi bi-geo-alt"></i> ' + SLV_NO_MESA + '</div>';
+      }
+      if (SLV_GESTION) {
+        html += '<div class="slv-ractions">';
+        ESTADOS.forEach(function (e) {
+          const on = e === st ? ' on' : '';
+          const cls = e === 'Pendiente' ? 'slv-chip-p' : (e === 'Confirmada' ? 'slv-chip-c' : (e === 'Llegó' ? 'slv-chip-l' : (e === 'Finalizada' ? 'slv-chip-f' : 'slv-chip-x')));
+          html += '<button type="button" class="slv-chip ' + cls + on + '" data-estado="' + esc(e) + '" data-rid="' + esc(r.id) + '">' + esc(e) + '</button>';
+        });
+        html += '</div>';
+        html += '<button type="button" class="slv-assign-mini" data-reassign="' + esc(r.id) + '">' + esc(mesaTxt ? SLV_CHANGE_MESA : SLV_ASSIGN) + '</button>';
+        html += '<div class="slv-rsecondary"><a href="/editar/' + esc(r.id) + '?fecha=' + encodeURIComponent(salaQuery.fecha || '') + '&next=' + encodeURIComponent(VIZ_NEXT || '') + '">' + esc(SLV_EDIT) + '</a></div>';
+      }
+      html += '</div>';
+    });
+    box.innerHTML = html;
+  }
+
+  function bindReservaListEvents() {
+    const box = document.getElementById('slv-reservas-list');
+    if (!box) return;
+    box.querySelectorAll('.slv-rcard').forEach(function (card) {
+      card.addEventListener('click', function (ev) {
+        if (ev.target.closest('button')) return;
+        const id = card.getAttribute('data-rid');
+        const r = findReserva(id);
+        if (r) abrirModal(r, (r.mesa || '').trim() || null);
+      });
+    });
+    box.querySelectorAll('.slv-chip').forEach(function (btn) {
+      btn.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        const rid = btn.getAttribute('data-rid');
+        const est = btn.getAttribute('data-estado');
+        postEstado(rid, est);
+      });
+    });
+    box.querySelectorAll('[data-reassign]').forEach(function (btn) {
+      btn.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        openAssignModal(btn.getAttribute('data-reassign'));
+      });
+    });
+  }
+
+  function postEstado(rid, estado) {
+    fetch('/api/reserva_estado', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ id: parseInt(rid, 10), estado: estado })
+    })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (x) {
+        if (!x.j || !x.j.ok) {
+          if (x.j && x.j.error === 'pin_required') {
+            if (typeof mostrarToast === 'function') mostrarToast(SLV_ERR_PIN);
+            else alert(SLV_ERR_PIN);
+          }
+          return;
+        }
+        tickSalaSync(true);
+      })
+      .catch(function () {});
+  }
+
+  function updateStats() {
+    const t = __slvPayload && __slvPayload.totales;
+    if (!t) return;
+    const elL = document.getElementById('stat-libres');
+    const elO = document.getElementById('stat-ocupadas');
+    const elI = document.getElementById('stat-lista');
+    const elP = document.getElementById('stat-pct');
+    if (elL) elL.textContent = t.libres;
+    if (elO) elO.textContent = t.ocupadas;
+    if (elI) elI.textContent = t.reservas_lista;
+    if (elP) elP.textContent = (t.pct_ocupacion != null ? t.pct_ocupacion : 0) + '%';
+    const clk = document.getElementById('slv-srv-clock');
+    if (clk && __slvPayload.server_time_sec) clk.textContent = __slvPayload.server_time_sec;
+    else if (clk && __slvPayload.server_time) clk.textContent = __slvPayload.server_time;
+  }
+
+  function applyFullPayload(data) {
+    __slvPayload = data;
+    salaSyncToken = data.sync_token || '';
+    (__slvPayload.mesas || []).forEach(applyMesaDom);
+    renderReservasList();
+    bindReservaListEvents();
+    updateStats();
+    const wm = document.getElementById('slv-walkin-modal');
+    if (wm && wm.classList.contains('visible')) {
+      wiRenderMesaChips();
+    }
+  }
+
+  function tickSalaSync(force) {
+    const u = '/api/sala_vivo?fecha=' + encodeURIComponent(salaQuery.fecha || '') + '&turno=' + encodeURIComponent(salaQuery.turno || '');
+    fetch(u, { credentials: 'same-origin', cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('sync'); return r.json(); })
+      .then(function (data) {
+        const t = document.getElementById('sala-sync-time');
+        if (t) t.textContent = new Date().toLocaleTimeString();
+        if (force || (data.sync_token && data.sync_token !== salaSyncToken)) {
+          applyFullPayload(data);
+        } else {
+          if (data.server_time_sec) {
+            const clk = document.getElementById('slv-srv-clock');
+            if (clk) clk.textContent = data.server_time_sec;
+          }
+        }
+      })
+      .catch(function () {
+        const t = document.getElementById('sala-sync-time');
+        if (t) t.textContent = '·';
+      });
+  }
+
+  setInterval(function () { tickSalaSync(false); }, 4000);
+  setInterval(refreshMesaTimers, 1000);
+  applyFullPayload(__slvPayload || {});
+  refreshMesaTimers();
+
+  let reservaActual = null;
+
+  function onMesaClick(el) {
+    const rid = el.dataset.reservaId;
+    const res = rid ? findReserva(rid) : null;
+    const nombre = el.dataset.mesaNombre || '';
+    const mid = parseInt(el.dataset.mesaId || '0', 10);
+    const mcap = parseInt(el.dataset.capacidad || '0', 10) || 0;
+    const wiM = document.getElementById('slv-walkin-modal');
+    const wiMapPick = SLV_GESTION && wiM && wiM.classList.contains('visible') && wiM.classList.contains('slv-walkin--map-pick');
+    if (wiMapPick) {
+      if (res) {
+        abrirModal(res, nombre);
+        return;
+      }
+      if (mid && nombre) {
+        wiTryAddMesaFromMap(mid, nombre, mcap);
+      }
+      return;
+    }
+    if (res) {
+      abrirModal(res, nombre);
+      return;
+    }
+    if (SLV_GESTION) {
+      const rvM = document.getElementById('slv-reserva-modal');
+      if (rvM && rvM.classList.contains('visible')) {
+        const mesaSel = document.getElementById('slv-alta-mesa');
+        if (mesaSel) {
+          const opt = Array.from(mesaSel.options).find(function (o) { return o.value === nombre; });
+          if (opt) {
+            mesaSel.value = nombre;
+            return;
+          }
+        }
+      }
+      if (SLV_GESTION && wiM && wiM.classList.contains('visible')) {
+        if (mid && nombre) {
+          wiTryAddMesaFromMap(mid, nombre, mcap);
+        }
+        return;
+      }
+      openWalkinModal(el);
+    } else {
+      if (typeof mostrarToast === 'function') mostrarToast(nombre + ' · libre');
+    }
+  }
+
+  function abrirModal(r, mesaNombre) {
+    reservaActual = r;
+    document.getElementById('modal-nombre').textContent = r.nombre;
+    const sub = document.getElementById('modal-mesa');
+    if (sub) sub.textContent = mesaNombre ? ('Mesa: ' + mesaNombre) : '—';
+    document.getElementById('modal-hora').textContent = r.hora;
+    document.getElementById('modal-personas').textContent = r.personas + ' personas';
+    document.getElementById('modal-estado').textContent = r.estado;
+    const tw = document.getElementById('modal-tiempo-wrap');
+    const tv = document.getElementById('modal-tiempo-val');
+    if (tw && tv) {
+      if (r.estado === 'Llegó' && r.hora_llegada) {
+        tw.classList.remove('d-none');
+        const iso = normalizeLlegadaIso(r.hora_llegada);
+        tv.setAttribute('data-hora', iso);
+        tv.textContent = formatTiempoEnMesa(r.hora_llegada);
+      } else {
+        tw.classList.add('d-none');
+        tv.removeAttribute('data-hora');
+        tv.textContent = '';
+      }
+    }
+    const fecha = salaQuery.fecha || '{{ fecha }}';
+    const nextQ = encodeURIComponent(VIZ_NEXT || '');
+    if (!SLV_GESTION) {
+      let btns = '';
+      ESTADOS.forEach(function (e) {
+        const activo = e === r.estado ? 'activo' : '';
+        btns += '<a href="/estado/' + r.id + '/' + encodeURIComponent(e) + '?fecha=' + encodeURIComponent(fecha) + '&next=' + nextQ + '" class="btn-estado btn-' + e + ' ' + activo + '">' + e + '</a>';
+      });
+      document.getElementById('modal-btns').innerHTML = btns;
+    } else {
+      let btns = '';
+      ESTADOS.forEach(function (e) {
+        const activo = e === r.estado ? 'activo' : '';
+        btns += '<button type="button" class="btn-estado btn-' + e + ' ' + activo + '" data-go-estado="' + e + '">' + e + '</button>';
+      });
+      const wrap = document.getElementById('modal-btns');
+      wrap.innerHTML = btns;
+      wrap.querySelectorAll('[data-go-estado]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          postEstado(r.id, b.getAttribute('data-go-estado'));
+          cerrarModal();
+        });
+      });
+    }
+    const extraEl = document.getElementById('modal-gestion-extra');
+    if (extraEl) {
+      if (SLV_GESTION) {
+        extraEl.classList.remove('d-none');
+        extraEl.innerHTML = '<a href="/editar/' + esc(r.id) + '?fecha=' + encodeURIComponent(salaQuery.fecha || '') + '&next=' + encodeURIComponent(VIZ_NEXT || '') + '">' + esc(SLV_EDIT) + '</a>' +
+          '<button type="button" id="slv-modal-reassign">' + esc(SLV_CHANGE_MESA) + '</button>';
+        const br = document.getElementById('slv-modal-reassign');
+        if (br) {
+          br.addEventListener('click', function () {
+            cerrarModal();
+            openAssignModal(r.id);
+          });
+        }
+      } else {
+        extraEl.classList.add('d-none');
+        extraEl.innerHTML = '';
+      }
+    }
+    document.getElementById('modal').classList.add('visible');
+  }
+
+  function cerrarModal(e) {
+    if (!e || e.target === document.getElementById('modal')) {
+      document.getElementById('modal').classList.remove('visible');
+    }
+  }
+
+  let vizScale = 1;
+  function vizZoom(delta) {
+    vizScale = Math.min(2.4, Math.max(0.45, vizScale + delta));
+    const el = document.getElementById('viz-map-zoom');
+    if (el) el.style.transform = 'scale(' + vizScale + ')';
+  }
+  function vizZoomReset() {
+    vizScale = 1;
+    const el = document.getElementById('viz-map-zoom');
+    if (el) el.style.transform = 'scale(1)';
+  }
+
+  (function () {
+    const root = document.getElementById('viz-mapa-root');
+    const chk = document.getElementById('viz-toggle-plano');
+    if (!root || !chk) return;
+    const sk = 'vizVerPlanoLocal';
+    const s = sessionStorage.getItem(sk);
+    chk.checked = s === null ? false : s === '1';
+    function applyPlano() {
+      root.classList.toggle('viz-mapa--solo-mesas', !chk.checked);
+      sessionStorage.setItem(sk, chk.checked ? '1' : '0');
+    }
+    chk.addEventListener('change', applyPlano);
+    applyPlano();
+  })();
+
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape') {
+      cerrarModal();
+      slvCloseWalkin();
+      slvCloseAssign();
+    }
+  });
+
+  /* Walk-in */
+  let wiMesaSel = [];
+  let wiPickNext = false;
+
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function nowTimeHM() {
+    const d = new Date();
+    return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  }
+  function wiCapacidadUnionClient(caps) {
+    const capsOk = caps.map(function (c) { return parseInt(c, 10) || 0; }).filter(function (c) { return c > 0; });
+    if (!capsOk.length) return 0;
+    const n = capsOk.length;
+    const total = capsOk.reduce(function (a, b) { return a + b; }, 0);
+    const adj = Math.max(0, n - 1) * 2;
+    return Math.max(2, total - adj);
+  }
+  function wiFillWalkinExtraSelect(sel) {
+    if (!sel) return;
+    sel.innerHTML = '';
+    const ph = document.createElement('option');
+    ph.value = '';
+    ph.textContent = '—';
+    sel.appendChild(ph);
+    const taken = new Set(wiMesaSel.map(function (x) { return x.id; }));
+    let n = 0;
+    (__slvPayload.mesas || []).forEach(function (m) {
+      if (m.reserva) return;
+      const id = parseInt(m.id, 10) || 0;
+      if (!id || !m.nombre) return;
+      if (taken.has(id)) return;
+      const o = document.createElement('option');
+      o.value = String(id);
+      o.setAttribute('data-nombre', String(m.nombre).trim());
+      o.setAttribute('data-cap', String(m.capacidad != null ? m.capacidad : 4));
+      o.textContent = String(m.nombre) + ' (' + (m.capacidad || 4) + ')';
+      sel.appendChild(o);
+      n += 1;
+    });
+    if (n === 0) {
+      const z = document.createElement('option');
+      z.value = '';
+      z.disabled = true;
+      z.textContent = SLV_NO_FREE;
+      sel.appendChild(z);
+    }
+  }
+  function wiUpdateWalkinOverlayPickMode() {
+    const modal = document.getElementById('slv-walkin-modal');
+    if (!modal) {
+      document.body.classList.remove('slv-wi-picking-map');
+      return;
+    }
+    if (!modal.classList.contains('visible')) {
+      modal.classList.remove('slv-walkin--map-pick');
+      document.body.classList.remove('slv-wi-picking-map');
+      return;
+    }
+    const pick = !!(wiPickNext || wiMesaSel.length === 0);
+    modal.classList.toggle('slv-walkin--map-pick', pick);
+    document.body.classList.toggle('slv-wi-picking-map', pick);
+  }
+  function wiRenderMesaChips() {
+    const box = document.getElementById('wi-mesas-chips');
+    const capEl = document.getElementById('wi-mesas-cap');
+    if (!box) return;
+    box.innerHTML = '';
+    wiMesaSel.forEach(function (m) {
+      const sp = document.createElement('span');
+      sp.className = 'wi-mesa-chip';
+      sp.appendChild(document.createTextNode(m.nombre));
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.setAttribute('aria-label', '×');
+      del.appendChild(document.createTextNode('×'));
+      del.addEventListener('click', function () {
+        wiMesaSel = wiMesaSel.filter(function (x) { return x.id !== m.id; });
+        if (!wiMesaSel.length) wiPickNext = true;
+        wiRenderMesaChips();
+      });
+      sp.appendChild(del);
+      box.appendChild(sp);
+    });
+    if (capEl) {
+      if (wiMesaSel.length >= 2) {
+        const u = wiCapacidadUnionClient(wiMesaSel.map(function (x) { return x.capacidad; }));
+        capEl.textContent = SLV_WI_CAP_UNION.replace('{n}', String(u));
+      } else if (wiMesaSel.length === 1) {
+        capEl.textContent = SLV_WI_CAP_SINGLE.replace('{n}', String(wiMesaSel[0].capacidad));
+      } else {
+        capEl.textContent = '';
+      }
+    }
+    const addBtn = document.getElementById('wi-mesa-add');
+    if (addBtn) addBtn.disabled = wiMesaSel.length === 0 || wiMesaSel.length >= 6;
+    const extraWrap = document.getElementById('wi-extra-wrap');
+    const extraSel = document.getElementById('wi-mesa-extra');
+    const wmod = document.getElementById('slv-walkin-modal');
+    const showExtra = !!(wmod && wmod.classList.contains('visible') && (wiPickNext || wiMesaSel.length === 0) && wiMesaSel.length < 6);
+    if (extraWrap) extraWrap.classList.toggle('d-none', !showExtra);
+    if (showExtra && extraSel) wiFillWalkinExtraSelect(extraSel);
+    wiUpdateWalkinOverlayPickMode();
+  }
+  function wiResetWalkinMesas(allowFirstTap) {
+    wiMesaSel = [];
+    wiPickNext = !!allowFirstTap;
+    wiRenderMesaChips();
+  }
+  function wiTryAddMesaFromMap(id, nombre, cap) {
+    if (!id || !nombre) return;
+    if (wiMesaSel.some(function (x) { return x.id === id; })) {
+      if (typeof mostrarToast === 'function') mostrarToast(SLV_WI_DUP);
+      return;
+    }
+    if (wiMesaSel.length >= 6) {
+      if (typeof mostrarToast === 'function') mostrarToast('Máx. 6');
+      return;
+    }
+    if (wiMesaSel.length >= 1 && !wiPickNext) {
+      if (typeof mostrarToast === 'function') mostrarToast(SLV_WI_PRESS_PLUS);
+      return;
+    }
+    wiMesaSel.push({ id: id, nombre: nombre, capacidad: cap || 4 });
+    wiPickNext = false;
+    wiRenderMesaChips();
+  }
+  function slvEnsureAltaHora() {
+    var h = document.getElementById('slv-alta-hora');
+    if (!h) return;
+    if (!h.value) h.value = nowTimeHM();
+  }
+  function slvCloseReserva(ev) {
+    var m = document.getElementById('slv-reserva-modal');
+    if (!m) return;
+    if (!ev || ev.target.id === 'slv-reserva-modal') {
+      m.classList.remove('visible');
+    }
+  }
+  function slvOpenReservaModal() {
+    var m = document.getElementById('slv-reserva-modal');
+    if (!m) return;
+    const wiH = document.getElementById('slv-walkin-modal');
+    if (wiH) {
+      wiH.classList.remove('visible');
+      wiH.classList.remove('slv-walkin--map-pick');
+    }
+    wiResetWalkinMesas(false);
+    slvEnsureAltaHora();
+    m.classList.add('visible');
+    setTimeout(function () {
+      var n = document.getElementById('slv-alta-nombre');
+      if (n) n.focus();
+    }, 80);
+  }
+  function openWalkinModal(el) {
+    document.getElementById('slv-reserva-modal')?.classList.remove('visible');
+    wiResetWalkinMesas(true);
+    const id = parseInt(el.dataset.mesaId || '0', 10);
+    const cap = parseInt(el.dataset.capacidad || '0', 10) || 0;
+    const nombre = el.dataset.mesaNombre || '';
+    if (id && nombre) {
+      wiMesaSel.push({ id: id, nombre: nombre, capacidad: cap || 4 });
+      wiPickNext = false;
+      wiRenderMesaChips();
+    }
+    document.getElementById('wi-pax').value = 2;
+    document.getElementById('wi-name').value = '';
+    document.getElementById('wi-notes').value = '';
+    document.getElementById('wi-time').value = nowTimeHM();
+    document.getElementById('slv-walkin-modal').classList.add('visible');
+    wiRenderMesaChips();
+  }
+  function slvCloseWalkin(ev) {
+    if (arguments.length === 0 || ev === undefined || ev === null) {
+      /* Botón Cerrar, Escape, etc. */
+    } else {
+      const t = ev.target;
+      if (!t || (t.id !== 'wi-scrim' && t.id !== 'slv-walkin-modal')) return;
+    }
+    const wm = document.getElementById('slv-walkin-modal');
+    if (wm) {
+      wm.classList.remove('visible');
+      wm.classList.remove('slv-walkin--map-pick');
+    }
+    wiResetWalkinMesas(false);
+  }
+  function slvOpenWalkinFromUi() {
+    document.getElementById('slv-reserva-modal')?.classList.remove('visible');
+    wiResetWalkinMesas(true);
+    document.getElementById('wi-pax').value = 2;
+    document.getElementById('wi-name').value = '';
+    document.getElementById('wi-notes').value = '';
+    document.getElementById('wi-time').value = nowTimeHM();
+    document.getElementById('slv-walkin-modal').classList.add('visible');
+    wiRenderMesaChips();
+  }
+  document.getElementById('slv-fab-reserva')?.addEventListener('click', function () {
+    slvOpenReservaModal();
+  });
+  document.getElementById('slv-fab-walkin')?.addEventListener('click', slvOpenWalkinFromUi);
+  document.getElementById('wi-mesa-add')?.addEventListener('click', function () {
+    if (wiMesaSel.length >= 6) return;
+    if (!wiMesaSel.length) {
+      if (typeof mostrarToast === 'function') mostrarToast(SLV_NO_MESA);
+      return;
+    }
+    wiPickNext = true;
+    wiRenderMesaChips();
+  });
+  document.getElementById('wi-mesa-clear')?.addEventListener('click', function () {
+    wiResetWalkinMesas(true);
+  });
+  document.getElementById('wi-mesa-extra')?.addEventListener('change', function () {
+    const sel = this;
+    const v = (sel.value || '').trim();
+    if (!v) return;
+    const opt = sel.options[sel.selectedIndex];
+    if (!opt) return;
+    const nombre = (opt.getAttribute('data-nombre') || '').trim();
+    const id = parseInt(v, 10) || 0;
+    const cap = parseInt(opt.getAttribute('data-cap') || '4', 10) || 4;
+    if (!id || !nombre) return;
+    wiTryAddMesaFromMap(id, nombre, cap);
+    sel.selectedIndex = 0;
+  });
+  /* Clic en mesa con modal abierto: el FAB y otros fixed pueden quedar por encima del plano; capturamos en fase capture. */
+  document.addEventListener('click', function (ev) {
+    const modal = document.getElementById('slv-walkin-modal');
+    if (!modal || !modal.classList.contains('visible') || !modal.classList.contains('slv-walkin--map-pick')) return;
+    if (!ev.target || !ev.target.closest) return;
+    const wrap = ev.target.closest('.viz-mesa-wrap');
+    if (!wrap) return;
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+    onMesaClick(wrap);
+  }, true);
+  document.getElementById('wi-submit')?.addEventListener('click', function () {
+    if (!wiMesaSel.length) {
+      if (typeof mostrarToast === 'function') mostrarToast(SLV_NO_MESA);
+      return;
+    }
+    const bodyBase = {
+      fecha: salaQuery.fecha,
+      personas: parseInt(document.getElementById('wi-pax').value, 10) || 2,
+      nombre: (document.getElementById('wi-name').value || '').trim() || 'Walk-in',
+      hora: (document.getElementById('wi-time').value || '').trim() || nowTimeHM(),
+      notas: (document.getElementById('wi-notes').value || '').trim()
+    };
+    function wiToastWalkinErr(x) {
+      const msg = (x.j && x.j.error === 'mesa_ocupada') ? SLV_ERR_MESA : 'Error';
+      if (typeof mostrarToast === 'function') mostrarToast(msg);
+      else alert(msg);
+    }
+    function wiRollbackUnion(unionId) {
+      if (!unionId) return;
+      fetch('/api/union_mesas/' + encodeURIComponent(String(unionId)), { method: 'DELETE', credentials: 'same-origin' }).catch(function () {});
+    }
+    function postWalkin(mesaNombre, rollbackUnionId) {
+      return fetch('/api/walkin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify(Object.assign({}, bodyBase, { mesa: mesaNombre }))
+      })
+        .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j, st: r.status }; }); })
+        .then(function (x) {
+          if (!x.j || !x.j.ok) {
+            wiRollbackUnion(rollbackUnionId);
+            wiToastWalkinErr(x);
+            return;
+          }
+          slvCloseWalkin({ target: { id: 'slv-walkin-modal' } });
+          tickSalaSync(true);
+        })
+        .catch(function () {
+          wiRollbackUnion(rollbackUnionId);
+          if (typeof mostrarToast === 'function') mostrarToast('Error');
+        });
+    }
+    if (wiMesaSel.length === 1) {
+      postWalkin(wiMesaSel[0].nombre, null);
+      return;
+    }
+    const ids = wiMesaSel.map(function (m) { return m.id; });
+    fetch('/api/union_mesas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ mesa_ids: ids, nombre: '' })
+    })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (x) {
+        if (!x.ok || !x.j || !x.j.ok) {
+          const msg = (x.j && x.j.error) ? String(x.j.error) : SLV_UNION_FAIL;
+          if (typeof mostrarToast === 'function') mostrarToast(msg);
+          return;
+        }
+        const uid = x.j.id;
+        const nom = (x.j.nombre || '').trim();
+        if (!nom) {
+          wiRollbackUnion(uid);
+          if (typeof mostrarToast === 'function') mostrarToast(SLV_UNION_FAIL);
+          return;
+        }
+        return postWalkin(nom, uid);
+      })
+      .catch(function () { if (typeof mostrarToast === 'function') mostrarToast(SLV_UNION_FAIL); });
+  });
+
+  slvEnsureAltaHora();
+
+  let assignRid = null;
+  function openAssignModalAfterFill() {
+    const sel = document.getElementById('as-mesa');
+    if (!sel || !sel.options.length) {
+      if (typeof mostrarToast === 'function') mostrarToast(SLV_NO_FREE);
+      assignRid = null;
+      return;
+    }
+    let anyEnabled = false;
+    for (let i = 0; i < sel.options.length; i++) {
+      if (!sel.options[i].disabled) { anyEnabled = true; break; }
+    }
+    if (!anyEnabled) {
+      if (typeof mostrarToast === 'function') mostrarToast(SLV_NO_FREE);
+      assignRid = null;
+      return;
+    }
+    document.getElementById('slv-assign-modal').classList.add('visible');
+  }
+  function fillAssignSelectFromMapOnly() {
+    const sel = document.getElementById('as-mesa');
+    if (!sel) return;
+    sel.innerHTML = '';
+    (__slvPayload.mesas || []).forEach(function (m) {
+      if (m.reserva) return;
+      const o = document.createElement('option');
+      o.value = m.nombre;
+      o.textContent = m.nombre + ' (' + (m.capacidad || 4) + 'p)';
+      sel.appendChild(o);
+    });
+  }
+  function openAssignModal(rid) {
+    assignRid = parseInt(rid, 10);
+    const r = findReserva(String(assignRid));
+    document.getElementById('as-rname').textContent = r
+      ? (r.nombre + ' · ' + r.hora + ' · ' + (r.personas != null ? r.personas : '') + ' pax')
+      : '';
+    const sel = document.getElementById('as-mesa');
+    if (!sel) return;
+    sel.innerHTML = '';
+    fetch('/api/sala_mesas_opciones?reserva_id=' + encodeURIComponent(String(assignRid)), { credentials: 'same-origin' })
+      .then(function (resp) { return resp.json(); })
+      .then(function (j) {
+        if (!j || !j.ok || !Array.isArray(j.opciones) || !j.opciones.length) {
+          fillAssignSelectFromMapOnly();
+          openAssignModalAfterFill();
+          return;
+        }
+        j.opciones.forEach(function (o) {
+          const op = document.createElement('option');
+          op.value = o.nombre;
+          let t = o.nombre + ' (' + (o.capacidad || 4) + 'p)';
+          if (o.actual) t += ' ' + SLV_MESA_ACTUAL;
+          const el = typeof o.elegible === 'boolean' ? o.elegible : !!(o.libre || o.actual);
+          if (!el) op.disabled = true;
+          op.textContent = t;
+          sel.appendChild(op);
+        });
+        openAssignModalAfterFill();
+      })
+      .catch(function () {
+        fillAssignSelectFromMapOnly();
+        openAssignModalAfterFill();
+      });
+  }
+  function slvCloseAssign(ev) {
+    if (!ev || ev.target.id === 'slv-assign-modal') {
+      document.getElementById('slv-assign-modal').classList.remove('visible');
+      assignRid = null;
+    }
+  }
+  document.getElementById('as-submit')?.addEventListener('click', function () {
+    const mesa = (document.getElementById('as-mesa').value || '').trim();
+    if (!assignRid || !mesa) return;
+    fetch('/api/asignar_mesa_reserva', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ reserva_id: assignRid, mesa: mesa })
+    })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (x) {
+        if (!x.j || !x.j.ok) {
+          if (typeof mostrarToast === 'function') mostrarToast(SLV_ERR_MESA);
+          return;
+        }
+        slvCloseAssign({ target: { id: 'slv-assign-modal' } });
+        tickSalaSync(true);
+      });
+  });
+
+  /* Init mesa tooltips from payload */
+  (__slvPayload.mesas || []).forEach(function (m) {
+    const el = document.querySelector('.viz-mesa-wrap[data-mesa-id="' + m.id + '"]');
+    if (el) {
+      el.dataset.reservaId = m.reserva ? String(m.reserva.id) : '';
+      setMesaTooltip(el, m, m.reserva || null);
+    }
+  });
+</script>
+{% endblock %}

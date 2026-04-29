@@ -1,0 +1,192 @@
+{# Selector d'idioma: pastilla amb icona, codi + nom, menú amb opcions clares #}
+<div class="dropdown lang-switcher">
+  <button
+    class="lang-switcher-trigger"
+    type="button"
+    data-bs-toggle="dropdown"
+    data-bs-auto-close="outside"
+    aria-expanded="false"
+    aria-haspopup="true"
+    aria-label="{{ tr('lang.switcher_aria') }}"
+    title="{{ tr('lang.switcher_aria') }}"
+  >
+    <span class="lang-switcher-trigger-inner">
+      <i class="bi bi-translate lang-switcher-ico" aria-hidden="true"></i>
+      <span class="lang-switcher-pill">
+        <span class="lang-switcher-code">{{ current_lang|upper }}</span>
+        <span class="lang-switcher-name">{{ tr('lang.' ~ current_lang) }}</span>
+      </span>
+      <i class="bi bi-chevron-down lang-switcher-caret" aria-hidden="true"></i>
+    </span>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end lang-switcher-panel" role="menu">
+    <li class="lang-switcher-panel-head px-3" role="presentation"><span>{{ tr('lang.choose_header') }}</span></li>
+    <li role="none">
+      <a class="lang-switcher-opt dropdown-item{% if current_lang == 'es' %} is-active{% endif %}" href="{{ url_for('public.set_lang', lang_code='es') }}" role="menuitem" {% if current_lang == 'es' %}aria-current="true"{% endif %}>
+        <span class="lang-switcher-opt-code">ES</span>
+        <span class="lang-switcher-opt-label">{{ tr('lang.es') }}</span>
+        {% if current_lang == 'es' %}<i class="bi bi-check2 lang-switcher-check" aria-hidden="true"></i>{% endif %}
+      </a>
+    </li>
+    <li role="none">
+      <a class="lang-switcher-opt dropdown-item{% if current_lang == 'ca' %} is-active{% endif %}" href="{{ url_for('public.set_lang', lang_code='ca') }}" role="menuitem" {% if current_lang == 'ca' %}aria-current="true"{% endif %}>
+        <span class="lang-switcher-opt-code">CA</span>
+        <span class="lang-switcher-opt-label">{{ tr('lang.ca') }}</span>
+        {% if current_lang == 'ca' %}<i class="bi bi-check2 lang-switcher-check" aria-hidden="true"></i>{% endif %}
+      </a>
+    </li>
+    <li role="none">
+      <a class="lang-switcher-opt dropdown-item{% if current_lang == 'va' %} is-active{% endif %}" href="{{ url_for('public.set_lang', lang_code='va') }}" role="menuitem" {% if current_lang == 'va' %}aria-current="true"{% endif %}>
+        <span class="lang-switcher-opt-code">VA</span>
+        <span class="lang-switcher-opt-label">{{ tr('lang.va') }}</span>
+        {% if current_lang == 'va' %}<i class="bi bi-check2 lang-switcher-check" aria-hidden="true"></i>{% endif %}
+      </a>
+    </li>
+    <li role="none">
+      <a class="lang-switcher-opt dropdown-item{% if current_lang == 'en' %} is-active{% endif %}" href="{{ url_for('public.set_lang', lang_code='en') }}" role="menuitem" {% if current_lang == 'en' %}aria-current="true"{% endif %}>
+        <span class="lang-switcher-opt-code">EN</span>
+        <span class="lang-switcher-opt-label">{{ tr('lang.en') }}</span>
+        {% if current_lang == 'en' %}<i class="bi bi-check2 lang-switcher-check" aria-hidden="true"></i>{% endif %}
+      </a>
+    </li>
+  </ul>
+</div>
+
+<style>
+.lang-switcher { position: relative; }
+.lang-switcher-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 999px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.08);
+  cursor: pointer;
+  transition: box-shadow 0.18s ease, transform 0.12s ease;
+  font: inherit;
+  color: #0f172a;
+}
+.lang-switcher-trigger:hover {
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1), 0 0 0 1px rgba(var(--brand-primary-rgb), 0.35);
+}
+.lang-switcher-trigger:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+.lang-switcher-trigger-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.55rem 0.35rem 0.65rem;
+  min-height: 36px;
+}
+.lang-switcher-ico {
+  font-size: 1.05rem;
+  color: var(--brand-primary);
+  opacity: 0.95;
+}
+.lang-switcher-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.1;
+  text-align: left;
+  max-width: min(140px, 38vw);
+}
+.lang-switcher-code {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #64748b;
+}
+.lang-switcher-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.lang-switcher-caret {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-left: 0.1rem;
+  flex-shrink: 0;
+}
+.lang-switcher-panel {
+  min-width: 15.5rem;
+  padding: 0.35rem !important;
+  margin-top: 0.45rem !important;
+  border-radius: 14px !important;
+  border: 1px solid #e2e8f0 !important;
+  overflow: hidden;
+  background: #fff !important;
+  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.14) !important;
+}
+.lang-switcher-panel-head {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  padding: 0.5rem 0.35rem 0.35rem !important;
+  list-style: none;
+}
+.lang-switcher-panel-head span { display: block; }
+.lang-switcher-opt.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.75rem !important;
+  border-radius: 10px;
+  white-space: normal;
+}
+.lang-switcher-opt:hover, .lang-switcher-opt:focus {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+.lang-switcher-opt.is-active {
+  background: rgba(var(--brand-primary-rgb), 0.1) !important;
+  color: #0f172a !important;
+}
+.lang-switcher-opt-code {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.1rem;
+  height: 1.75rem;
+  padding: 0 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #475569;
+  background: #f1f5f9;
+  border-radius: 6px;
+}
+.lang-switcher-opt.is-active .lang-switcher-opt-code {
+  background: rgba(var(--brand-primary-rgb), 0.2);
+  color: var(--brand-primary);
+}
+.lang-switcher-opt-label {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.lang-switcher-check {
+  font-size: 1.1rem;
+  color: var(--brand-primary);
+  flex-shrink: 0;
+}
+@media (max-width: 420px) {
+  .lang-switcher-name { display: none; }
+  .lang-switcher-pill { max-width: none; }
+  .lang-switcher-code { font-size: 0.75rem; }
+}
+@media (pointer: coarse) {
+  .lang-switcher-trigger-inner { min-height: 44px; padding-left: 0.75rem; padding-right: 0.65rem; }
+}
+</style>

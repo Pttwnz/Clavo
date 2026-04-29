@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ tr('page.conformidad.meta_title') }}{% endblock %}
+
+{% block estilos %}
+<style>
+  .cj-wrap { max-width: 640px; margin: 0 auto; padding: 1rem; }
+  .cj-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.75rem;
+    box-shadow: 0 4px 24px rgba(15,23,42,0.06);
+  }
+  .cj-canvas-wrap {
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    background: #fafafa;
+    touch-action: none;
+  }
+  #firma_canvas { width: 100%; height: 160px; display: block; cursor: crosshair; }
+</style>
+{% endblock %}
+
+{% block contenido %}
+{% set volver_href = url_for('empleado.area_personal') %}
+{% set volver_etiqueta = tr('action.back') %}
+{% include 'partials/volver_bar.html' %}
+<div class="cj-wrap">
+  <div class="cj-card">
+    <h1 class="h4 fw-bold text-dark mb-2"><i class="bi bi-pen me-2 text-primary"></i>{{ tr('page.conformidad.title') }}</h1>
+    <p class="text-muted small mb-4">
+      {{ tr('page.conformidad.intro') }}
+    </p>
+
+    <form method="post" action="{{ url_for('empleado.conformidad_jornada') }}" id="form_conf">
+      <input type="hidden" name="firma_png" id="firma_png" value="">
+      <div class="mb-3">
+        <label class="form-label small text-muted">{{ tr('page.conformidad.month_label') }}</label>
+        <input type="month" name="mes" class="form-control" value="{{ mes }}" required>
+      </div>
+      <div class="alert alert-light border small mb-3" style="border-radius:12px;">
+        {{ texto_legal }}
+      </div>
+      <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" name="acepto" value="1" id="acepto" required>
+        <label class="form-check-label small" for="acepto">
+          {{ tr('page.conformidad.check_read') }} <strong>{{ tr('page.conformidad.check_assert') }}</strong> {{ tr('page.conformidad.check_period') }}
+        </label>
+      </div>
+      <p class="small text-muted mb-1">{{ tr('page.conformidad.signature_hint') }}</p>
+      <div class="cj-canvas-wrap mb-2">
+        <canvas id="firma_canvas" width="560" height="160"></canvas>
+      </div>
+      <button type="button" class="btn btn-outline-secondary btn-sm mb-4" id="btn_clear"><i class="bi bi-eraser me-1"></i>{{ tr('page.conformidad.clear_signature') }}</button>
+
+      {% if conformidad %}
+      <div class="alert alert-success small py-2 mb-3" style="border-radius:10px;">
+        <i class="bi bi-check-circle me-1"></i>
+        {{ tr('page.conformidad.alert_ok', data=(conformidad.creado_en or '—')) }}
+      </div>
+      {% endif %}
+
+      <div class="d-flex gap-2 flex-wrap">
+        <button type="submit" class="btn btn-primary px-4"><i class="bi bi-shield-check me-1"></i>{{ tr('page.conformidad.submit') }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+(function(){
+  var canvas = document.getElementById('firma_canvas');
+  var input = document.getElementById('firma_png');
+  if (!canvas || !canvas.getContext) return;
+  var ctx = canvas.getContext('2d');
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#0f172a';
+  var drawing = false;
+  function pos(e) {
+    var r = canvas.getBoundingClientRect();
+    var x = (e.clientX !== undefined ? e.clientX : e.touches[0].clientX) - r.left;
+    var y = (e.clientY !== undefined ? e.clientY : e.touches[0].clientY) - r.top;
+    var sx = canvas.width / r.width;
+    var sy = canvas.height / r.height;
+    return { x: x * sx, y: y * sy };
+  }
+  canvas.addEventListener('mousedown', function(e){ drawing = true; var p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+  canvas.addEventListener('mousemove', function(e){
+    if (!drawing) return;
+    var p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke();
+  });
+  window.addEventListener('mouseup', function(){ drawing = false; sync(); });
+  canvas.addEventListener('touchstart', function(e){ e.preventDefault(); drawing = true; var p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+  canvas.addEventListener('touchmove', function(e){ e.preventDefault(); if (!drawing) return; var p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
+  window.addEventListener('touchend', function(){ drawing = false; sync(); });
+  function sync() {
+    try { input.value = canvas.toDataURL('image/png'); } catch (err) { input.value = ''; }
+  }
+  document.getElementById('btn_clear').addEventListener('click', function(){
+    ctx.fillStyle = '#fafafa';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    input.value = '';
+  });
+  ctx.fillStyle = '#fafafa';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+})();
+</script>
+{% endblock %}

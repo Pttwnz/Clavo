@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block titulo %}Preregistros empleados — gestión{% endblock %}
+{% block estilos %}
+<style>
+  .tpg-wrap { max-width: 720px; margin: 0 auto; padding: 1rem 1rem 2rem; }
+  .tpg-card { background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 1.15rem; margin-bottom: 1rem; }
+  .tablet-touch .btn { min-height: 44px; font-size: 1rem; }
+  .tablet-touch .form-control { min-height: 44px; }
+  .tpg-dl { font-size: 0.88rem; margin-bottom: 0.5rem; }
+  .tpg-dl dt { color: #64748b; font-weight: 500; float: left; clear: left; width: 11rem; margin: 0; }
+  .tpg-dl dd { margin-left: 11rem; margin-bottom: 0.25rem; }
+</style>
+{% endblock %}
+{% block contenido %}
+{% set volver_href = url_for('public.tablet_inicio') %}
+{% set volver_etiqueta = 'Inicio tablet' %}
+{% include 'partials/volver_bar.html' %}
+<div class="tpg-wrap tablet-touch">
+  <h1 class="h5 mb-2"><i class="bi bi-inbox me-2 text-primary"></i>Solicitudes de empleado</h1>
+  <p class="small text-muted mb-3">
+    Datos alineados con el formulario de alta en <a href="/empleados">Empleados</a>. Al aprobar, crea la ficha allí (PIN obligatorio, contrato, etc.).
+  </p>
+  <p class="small mb-3">
+    <a href="{{ url_for('public.tablet_preregistro') }}" class="text-decoration-none">→ Formulario de solicitud en tablet</a>
+  </p>
+
+  <h2 class="h6 text-warning mb-2">Pendientes ({{ pendientes|length }})</h2>
+  {% if pendientes %}
+    {% for p in pendientes %}
+    <div class="tpg-card">
+      <div class="small text-muted mb-2">#{{ p.id }} · {{ p.creado_en or '—' }}</div>
+      <div class="fw-semibold mb-2">{{ p.nombre }}{% if p.apellido %} {{ p.apellido }}{% endif %}</div>
+      {% if p.foto_perfil %}
+      <div class="mb-2">
+        <img src="{{ url_for('static', filename=p.foto_perfil) }}" alt="" class="rounded border" style="max-width:120px;max-height:120px;object-fit:cover">
+      </div>
+      {% endif %}
+      <p class="small mb-2">
+        <a href="{{ url_for('admin.empleados', preregistro_id=p.id) }}" class="text-decoration-none">→ Alta en escritorio con estos datos</a>
+      </p>
+
+      <dl class="tpg-dl mb-0">
+        {% if p.rango_id %}
+        <dt>Rango indicado</dt>
+        <dd>{{ rangos_nombres.get(p.rango_id|int, '—') }}</dd>
+        {% endif %}
+        {% if p.dni %}
+        <dt>DNI / NIE</dt>
+        <dd>{{ p.dni }}</dd>
+        {% endif %}
+        {% if p.fecha_nacimiento %}
+        <dt>Nacimiento</dt>
+        <dd>{{ p.fecha_nacimiento }}</dd>
+        {% endif %}
+        <dt>Teléfono</dt>
+        <dd>{{ p.telefono or '—' }}</dd>
+        {% if p.email %}
+        <dt>Email</dt>
+        <dd>{{ p.email }}</dd>
+        {% endif %}
+        {% if p.puesto %}
+        <dt>Puesto</dt>
+        <dd>{{ p.puesto }}</dd>
+        {% endif %}
+        {% if p.departamento %}
+        <dt>Departamento</dt>
+        <dd>{{ p.departamento }}</dd>
+        {% endif %}
+        {% if p.tipo_contrato %}
+        <dt>Tipo contrato</dt>
+        <dd>{{ p.tipo_contrato }}</dd>
+        {% endif %}
+        {% if p.fecha_alta %}
+        <dt>Incorporación deseada</dt>
+        <dd>{{ p.fecha_alta }}</dd>
+        {% endif %}
+        {% if p.horas_contrato %}
+        <dt>Horas / semana</dt>
+        <dd>{{ p.horas_contrato }}</dd>
+        {% endif %}
+        {% if p.numero_ss %}
+        <dt>Nº SS</dt>
+        <dd>{{ p.numero_ss }}</dd>
+        {% endif %}
+      </dl>
+      {% set obs = (p.observaciones or p.comentario or '') %}
+      {% if obs %}
+      <div class="small text-muted border-start border-3 ps-2 mt-2 mb-3">{{ obs }}</div>
+      {% endif %}
+
+      <form method="post" class="mb-2">
+        <input type="hidden" name="preregistro_id" value="{{ p.id }}">
+        <input type="hidden" name="accion_gestion" value="aprobar">
+        <label class="form-label small">Nota interna (opcional)</label>
+        <input type="text" name="notas_admin" class="form-control form-control-sm mb-2" maxlength="500" placeholder="Ej. Entrevista OK, alta prevista lunes…">
+        <button type="submit" class="btn btn-success w-100">Aprobar</button>
+      </form>
+      <form method="post">
+        <input type="hidden" name="preregistro_id" value="{{ p.id }}">
+        <input type="hidden" name="accion_gestion" value="rechazar">
+        <label class="form-label small">Motivo del rechazo <span class="text-danger">*</span></label>
+        <input type="text" name="notas_admin" class="form-control form-control-sm mb-2" maxlength="500" required placeholder="Mín. 3 caracteres">
+        <button type="submit" class="btn btn-outline-danger w-100">Rechazar</button>
+      </form>
+    </div>
+    {% endfor %}
+  {% else %}
+  <p class="text-muted small mb-4">No hay solicitudes pendientes.</p>
+  {% endif %}
+
+  {% if recientes %}
+  <h2 class="h6 text-muted mt-4 mb-2">Últimas gestionadas</h2>
+  <ul class="list-group list-group-flush small">
+    {% for r in recientes %}
+    <li class="list-group-item px-0 d-flex justify-content-between flex-wrap gap-1">
+      <span>
+        <span class="badge {% if 'aprob' in (r.estado or '')|lower %}text-bg-success{% else %}text-bg-secondary{% endif %} me-1">{{ r.estado }}</span>
+        #{{ r.id }} {{ r.nombre }}{% if r.apellido %} {{ r.apellido }}{% endif %}
+        {% if r.puesto %}· {{ r.puesto }}{% endif %}
+      </span>
+      <span class="text-muted">{{ (r.revisado_en or '')[:16] }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>
+{% endblock %}

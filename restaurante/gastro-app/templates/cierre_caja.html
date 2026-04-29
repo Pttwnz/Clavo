@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block titulo %}Cierre de caja X / Z{% endblock %}
+{% block estilos %}
+<style>
+/* .app-page, .app-hero, .app-hero--money en base.html */
+.cc-card.app-surface {
+  padding: 1.25rem 1.35rem;
+  margin-bottom: 1.25rem;
+}
+.cc-card h2 {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin: 0 0 1rem 0;
+}
+.cc-nav .nav-link { color: #475569; border-radius: 8px; font-weight: 500; }
+.cc-nav .nav-link.active { background: #ecfdf5; color: #14532d; }
+.cc-checklist {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+@media print {
+  .no-print { display: none !important; }
+  .cc-checklist { border: 1px solid #ccc; }
+}
+</style>
+{% endblock %}
+
+{% block contenido %}
+{% include 'partials/volver_bar.html' %}
+<div class="app-page">
+
+  <div class="app-hero app-hero--money no-print">
+    <h1><i class="bi bi-cash-stack me-2"></i>Cierre de caja X y Z</h1>
+    <p class="sub mb-0">
+      Guía rápida, plantilla imprimible, envío automático al correo del dueño (Gmail u otro SMTP) e historial de registros.
+      En tablet, el cierre pide el <strong>PIN de encargado</strong> (administrador). Activa el acceso en <a class="text-white fw-semibold" href="{{ url_for('admin.configuracion_tablet') }}">Opciones del modo tablet</a>.
+    </p>
+  </div>
+
+  <ul class="nav nav-pills gap-2 flex-wrap mb-3 no-print cc-nav" id="ccTabs" role="tablist">
+    <li class="nav-item"><a class="nav-link active" href="#cc-guia" data-bs-toggle="tab" role="tab">Guía y consejos</a></li>
+    <li class="nav-item"><a class="nav-link" href="#cc-plantilla" data-bs-toggle="tab" role="tab">Plantilla / checklist</a></li>
+    <li class="nav-item"><a class="nav-link" href="#cc-email" data-bs-toggle="tab" role="tab">Correo (Gmail)</a></li>
+    <li class="nav-item"><a class="nav-link" href="#cc-enviar" data-bs-toggle="tab" role="tab">Enviar informe</a></li>
+    <li class="nav-item"><a class="nav-link" href="#cc-historial" data-bs-toggle="tab" role="tab">Historial</a></li>
+  </ul>
+
+  <div class="tab-content">
+    <div class="tab-pane fade show active" id="cc-guia">
+      <div class="cc-card app-surface">
+        <h2>Diferencia entre X y Z</h2>
+        <ul class="mb-0">
+          <li><strong>Cierre X</strong>: lectura o arqueo <strong>intermedio</strong> sin cerrar el negocio. Sirve para comprobar efectivo en caja durante el turno (mediodía, cambio de responsable, etc.). No sustituye al arqueo final del día.</li>
+          <li><strong>Cierre Z</strong>: cierre <strong>de jornada</strong> (fin del día o turno nocturno). Es el informe “oficial” del periodo: efectivo esperado vs contado, tarjeta como referencia y observaciones para el dueño.</li>
+        </ul>
+      </div>
+      <div class="cc-card app-surface">
+        <h2>Consejos prácticos</h2>
+        <ol class="mb-0 ps-3">
+          <li>Cuenta el efectivo <strong>sin mezclar</strong> con propinas si las llevas aparte en tu política interna.</li>
+          <li>Anota <strong>retiros</strong> (cambio, envío al banco, pagos en metálico a proveedor) antes de comparar “esperado vs real”.</li>
+          <li>Las ventas con <strong>tarjeta</strong> aquí son referencia; el cierre fuerte de TPV lo confirma tu banco / adquirente.</li>
+          <li>Si hay <strong>diferencia</strong>, describe en observaciones: posible error de cambio, billete falsificado, etc.</li>
+          <li>Haz un <strong>X</strong> antes de entregar el turno y un <strong>Z</strong> al cerrar el local.</li>
+          <li>Para Gmail: usa una <strong>contraseña de aplicación</strong> (cuenta con 2 pasos), no la contraseña normal.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="cc-plantilla">
+      <div class="cc-card app-surface">
+        <h2 class="no-print">Checklist imprimible</h2>
+        <p class="small text-muted no-print">Usa “Imprimir” del navegador; se ocultan menús.</p>
+        <div class="cc-checklist">
+          <div class="fw-bold mb-2">Arqueo de caja — fecha: __________ &nbsp; hora: __________</div>
+          <div class="mb-2">Efectivo al abrir / base: __________________ €</div>
+          <div class="mb-2">+ Ventas efectivo (periodo): __________________ €</div>
+          <div class="mb-2">+ Otros ingresos efectivo: __________________ €</div>
+          <div class="mb-2">− Retiros / salidas: __________________ €</div>
+          <div class="mb-2 border-top pt-2 mt-2"><strong>= Efectivo esperado en cajón:</strong> __________________ €</div>
+          <div class="mb-2"><strong>Efectivo contado (real):</strong> __________________ €</div>
+          <div class="mb-2"><strong>Diferencia:</strong> __________________ €</div>
+          <div class="mb-2">Ventas tarjeta (referencia TPV): __________________ €</div>
+          <div class="mb-0">Observaciones:<br><br><br></div>
+          <div class="mt-3 small text-muted">Firma responsable: _______________________</div>
+        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm mt-3 no-print" onclick="window.print()"><i class="bi bi-printer me-1"></i> Imprimir</button>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="cc-email">
+      <div class="cc-card app-surface">
+        <h2>Envío automático al dueño</h2>
+        <p class="small text-muted">
+          Los informes desde <strong>tablet</strong> o desde el formulario de abajo se envían a este correo.
+          Con Gmail: servidor <code>smtp.gmail.com</code>, puerto <code>587</code>, TLS activado, usuario = tu Gmail completo,
+          contraseña = <a href="https://support.google.com/accounts/answer/185833" target="_blank" rel="noopener">contraseña de aplicación</a>.
+          Opcional: define la variable de entorno <code>CIERRE_CAJA_SMTP_PASSWORD</code> y deja el campo vacío en pantalla.
+        </p>
+        {% if smtp_ok %}
+        <div class="alert alert-success py-2 small mb-3"><i class="bi bi-check-circle me-1"></i> Configuración mínima completa (puedes probar el envío).</div>
+        {% else %}
+        <div class="alert alert-warning py-2 small mb-3">Falta correo del dueño, usuario SMTP o contraseña.</div>
+        {% endif %}
+
+        <form method="post" action="{{ url_for('admin.cierre_caja_config') }}" class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Correo del dueño (recibe los informes)</label>
+            <input type="email" name="email_destino" class="form-control" value="{{ cfg_cierre.email_destino or '' }}" placeholder="dueño@gmail.com" autocomplete="off">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Servidor SMTP</label>
+            <input type="text" name="smtp_host" class="form-control" value="{{ cfg_cierre.smtp_host or 'smtp.gmail.com' }}">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Puerto</label>
+            <input type="number" name="smtp_port" class="form-control" value="{{ cfg_cierre.smtp_port or 587 }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Usuario SMTP (suele ser el email completo)</label>
+            <input type="text" name="smtp_usuario" class="form-control" value="{{ cfg_cierre.smtp_usuario or '' }}" autocomplete="off">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Contraseña SMTP o app password</label>
+            <input type="password" name="smtp_password" class="form-control" placeholder="Dejar vacío para no cambiar" autocomplete="new-password">
+          </div>
+          <div class="col-12">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="smtp_tls" id="smtp_tls" value="1" {% if cfg_cierre.smtp_tls %}checked{% endif %}>
+              <label class="form-check-label" for="smtp_tls">Usar STARTTLS (recomendado en puerto 587)</label>
+            </div>
+          </div>
+          <div class="col-12 d-flex flex-wrap gap-2">
+            <button type="submit" class="btn btn-primary">Guardar configuración</button>
+          </div>
+        </form>
+
+        <form method="post" action="{{ url_for('admin.cierre_caja_probar_email') }}" class="mt-3">
+          <button type="submit" class="btn btn-outline-primary btn-sm" {% if not smtp_ok %}disabled title="Completa la configuración"{% endif %}>
+            <i class="bi bi-envelope-check me-1"></i> Enviar correo de prueba
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="cc-enviar">
+      <div class="cc-card app-surface">
+        <h2>Generar y enviar informe (panel admin)</h2>
+        <p class="text-muted small">Mismos datos que en la tablet. Se guarda en historial aunque falle el correo.</p>
+        <form id="formCierreAdmin" method="post" action="{{ url_for('admin.cierre_caja_enviar_manual') }}" class="row g-2">
+          <div class="col-12 mb-2">
+            <div class="btn-group" role="group">
+              <input type="radio" class="btn-check" name="tipo" id="tipoX" value="X" checked>
+              <label class="btn btn-outline-success" for="tipoX">Cierre X</label>
+              <input type="radio" class="btn-check" name="tipo" id="tipoZ" value="Z">
+              <label class="btn btn-outline-success" for="tipoZ">Cierre Z</label>
+            </div>
+          </div>
+          <div class="col-md-4"><label class="form-label small">Efectivo al abrir / base</label><input type="text" name="efectivo_apertura" class="form-control" value="0" inputmode="decimal"></div>
+          <div class="col-md-4"><label class="form-label small">Ventas efectivo</label><input type="text" name="ventas_efectivo" class="form-control" value="0" inputmode="decimal"></div>
+          <div class="col-md-4"><label class="form-label small">Ventas tarjeta (ref.)</label><input type="text" name="ventas_tarjeta" class="form-control" value="0" inputmode="decimal"></div>
+          <div class="col-md-4"><label class="form-label small">Otros ingresos efectivo</label><input type="text" name="otros_ingresos" class="form-control" value="0" inputmode="decimal"></div>
+          <div class="col-md-4"><label class="form-label small">Retiros / salidas</label><input type="text" name="retiros_caja" class="form-control" value="0" inputmode="decimal"></div>
+          <div class="col-md-4"><label class="form-label small">Efectivo contado (real)</label><input type="text" name="efectivo_contado" class="form-control" value="0" inputmode="decimal"></div>
+          <div class="col-12">
+            {% set form_id = 'formCierreAdmin' %}
+            {% include 'partials/calculadora_caja.html' %}
+          </div>
+          <div class="col-12"><label class="form-label small">Observaciones</label><textarea name="observaciones" class="form-control" rows="2"></textarea></div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-success">
+              <i class="bi bi-send me-1"></i>
+              {% if nombre_dueno %}Registrar y enviar a {{ nombre_dueno }}{% else %}Registrar y enviar al dueño{% endif %}
+            </button>
+            {% if not nombre_dueno %}
+            <p class="small text-muted mt-2 mb-0">Indica el nombre del dueño en <a href="{{ url_for('admin.configuracion_empresa') }}">Datos de la empresa</a> para personalizar.</p>
+            {% endif %}
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="cc-historial">
+      <div class="cc-card app-surface">
+        <h2>Últimos registros</h2>
+        {% if historial|length %}
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead><tr><th>Fecha</th><th>Tipo</th><th>Origen</th><th class="text-end">Dif. €</th><th>Correo</th></tr></thead>
+            <tbody>
+              {% for h in historial %}
+              <tr>
+                <td class="text-nowrap small">{{ h.creado_en }}</td>
+                <td><span class="badge bg-{{ 'info' if h.tipo == 'X' else 'dark' }}">{{ h.tipo }}</span></td>
+                <td>{{ h.origen or '—' }}</td>
+                <td class="text-end">{{ (h.payload.get('diferencia', 0)|float)|round(2) }}</td>
+                <td class="small">
+                  {% if h.enviado_email %}<span class="text-success">Enviado</span>
+                  {% else %}<span class="text-danger" title="{{ h.email_error or '' }}">No enviado</span>{% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">Aún no hay registros.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

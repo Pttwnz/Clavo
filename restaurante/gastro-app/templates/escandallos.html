@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block titulo %}Escandallos y costes{% endblock %}
+{% block estilos %}
+<style>
+.esc-hero.app-hero {
+  background: linear-gradient(135deg, #0f172a 0%, var(--brand-primary) 48%, #1e293b 100%);
+  padding: 1.35rem 1.5rem;
+}
+.esc-hero.app-hero h1 { font-size: 1.4rem; }
+.esc-hero .btn-tutorial {
+  background: rgba(255,255,255,0.95);
+  color: #1e3a5f;
+  border: none;
+  font-weight: 600;
+}
+.esc-hero .btn-tutorial:hover { background: #fff; color: #0f172a; }
+.card-esc { border-radius: 14px; border: 1px solid #e2e8f0; }
+.esc-pasos .step-num {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #e0e7ff; color: #3730a3;
+  font-weight: 700; font-size: 0.85rem;
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+</style>
+{% endblock %}
+
+{% block contenido %}
+{% include 'partials/volver_bar.html' %}
+
+<div class="app-page">
+<div class="esc-hero app-hero d-flex flex-wrap justify-content-between align-items-start gap-3">
+  <div class="flex-grow-1" style="min-width: 220px;">
+    <h1><i class="bi bi-calculator me-2"></i>Escandallos</h1>
+    <p class="sub mb-2">Ingredientes con coste, platos y margen bruto aproximado según el precio de venta.</p>
+    <p class="mb-0 small opacity-90"><i class="bi bi-info-circle me-1"></i>¿Primera vez? Usa la guía para seguir el orden correcto.</p>
+  </div>
+  <div class="d-flex flex-column align-items-stretch gap-2">
+    <button type="button" class="btn btn-tutorial px-3 py-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAyudaEscandallos"
+            title="Abrir tutorial de uso">
+      <i class="bi bi-book-half me-2"></i>Guía rápida
+    </button>
+    <span class="badge align-self-center rounded-pill" style="background: rgba(255,255,255,0.2); font-weight: 500;">3 pasos · lista → plato → líneas</span>
+  </div>
+</div>
+
+<div class="modal fade" id="modalAyudaEscandallos" tabindex="-1" aria-labelledby="modalAyudaEscandallosLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header border-0 pb-0">
+        <h2 class="modal-title fs-5" id="modalAyudaEscandallosLabel">
+          <i class="bi bi-mortarboard text-primary me-2"></i>Cómo usar Escandallos
+        </h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body pt-2 esc-pasos">
+        <p class="text-muted small mb-4">El módulo va de lo general a lo concreto: primero el catálogo de materias primas, luego los platos y por último el desglose por receta.</p>
+
+        <div class="d-flex gap-3 mb-4">
+          <span class="step-num">1</span>
+          <div>
+            <div class="fw-semibold">Ingredientes (columna izquierda)</div>
+            <p class="small text-muted mb-0">Registra cada materia prima con <strong>unidad</strong> (kg, L, ud…) y <strong>coste por esa unidad</strong>. Ejemplo: si compras solomillo a 18 €/kg, unidad <code>kg</code> y coste <code>18</code>. Así el sistema puede multiplicar por la cantidad que uses en cada plato.</p>
+          </div>
+        </div>
+        <div class="d-flex gap-3 mb-4">
+          <span class="step-num">2</span>
+          <div>
+            <div class="fw-semibold">Platos (columna derecha)</div>
+            <p class="small text-muted mb-0">Crea un plato con un nombre claro y pulsa <strong>Crear y escandallar</strong>. Te lleva a la ficha del plato: ahí añades las líneas del escandallo (ingrediente + cantidad) y, si quieres, precio de venta para ver el margen.</p>
+          </div>
+        </div>
+        <div class="d-flex gap-3 mb-2">
+          <span class="step-num">3</span>
+          <div>
+            <div class="fw-semibold">Cantidades coherentes</div>
+            <p class="small text-muted mb-0">La cantidad de cada línea va en la <strong>misma unidad</strong> que el ingrediente (si el ingrediente es por kg, la cantidad es en kg). El coste del plato se suma solo; el margen aparece si indicas PVP en la ficha.</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Listo, continuar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+
+  <div class="col-lg-5">
+    <div class="card card-esc shadow-sm">
+      <div class="card-header bg-white fw-semibold"><i class="bi bi-basket text-primary"></i> Nuevo ingrediente</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('admin.escandallos_crear_ingrediente') }}">
+          <div class="mb-2">
+            <label class="form-label small text-muted">Nombre</label>
+            <input name="nombre" class="form-control" required placeholder="Ej. Solomillo">
+          </div>
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label small text-muted">Unidad</label>
+              <select name="unidad" class="form-select">
+                <option value="kg">kg</option>
+                <option value="L">L</option>
+                <option value="ud">ud</option>
+                <option value="g">g</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label small text-muted">Coste / unidad (€)</label>
+              <input name="coste_unitario" type="number" step="0.0001" class="form-control" value="0" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary mt-3 w-100">Guardar ingrediente</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card card-esc shadow-sm mt-4">
+      <div class="card-header bg-white fw-semibold">Ingredientes</div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="table-light"><tr><th>Nombre</th><th>U.</th><th>€/u</th></tr></thead>
+            <tbody>
+              {% for i in ingredientes %}
+              <tr>
+                <td>{{ i['nombre'] }}</td>
+                <td>{{ i['unidad'] }}</td>
+                <td>{{ '%.4f'|format(i['coste_unitario']) }}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="3" class="text-muted text-center py-4">Aún no hay ingredientes.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card card-esc shadow-sm">
+      <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-egg-fried text-warning"></i> Platos</span>
+      </div>
+      <div class="card-body border-bottom">
+        <form method="post" action="{{ url_for('admin.escandallos_crear_plato') }}" class="row g-2 align-items-end">
+          <div class="col-md-8">
+            <label class="form-label small text-muted mb-0">Nuevo plato</label>
+            <input name="nombre" class="form-control" placeholder="Nombre del plato" required>
+          </div>
+          <div class="col-md-4">
+            <button type="submit" class="btn btn-primary w-100">Crear y escandallar</button>
+          </div>
+        </form>
+      </div>
+      <div class="list-group list-group-flush">
+        {% for p in platos %}
+        <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3"
+           href="{{ url_for('admin.escandallos_plato', id=p['id']) }}">
+          <div>
+            <div class="fw-semibold">{{ p['nombre'] }}</div>
+            <div class="small text-muted">PVP: {% if p['precio_venta'] %}{{ '%.2f'|format(p['precio_venta']) }} €{% else %}—{% endif %}</div>
+          </div>
+          <div class="text-end">
+            <span class="badge bg-secondary">Coste ~ {{ '%.2f'|format(costes.get(p['id'], 0)) }} €</span>
+            <i class="bi bi-chevron-right ms-2 text-muted"></i>
+          </div>
+        </a>
+        {% else %}
+        <div class="p-4 text-center text-muted">Crea el primer plato para montar el escandallo.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+{% endblock %}

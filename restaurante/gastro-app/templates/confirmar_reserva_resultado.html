@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block titulo %}Confirmación de reserva{% endblock %}
+{% block contenido %}
+<div class="mx-auto text-center py-5" style="max-width: 520px;">
+  {% if ok %}
+  <div class="display-4 text-success mb-3"><i class="bi bi-check-circle-fill"></i></div>
+  <h1 class="h4 mb-3">Listo</h1>
+  {% else %}
+  <div class="display-4 text-warning mb-3"><i class="bi bi-exclamation-circle-fill"></i></div>
+  <h1 class="h4 mb-3">No se pudo confirmar</h1>
+  {% endif %}
+  <p class="text-muted">{{ message }}</p>
+  <a href="/" class="btn btn-primary mt-3">Ir al inicio</a>
+</div>
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block titulo %}Opciones modo tablet{% endblock %}
+{% block contenido %}
+
+<div class="mx-auto" style="max-width: 640px;">
+  <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-3">
+    <div class="min-w-0">
+      <h1 class="h4 mb-1"><i class="bi bi-tablet-landscape text-primary me-2"></i>Tablet del local</h1>
+      <p class="text-muted small mb-0">
+        Solo decides <strong>qué accesos directos</strong> salen en la pantalla <code>/tablet</code> y un texto opcional de bienvenida.
+        El código de acceso al tablet es aparte.
+      </p>
+    </div>
+    <a href="{{ url_for('admin.configuracion_pin_tablet') }}" class="btn btn-primary flex-shrink-0">
+      <i class="bi bi-key-fill me-1"></i>PIN del tablet
+    </a>
+  </div>
+
+  <div class="alert alert-light border py-2 px-3 small mb-4 mb-md-3">
+    <i class="bi bi-shield-lock text-secondary me-1"></i>
+    Cancelar o borrar reservas desde el tablet <strong>sigue pidiendo el PIN de administrador</strong>, no el del tablet.
+  </div>
+
+  <form method="post" class="card border-0 shadow-sm rounded-3">
+    <div class="card-body p-4">
+      <h2 class="h6 text-uppercase text-muted mb-3">Reservas y sala</h2>
+
+      <div class="form-check form-switch mb-3">
+        <input class="form-check-input" type="checkbox" name="permitir_visualizar_sala" id="vis" value="1"
+               {% if cfg.permitir_visualizar_sala %}checked{% endif %}>
+        <label class="form-check-label" for="vis">
+          <strong>Sala en vivo</strong>
+          <span class="d-block small text-muted">Enlace al mapa de ocupación (solo lectura).</span>
+        </label>
+      </div>
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input" type="checkbox" name="permitir_ver_todas_reservas" id="todas" value="1"
+               {% if cfg.permitir_ver_todas_reservas %}checked{% endif %}>
+        <label class="form-check-label" for="todas">
+          <strong>Ver todas las reservas</strong>
+          <span class="d-block small text-muted">Botón para abrir el listado completo; si lo quitas, solo el día elegido.</span>
+        </label>
+      </div>
+
+      {% if not reservas_only %}
+      <hr class="my-4">
+      <h2 class="h6 text-uppercase text-muted mb-3">Otros módulos en el tablet</h2>
+      <p class="small text-muted mb-3">Cada interruptor añade o quita un acceso en la pantalla de inicio del tablet.</p>
+
+      <div class="form-check form-switch mb-3">
+        <input class="form-check-input" type="checkbox" name="permitir_ver_equipo_turno" id="equipo" value="1"
+               {% if cfg.permitir_ver_equipo_turno %}checked{% endif %}>
+        <label class="form-check-label" for="equipo">
+          <strong>Equipo y turnos del día</strong>
+          <span class="d-block small text-muted">Lectura según horarios (RRHH).</span>
+        </label>
+      </div>
+      <div class="form-check form-switch mb-3">
+        <input class="form-check-input" type="checkbox" name="permitir_cierre_caja" id="cierre" value="1"
+               {% if cfg.permitir_cierre_caja %}checked{% endif %}>
+        <label class="form-check-label" for="cierre">
+          <strong>Cierre de caja (X / Z)</strong>
+          <span class="d-block small text-muted">Arqueo e informe al dueño; al entrar pide PIN de encargado/admin. Requiere SMTP en cierre de caja.</span>
+        </label>
+      </div>
+      <div class="form-check form-switch mb-3">
+        <input class="form-check-input" type="checkbox" name="permitir_propinas" id="propinas" value="1"
+               {% if cfg.permitir_propinas %}checked{% endif %}>
+        <label class="form-check-label" for="propinas">
+          <strong>Propinas</strong>
+          <span class="d-block small text-muted">Reparto del bote según turnos.</span>
+        </label>
+      </div>
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input" type="checkbox" name="permitir_preregistro" id="prereg" value="1"
+               {% if cfg.permitir_preregistro %}checked{% endif %}>
+        <label class="form-check-label" for="prereg">
+          <strong>Solicitud de alta (empleado)</strong>
+          <span class="d-block small text-muted">Formulario para RRHH; no crea la ficha en el sistema.</span>
+        </label>
+      </div>
+
+      <details class="mt-4 mb-0 border rounded-3 p-3 bg-light bg-opacity-50">
+        <summary class="fw-semibold small" style="cursor:pointer;">Ajustes finos del módulo Propinas</summary>
+        <p class="small text-muted mt-2 mb-3">Solo afectan si <strong>Propinas</strong> está activado. Puedes dejar los valores por defecto.</p>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label small mb-1" for="ppv">Estadísticas (vista por defecto)</label>
+            <select name="propinas_periodo_vista" id="ppv" class="form-select form-select-sm">
+              <option value="dia" {% if cfg.propinas_periodo_vista == 'dia' %}selected{% endif %}>Día</option>
+              <option value="semana" {% if cfg.propinas_periodo_vista == 'semana' %}selected{% endif %}>Semana</option>
+              <option value="mes" {% if cfg.propinas_periodo_vista == 'mes' %}selected{% endif %}>Mes</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small mb-1" for="pmd">Reparto por defecto</label>
+            <select name="propinas_modo_defecto" id="pmd" class="form-select form-select-sm">
+              <option value="igual" {% if cfg.propinas_modo_defecto == 'igual' %}selected{% endif %}>Partes iguales</option>
+              <option value="horas" {% if cfg.propinas_modo_defecto == 'horas' %}selected{% endif %}>Por horas de turno</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small mb-1" for="pag">Agrupación del bote</label>
+            <select name="propinas_agrupacion" id="pag" class="form-select form-select-sm">
+              <option value="dia" {% if cfg.propinas_agrupacion == 'dia' %}selected{% endif %}>Un bote al día</option>
+              <option value="franja" {% if cfg.propinas_agrupacion == 'franja' %}selected{% endif %}>Varios botes (franjas)</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small mb-1" for="pfh">Duración franja automática (h)</label>
+            <select name="propinas_franja_horas" id="pfh" class="form-select form-select-sm">
+              <option value="4" {% if cfg.propinas_franja_horas == 4 %}selected{% endif %}>4</option>
+              <option value="6" {% if cfg.propinas_franja_horas == 6 %}selected{% endif %}>6</option>
+              <option value="8" {% if cfg.propinas_franja_horas == 8 %}selected{% endif %}>8</option>
+              <option value="12" {% if cfg.propinas_franja_horas == 12 %}selected{% endif %}>12</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label small mb-1" for="pfm">Franjas automáticas o manual</label>
+            <select name="propinas_franja_modo" id="pfm" class="form-select form-select-sm">
+              <option value="auto" {% if (cfg.propinas_franja_modo or 'auto') == 'auto' %}selected{% endif %}>Automático desde medianoche</option>
+              <option value="manual" {% if cfg.propinas_franja_modo == 'manual' %}selected{% endif %}>Horarios personalizados</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label small mb-1" for="pfmt">Ventanas manual (una por línea <code>HH:MM-HH:MM</code>)</label>
+            <textarea name="propinas_franjas_manual_texto" id="pfmt" class="form-control font-monospace small" rows="4"
+              placeholder="Ej.: 06:30-14:30">{{ cfg.propinas_franjas_manual_texto or '' }}</textarea>
+          </div>
+        </div>
+      </details>
+      {% endif %}
+
+      <hr class="my-4">
+      <label class="form-label" for="msgini">Mensaje en la pantalla de inicio</label>
+      <textarea name="mensaje_inicio" id="msgini" class="form-control" rows="2" maxlength="500"
+                placeholder="Opcional: un aviso corto para el equipo">{{ cfg.mensaje_inicio or '' }}</textarea>
+      <div class="form-text mb-0">Debajo del título en <code>/tablet</code>. Vacío = no se muestra.</div>
+    </div>
+    <div class="card-footer bg-light border-0 py-3 px-4 d-flex flex-wrap gap-2 align-items-center">
+      <button type="submit" class="btn btn-primary">Guardar</button>
+      <a href="{{ url_for('admin.panel') }}" class="btn btn-outline-secondary">Volver al panel</a>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

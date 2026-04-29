@@ -1,0 +1,19 @@
+{# Tablero + nombre + aforo. mesa_editor: input editable en editor #}
+{% set cap = o.capacidad|default(4)|int %}
+{% if cap < 2 %}{% set cap = 2 %}{% endif %}
+{% if cap > 8 %}{% set cap = 8 %}{% endif %}
+{% set nombre_mostrar = o.nombre_corto|default(o.nombre) %}
+<div class="plano-mesa plano-mesa--{{ o.vista|default('cuadrada') }}">
+  <div class="plano-mesa-tablero">
+    <div class="plano-mesa-centro">
+      {% if mesa_editor|default(false) %}
+      <input type="text" class="plano-mesa-inp sal-inp-nombre" value="{{ o.nombre }}" data-id="{{ o.id }}" autocomplete="off" title="Nombre visible en el mapa">
+      {% else %}
+      <span class="plano-mesa-nombre">{{ nombre_mostrar }}</span>
+      {% endif %}
+      {% if not mesa_compacto|default(false) %}
+      <span class="plano-mesa-cap">{{ cap }} pers.</span>
+      {% endif %}
+    </div>
+  </div>
+</div>

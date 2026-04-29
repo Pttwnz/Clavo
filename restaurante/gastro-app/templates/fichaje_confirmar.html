@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block titulo %}Confirmar fichaje{% endblock %}
+
+{% block estilos %}
+<style>
+  .fc2-page {
+    min-height: calc(100vh - 120px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    background: linear-gradient(165deg, #f8fafc 0%, #eff6ff 45%, #f1f5f9 100%);
+  }
+  .fc2-card {
+    width: 100%;
+    max-width: 440px;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.12);
+    padding: 2rem 1.75rem;
+    text-align: center;
+  }
+  .fc2-avatar {
+    width: 88px;
+    height: 88px;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #3b82f6, #1d4ed8);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
+  }
+  .fc2-name {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 0.25rem;
+  }
+  .fc2-meta {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin-bottom: 1.5rem;
+  }
+  .fc2-meta strong { color: #334155; font-weight: 600; }
+  .fc2-actions form { display: flex; flex-direction: column; gap: 0.75rem; }
+  .fc2-btn {
+    height: 54px;
+    border-radius: 14px;
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: none;
+    transition: filter 0.15s, transform 0.08s;
+  }
+  .fc2-btn:hover:not(:disabled) { filter: brightness(1.06); }
+  .fc2-btn:active:not(:disabled) { transform: translateY(1px); }
+  .fc2-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .fc2-btn-in {
+    background: linear-gradient(180deg, #16a34a 0%, #15803d 100%);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
+  }
+  .fc2-btn-out {
+    background: linear-gradient(180deg, #f97316 0%, #ea580c 100%);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(249, 115, 22, 0.3);
+  }
+  .fc2-btn-pause {
+    background: linear-gradient(180deg, #6366f1 0%, #4f46e5 100%);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+  }
+  .fc2-hint {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-top: 1rem;
+    line-height: 1.4;
+  }
+  .fc2-back {
+    display: inline-block;
+    margin-top: 1.25rem;
+    font-size: 0.9rem;
+    color: #64748b;
+    text-decoration: none;
+  }
+  .fc2-back:hover { color: #0f172a; }
+  .fc2-status {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 10px;
+    background: #f1f5f9;
+    color: #475569;
+    margin-bottom: 1rem;
+    text-align: left;
+  }
+</style>
+{% endblock %}
+
+{% block contenido %}
+<div class="fc2-page">
+  <div class="fc2-card">
+    {% set _n = (nombre_completo or '')|trim %}
+    {% set ini = ((_n[0] if _n else '?')|upper) %}
+    <div class="fc2-avatar" aria-hidden="true">{{ ini }}</div>
+    <p class="fc2-name">{{ nombre_completo }}</p>
+    <p class="fc2-meta">Hora del servidor: <strong>{{ hora_servidor }}</strong> · {{ fecha_hoy }}</p>
+
+    {% if not puede_entrada and not puede_salida and not puede_pausa_inicio and not puede_pausa_fin %}
+    <div class="fc2-status">
+      <i class="bi bi-check2-all me-1 text-success"></i>
+      Hoy ya has completado la jornada (entrada y salida).
+    </div>
+    {% elif puede_entrada %}
+    <div class="fc2-status">
+      <i class="bi bi-sunrise me-1 text-warning"></i>
+      Aún no has fichado la <strong>entrada</strong> hoy.
+    </div>
+    {% elif puede_pausa_fin %}
+    <div class="fc2-status">
+      <i class="bi bi-cup-hot me-1 text-primary"></i>
+      Tienes una <strong>pausa de descanso abierta</strong>. Ciérrala antes de fichar la salida.
+    </div>
+    {% else %}
+    <div class="fc2-status">
+      <i class="bi bi-clock-history me-1 text-success"></i>
+      Estás en jornada. Puedes registrar <strong>pausa</strong> o la <strong>salida</strong>.
+    </div>
+    {% endif %}
+
+    <div class="fc2-actions">
+      <form method="post" action="{{ url_for('admin.confirmar_fichaje') }}">
+        <input type="hidden" name="empleado_id" value="{{ empleado_id }}">
+        <button type="submit" name="tipo" value="entrada" class="fc2-btn fc2-btn-in w-100"
+          {% if not puede_entrada %}disabled{% endif %}>
+          <i class="bi bi-box-arrow-in-right"></i>
+          Registrar entrada
+        </button>
+        <button type="submit" name="tipo" value="pausa_inicio" class="fc2-btn fc2-btn-pause w-100"
+          {% if not puede_pausa_inicio %}disabled{% endif %}>
+          <i class="bi bi-pause-circle"></i>
+          Inicio pausa / descanso
+        </button>
+        <button type="submit" name="tipo" value="pausa_fin" class="fc2-btn fc2-btn-pause w-100"
+          {% if not puede_pausa_fin %}disabled{% endif %}>
+          <i class="bi bi-play-circle"></i>
+          Fin pausa / descanso
+        </button>
+        <button type="submit" name="tipo" value="salida" class="fc2-btn fc2-btn-out w-100"
+          {% if not puede_salida %}disabled{% endif %}>
+          <i class="bi bi-box-arrow-right"></i>
+          Registrar salida
+        </button>
+      </form>
+    </div>
+
+    <p class="fc2-hint mb-0">La hora efectiva del fichaje es la del momento en que pulsas el botón. Las pausas descuentan del total trabajado.</p>
+    <a href="{{ url_for('admin.fichaje') }}" class="fc2-back"><i class="bi bi-arrow-left me-1"></i>Cambiar de usuario</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ tr('page.fichaje.meta_title') }}{% endblock %}
+
+{% block estilos %}
+<style>
+  .fc-root {
+    min-height: calc(100vh - 120px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    background: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(59, 130, 246, 0.12), transparent),
+                linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  }
+  .fc-card {
+    width: 100%;
+    max-width: 420px;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(15, 23, 42, 0.05);
+    padding: 2rem 1.75rem 1.75rem;
+  }
+  .fc-logo {
+    height: 56px;
+    width: auto;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 1.25rem;
+    opacity: 0.95;
+  }
+  .fc-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #0f172a;
+    text-align: center;
+    margin-bottom: 0.35rem;
+    letter-spacing: -0.02em;
+  }
+  .fc-sub {
+    text-align: center;
+    color: #64748b;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.45;
+  }
+  .fc-clock {
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.03em;
+  }
+  .fc-clock-lbl {
+    text-align: center;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #94a3b8;
+    margin-bottom: 1.25rem;
+  }
+  .fc-pin-wrap {
+    position: relative;
+    margin-bottom: 1rem;
+  }
+  .fc-pin-input {
+    width: 100%;
+    padding: 0.9rem 1rem;
+    font-size: 1.35rem;
+    letter-spacing: 0.35em;
+    text-align: center;
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    background: #f8fafc;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .fc-pin-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+  }
+  .fc-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+  .fc-pad button {
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    border-radius: 12px;
+    padding: 0.65rem;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+    transition: background 0.12s, transform 0.08s;
+  }
+  .fc-pad button:hover {
+    background: #f1f5f9;
+  }
+  .fc-pad button:active {
+    transform: scale(0.97);
+  }
+  .fc-pad .fc-pad-clear {
+    grid-column: span 3;
+    font-size: 0.85rem;
+    color: #64748b;
+  }
+  .fc-submit {
+    width: 100%;
+    padding: 0.85rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    transition: filter 0.15s, transform 0.08s;
+  }
+  .fc-submit:hover {
+    filter: brightness(1.05);
+  }
+  .fc-submit:active {
+    transform: translateY(1px);
+  }
+  .fc-foot {
+    margin-top: 1.25rem;
+    text-align: center;
+    font-size: 0.78rem;
+    color: #94a3b8;
+    line-height: 1.4;
+  }
+  .fc-alert {
+    border-radius: 12px;
+    border: none;
+    font-size: 0.9rem;
+  }
+</style>
+{% endblock %}
+
+{% block contenido %}
+{% include 'partials/volver_bar.html' %}
+<div class="fc-root">
+  <div class="fc-card">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="" class="fc-logo" width="120" height="56">
+
+    <h1 class="fc-title">{{ tr('page.fichaje.title') }}</h1>
+    <p class="fc-sub">{{ tr('page.fichaje.sub') }}</p>
+
+    <div class="fc-clock" id="fc-live-clock">--:--</div>
+    <div class="fc-clock-lbl">{{ tr('page.fichaje.clock_lbl') }}</div>
+
+    {% if mensaje_ok %}
+    <div class="alert alert-success fc-alert text-center mb-3" role="status">
+      <i class="bi bi-check-circle me-1"></i>{{ mensaje_ok }}
+    </div>
+    {% endif %}
+
+    {% if mensaje_error %}
+    <div class="alert alert-danger fc-alert text-center mb-3" role="alert">
+      <i class="bi bi-exclamation-circle me-1"></i>{{ mensaje_error }}
+    </div>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('admin.fichar') }}" id="fc-form">
+      <div class="fc-pin-wrap">
+        <label for="fc-pin" class="visually-hidden">{{ tr('page.fichaje.pin_aria') }}</label>
+        <input type="password" name="pin" id="fc-pin" class="fc-pin-input" placeholder="••••" maxlength="12" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" required>
+      </div>
+
+      <div class="fc-pad" aria-hidden="true">
+        {% for d in ['1','2','3','4','5','6','7','8','9'] %}
+        <button type="button" class="fc-dig" data-d="{{ d }}">{{ d }}</button>
+        {% endfor %}
+        <button type="button" class="fc-dig" data-d="0" style="grid-column: 2;">0</button>
+        <button type="button" class="fc-pad-clear" id="fc-clear">{{ tr('page.fichaje.btn_clear') }}</button>
+      </div>
+
+      <button type="submit" class="fc-submit">{{ tr('page.fichaje.btn_continue') }}</button>
+    </form>
+
+    <p class="fc-foot">{{ tr('page.fichaje.foot') }}</p>
+  </div>
+</div>
+<script>
+(function () {
+  var inp = document.getElementById('fc-pin');
+  var clock = document.getElementById('fc-live-clock');
+  var localeTag = {% if current_lang == 'en' %}'en-GB'{% elif current_lang == 'es' %}'es-ES'{% else %}'ca-ES'{% endif %};
+  function tick() {
+    try {
+      var s = new Date().toLocaleTimeString(localeTag, { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      if (clock) clock.textContent = s;
+    } catch (e) {}
+  }
+  tick();
+  setInterval(tick, 1000);
+  document.querySelectorAll('.fc-dig').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var d = b.getAttribute('data-d');
+      if (!inp || d == null) return;
+      if (inp.value.length < 12) inp.value += d;
+    });
+  });
+  var clr = document.getElementById('fc-clear');
+  if (clr && inp) clr.addEventListener('click', function () { inp.value = ''; inp.focus(); });
+})();
+</script>
+{% endblock %}

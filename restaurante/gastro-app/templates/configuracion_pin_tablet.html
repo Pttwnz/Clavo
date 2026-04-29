@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block titulo %}PIN modo tablet{% endblock %}
+{% block contenido %}
+
+<div class="mx-auto" style="max-width: 560px;">
+  <p class="small mb-2"><a href="{{ url_for('admin.configuracion_tablet') }}" class="text-decoration-none">← Opciones del modo tablet</a></p>
+  <h1 class="h4 mb-2"><i class="bi bi-tablet-landscape text-primary me-2"></i>PIN del modo tablet</h1>
+  <p class="text-muted small mb-4">
+    Es el código que se usa en <strong>Tablet del local</strong> (<code>/tablet/acceso</code>) para acceder solo a reservas y fichaje.
+    Para cancelar o eliminar reservas desde la tablet sigue haciendo falta el <strong>PIN de administrador</strong>.
+  </p>
+
+  <div class="alert alert-light border small mb-4">
+    {% if tiene_tablet_distinto %}
+    <i class="bi bi-check-circle text-success me-1"></i> Tienes un PIN de tablet <strong>diferente</strong> al del panel.
+    {% else %}
+    <i class="bi bi-info-circle text-primary me-1"></i> Ahora el PIN de tablet coincide con el del administrador. Puedes cambiarlo abajo para dejar una clave más simple en el mostrador.
+    {% endif %}
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-4">
+      <h2 class="h6 text-uppercase text-muted mb-3">Cambiar PIN tablet</h2>
+      <form method="post">
+        <input type="hidden" name="accion" value="cambiar">
+        <div class="mb-3">
+          <label class="form-label">PIN de administrador <span class="text-danger">*</span></label>
+          <input type="password" name="pin_admin" class="form-control" required autocomplete="current-password"
+                 placeholder="Para autorizar el cambio">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Nuevo PIN tablet</label>
+          <input type="password" name="pin_tablet_nuevo" class="form-control" required autocomplete="new-password"
+                 minlength="4" placeholder="Mínimo 4 caracteres">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Repetir PIN tablet</label>
+          <input type="password" name="pin_tablet_confirmar" class="form-control" required autocomplete="new-password"
+                 minlength="4" placeholder="Misma clave">
+        </div>
+        <button type="submit" class="btn btn-primary">Guardar PIN tablet</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-3 border-warning" style="border-width: 1px !important;">
+    <div class="card-body p-4">
+      <h2 class="h6 text-uppercase text-muted mb-2">Restablecer</h2>
+      <p class="small text-muted mb-3">Vuelve a usar el mismo PIN que el del panel administrador (útil si olvidaste el PIN del tablet).</p>
+      <form method="post" onsubmit="return confirm('¿Igualar el PIN de tablet al PIN de administrador?');">
+        <input type="hidden" name="accion" value="restablecer">
+        <div class="mb-3">
+          <label class="form-label">PIN de administrador <span class="text-danger">*</span></label>
+          <input type="password" name="pin_admin" class="form-control" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-outline-secondary btn-sm">Restablecer al PIN del administrador</button>
+      </form>
+    </div>
+  </div>
+
+  <p class="small text-muted mt-4 mb-0">
+    <a href="{{ url_for('admin.panel') }}">← Volver al panel</a>
+  </p>
+</div>
+
+{% endblock %}

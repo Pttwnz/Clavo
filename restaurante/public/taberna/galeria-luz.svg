@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 200" role="img" aria-label="Motivo decorativo luz c�lida">
+  <defs>
+    <linearGradient id="a" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2d1818"/>
+      <stop offset="55%" stop-color="#8f1d1d"/>
+      <stop offset="100%" stop-color="#e8c87a"/>
+    </linearGradient>
+    <radialGradient id="b" cx="78%" cy="22%" r="55%">
+      <stop offset="0%" stop-color="#faf6ed" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#faf6ed" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="480" height="200" fill="url(#a)"/>
+  <rect width="480" height="200" fill="url(#b)"/>
+  <path d="M0 160 Q120 120 240 150 T480 130 L480 200 L0 200 Z" fill="#1a0f0f" opacity="0.35"/>
+</svg>

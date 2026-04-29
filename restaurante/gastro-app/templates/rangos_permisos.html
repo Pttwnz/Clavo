@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block titulo %}Rangos y permisos{% endblock %}
+{% block contenido %}
+<div class="container py-4" style="max-width: 920px;">
+  <h1 class="h4 mb-3"><i class="bi bi-shield-lock me-2"></i>Rangos y permisos</h1>
+  <p class="text-muted small mb-2"><strong>Jerarquía:</strong> <span class="text-body">SuperAdmin</span> (PIN administrador, acceso total) → <span class="text-body">Gerente</span> → <span class="text-body">Encargado</span> → <span class="text-body">Empleado</span>. Los tres últimos son rangos que asignas a cada persona en Empleados.</p>
+  <p class="text-muted small">Define qué ve cada rango en el portal y qué módulos del panel puede usar quien inicie sesión con PIN de personal. Por defecto, Encargado no incluye empresa ni escandallos (puedes activarlos aquí).</p>
+
+  {% for item in rangos_matrices %}
+  <div class="card shadow-sm mb-4">
+    <div class="card-header fw-semibold">{{ item.rango.nombre }}</div>
+    <div class="card-body">
+      <form method="post" class="row g-2">
+        <input type="hidden" name="rango_id" value="{{ item.rango.id }}">
+        <p class="small text-muted mb-2">Panel / back-office</p>
+        <div class="col-12">
+          {% for cod in codigos_mod %}
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="perm_{{ cod }}" id="m{{ item.rango.id }}_{{ cod }}" {% if cod in item.permisos %}checked{% endif %}>
+            <label class="form-check-label small" for="m{{ item.rango.id }}_{{ cod }}">{{ etiqueta(cod) }}</label>
+          </div>
+          {% endfor %}
+        </div>
+        <p class="small text-muted mb-2 mt-3">Portal empleado</p>
+        <div class="col-12">
+          {% for cod in codigos_emp %}
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="perm_{{ cod }}" id="e{{ item.rango.id }}_{{ cod }}" {% if cod in item.permisos %}checked{% endif %}>
+            <label class="form-check-label small" for="e{{ item.rango.id }}_{{ cod }}">{{ etiqueta(cod) }}</label>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="col-12 mt-3">
+          <button type="submit" class="btn btn-primary btn-sm">Guardar {{ item.rango.nombre }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

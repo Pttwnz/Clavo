@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ tr('page.area.meta_title') }}{% endblock %}
+
+{% block estilos %}
+<style>
+.ap-root { max-width: 920px; margin: 0 auto; padding: 0 12px 48px; }
+.ap-head {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #fff;
+  border-radius: 16px;
+  padding: 22px 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.25);
+}
+.ap-head-top { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; margin-bottom: 18px; }
+.ap-av {
+  width: 56px; height: 56px; border-radius: 14px;
+  background: linear-gradient(145deg, #3b82f6, #1d4ed8);
+  font-size: 1.4rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.ap-head h1 { font-size: 1.35rem; font-weight: 700; margin: 0 0 4px 0; letter-spacing: -0.02em; }
+.ap-head .muted { color: #94a3b8; font-size: 0.9rem; margin: 0; }
+.ap-meta { display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 0.82rem; color: #cbd5e1; }
+.ap-meta span strong { color: #f1f5f9; font-weight: 600; }
+
+.ap-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+@media (max-width: 575px) { .ap-actions { grid-template-columns: 1fr; } }
+.ap-action-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: #fff !important;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+.ap-action-card:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.25); color: #fff !important; }
+.ap-action-card .bi { font-size: 1.5rem; opacity: 0.95; }
+.ap-action-card strong { font-size: 1rem; font-weight: 600; }
+.ap-action-card span { font-size: 0.8rem; color: #94a3b8; font-weight: 400; }
+
+.ap-quick {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.08);
+}
+.ap-quick a {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 10px;
+  font-size: 0.8rem; font-weight: 500;
+  color: #e2e8f0;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  text-decoration: none;
+}
+.ap-quick a:hover { background: rgba(255,255,255,0.12); color: #fff; }
+.ap-quick .ap-btn-rrhh {
+  border-color: rgba(96, 165, 250, 0.55);
+  background: rgba(59, 130, 246, 0.22);
+  color: #e0f2fe;
+}
+.ap-quick .ap-btn-rrhh:hover { background: rgba(59, 130, 246, 0.35); color: #fff; }
+
+.ap-alert-pend { border-radius: 12px; border: 0; margin-bottom: 18px; }
+
+.ap-toc {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;
+}
+.ap-toc a {
+  font-size: 0.8rem; font-weight: 600;
+  padding: 6px 12px; border-radius: 999px;
+  color: #475569; background: #fff; border: 1px solid #e2e8f0; text-decoration: none;
+}
+.ap-toc a:hover { border-color: #94a3b8; color: #0f172a; }
+
+.ap-block {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 20px 22px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.ap-block > h2 {
+  font-size: 1.05rem; font-weight: 700; color: #0f172a;
+  margin: 0 0 6px 0; display: flex; align-items: center; gap: 10px;
+}
+.ap-block-lead { font-size: 0.88rem; color: #64748b; margin: 0 0 18px 0; line-height: 1.45; }
+
+.ap-week { margin-bottom: 1.15rem; }
+.ap-week:last-child { margin-bottom: 0; }
+.ap-week h4 { font-size: 0.85rem; font-weight: 600; color: #334155; margin: 0 0 10px 0; }
+.ap-week-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid #e2e8f0; }
+.ap-week-table { margin: 0; font-size: 0.8rem; }
+.ap-week-table thead th {
+  background: #f8fafc; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.03em;
+  color: #64748b; font-weight: 600; text-align: center; white-space: nowrap;
+  border-bottom: 2px solid #e2e8f0; padding: 8px 6px;
+}
+.ap-week-table thead th.hoy { background: #e0f2fe; color: #0369a1; }
+.ap-week-table tbody td {
+  vertical-align: top; padding: 6px; border-color: #f1f5f9; min-width: 6.25rem;
+}
+.ap-week-table tbody td.pasado { background: #fafafa; }
+.ap-week-table tbody td.hoy { background: #f0f9ff; }
+.ap-slot { padding: 0.3rem 0; border-bottom: 1px solid #f1f5f9; font-size: 0.76rem; line-height: 1.35; }
+.ap-slot:last-child { border-bottom: none; }
+
+.ap-week-compact-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid #e2e8f0; background: #fafbfc; padding: 8px 10px; margin-bottom: 10px; }
+.ap-week-compact { margin: 0; width: 100%; border-collapse: collapse; font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 0.78rem; line-height: 1.4; }
+.ap-week-compact th, .ap-week-compact td { padding: 6px 5px; text-align: center; border-bottom: 1px solid #e2e8f0; }
+.ap-week-compact thead th { font-weight: 700; color: #475569; border-bottom: 2px solid #cbd5e1; font-size: 0.68rem; letter-spacing: 0.04em; }
+.ap-week-compact tbody td { color: #334155; }
+.ap-week-compact td.ap-wc-h { text-align: right; font-weight: 600; color: #1e293b; }
+.ap-week-compact thead th.ap-wc-hh { text-align: right; }
+
+.ap-fich-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 575px) { .ap-fich-grid { grid-template-columns: 1fr; } }
+.ap-fich-tile {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 18px; border-radius: 12px;
+  border: 1px solid #e2e8f0; background: #f8fafc;
+  text-decoration: none; color: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.ap-fich-tile:hover { border-color: #cbd5e1; box-shadow: 0 4px 14px rgba(15,23,42,0.06); color: inherit; }
+.ap-fich-tile .ic { font-size: 1.75rem; }
+.ap-fich-tile h3 { font-size: 1rem; font-weight: 600; margin: 0; color: #0f172a; }
+.ap-fich-tile p { font-size: 0.85rem; color: #64748b; margin: 0; line-height: 1.4; }
+.ap-fich-tile .cta { font-size: 0.8rem; font-weight: 600; color: #2563eb; }
+.ap-fich-tile:hover .cta { color: #1d4ed8; }
+
+.ap-empty {
+  text-align: center; padding: 28px 16px; color: #94a3b8; font-size: 0.88rem;
+  border: 1px dashed #e2e8f0; border-radius: 12px; background: #fafafa;
+}
+.ap-empty i { font-size: 1.75rem; display: block; margin-bottom: 8px; opacity: 0.45; }
+#ap-horarios, #ap-fichaje { scroll-margin-top: 96px; }
+.ap-resumen {
+  background: linear-gradient(135deg, #f0fdf4 0%, #fff 100%);
+  border: 1px solid #bbf7d0 !important;
+}
+.ap-resumen-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+}
+.ap-stat {
+  text-align: center;
+  padding: 10px 8px;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+.ap-stat .num { font-size: 1.25rem; font-weight: 700; color: #0f172a; display: block; }
+.ap-stat .lbl { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: #64748b; }
+</style>
+{% endblock %}
+
+{% block contenido %}
+{% include 'partials/volver_bar.html' %}
+
+<div class="ap-root">
+
+  {% if n_rrhh_pend or n_sol_pend %}
+  <div class="alert alert-info ap-alert-pend shadow-sm d-flex flex-wrap align-items-center justify-content-between gap-2 py-3 px-3">
+    <div class="d-flex flex-wrap align-items-start gap-2">
+      <i class="bi bi-hourglass-split fs-5 mt-1"></i>
+      <div class="small">
+        <strong class="d-block mb-1">{{ tr('page.area.pending_title') }}</strong>
+        {% if n_rrhh_pend %}<span>{{ tr('page.area.pending_rrhh', n=n_rrhh_pend) }}</span>{% endif %}
+        {% if n_rrhh_pend and n_sol_pend %}<span class="mx-1">·</span>{% endif %}
+        {% if n_sol_pend %}<span>{{ tr('page.area.pending_sol', n=n_sol_pend) }}</span>{% endif %}
+      </div>
+    </div>
+    <a href="{{ url_for('empleado.peticiones_rrhh') }}" class="btn btn-sm btn-primary shrink-0">{{ tr('page.area.btn_open_rrhh') }}</a>
+  </div>
+  {% endif %}
+
+  <header class="ap-head">
+    <div class="ap-head-top">
+      <div class="ap-av">{{ (empleado.nombre or '?')[0]|upper }}</div>
+      <div class="flex-grow-1">
+        <h1>{{ empleado.nombre|default('', true) }} {{ empleado.apellido|default('', true) }}</h1>
+        <p class="muted mb-2">{{ empleado.puesto|default(tr('page.area.role_fallback'), true) }}</p>
+        <div class="ap-meta">
+          <span>{{ tr('page.area.contract') }} <strong>{{ empleado.horas_contrato|default('—', true) }}</strong> {{ tr('page.area.h_sem') }}</span>
+          <span>{{ tr('page.area.alta') }} <strong>{{ empleado.fecha_alta|default('—', true) }}</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ap-actions">
+      {% if not reservas_only %}
+      <a href="#ap-horarios" class="ap-action-card">
+        <i class="bi bi-calendar-week"></i>
+        <strong>{{ tr('page.area.act_sched') }}</strong>
+        <span>{{ tr('page.area.act_sched_sub') }}</span>
+      </a>
+      {% endif %}
+      <a href="#ap-fichaje" class="ap-action-card">
+        <i class="bi bi-clock-history"></i>
+        <strong>{{ tr('page.area.act_clock') }}</strong>
+        <span>{{ tr('page.area.act_clock_sub') }}</span>
+      </a>
+    </div>
+
+    <div class="ap-quick">
+      <a href="{{ url_for('empleado.peticiones_rrhh') }}" class="ap-btn-rrhh"><i class="bi bi-chat-dots-fill"></i> {{ tr('page.area.quick_rrhh') }}</a>
+      <a href="/panel_empleado"><i class="bi bi-grid-1x2"></i> {{ tr('page.area.quick_panel') }}</a>
+      <a href="/reservas"><i class="bi bi-calendar-event"></i> {{ tr('page.area.quick_reserv') }}</a>
+      <a href="{{ url_for('empleado.conformidad_jornada') }}"><i class="bi bi-journal-check"></i> {{ tr('page.area.quick_conform') }}</a>
+    </div>
+  </header>
+
+  <nav class="ap-toc" aria-label="{{ tr('page.area.toc_aria') }}">
+    {% if not reservas_only %}
+    <a href="#ap-horarios">{{ tr('page.area.toc_sched') }}</a>
+    {% endif %}
+    <a href="#ap-fichaje">{{ tr('page.area.toc_clock') }}</a>
+  </nav>
+
+  <section id="ap-resumen" class="ap-block ap-resumen">
+    <h2 class="mb-2"><i class="bi bi-speedometer2 text-success"></i> {{ tr('page.area.block_jornada') }}</h2>
+    <p class="ap-block-lead mb-3 small text-muted">{{ tr('page.area.block_jornada_lead') }}</p>
+    <div class="ap-resumen-grid">
+      <div class="ap-stat">
+        <span class="lbl">{{ tr('page.area.stat_worked') }}</span>
+        <span class="num">{{ '%.1f'|format(jornada_vacaciones.horas_trabajadas) }}<span class="small fw-normal"> h</span></span>
+      </div>
+      <div class="ap-stat">
+        <span class="lbl">{{ tr('page.area.stat_vac_ref') }}</span>
+        <span class="num text-success">{{ '%.1f'|format(jornada_vacaciones.horas_vacaciones_generadas) }}<span class="small fw-normal"> h</span></span>
+      </div>
+      <div class="ap-stat">
+        <span class="lbl">{{ tr('page.area.stat_weeks_vac') }}</span>
+        <span class="num text-success" style="font-size:1.1rem;">{{ '%.2f'|format(jornada_vacaciones.semanas_vacacion_equiv) }}</span>
+      </div>
+      <div class="ap-stat">
+        <span class="lbl">{{ tr('page.area.stat_seniority') }}</span>
+        <span class="num" style="font-size:0.95rem;">{{ jornada_vacaciones.texto_antiguedad }}</span>
+      </div>
+    </div>
+  </section>
+
+  {% if not reservas_only %}
+  <section id="ap-horarios" class="ap-block">
+    <h2><i class="bi bi-calendar-week text-primary"></i> {{ tr('page.area.horarios_title') }}</h2>
+    <p class="ap-block-lead">{{ tr('page.area.horarios_lead') }}</p>
+    {% if semanas_horario|length %}
+    {% for sem in semanas_horario %}
+    <div class="ap-week">
+      <h4><i class="bi bi-calendar3 me-1 text-primary"></i>{{ sem.titulo_semana }}</h4>
+      {% if sem.row_compact and sem.dias_letras %}
+      <div class="ap-week-compact-wrap">
+        <table class="ap-week-compact" aria-label="Resumen semanal compacto">
+          <thead>
+            <tr>
+              {% for letter in sem.dias_letras %}
+              <th scope="col">{{ letter }}</th>
+              {% endfor %}
+              <th scope="col" class="ap-wc-hh">horas</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              {% for c in sem.row_compact.cols %}
+              <td>{{ c }}</td>
+              {% endfor %}
+              <td class="ap-wc-h">{{ sem.row_compact.horas_semana_txt }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+      <div class="ap-week-wrap">
+        <table class="table table-bordered table-sm mb-0 ap-week-table">
+          <thead>
+            <tr>
+              {% for d in sem.dias %}
+              <th class="{% if d.es_hoy %}hoy{% endif %}">{{ d.label }}<br><span class="text-muted fw-normal">{{ d.num }}</span></th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              {% for d in sem.dias %}
+              {% set ck = d.fecha %}
+              <td class="{% if d.es_hoy %}hoy{% elif d.es_pasado %}pasado{% endif %}">
+                {% if sem.celdas.get(ck) %}
+                  {% for t in sem.celdas[ck] %}
+                  <div class="ap-slot">
+                    <div class="font-monospace text-dark">{{ (t.hora_inicio or '')[:5] }}–{{ (t.hora_fin or '')[:5] }}</div>
+                    {% if t.turno %}<div><span class="badge bg-light text-dark border" style="font-size:0.62rem;">{{ t.turno }}</span></div>{% endif %}
+                    {% set st = (t.estado or '')|lower %}
+                    <div class="mt-1">
+                      {% if 'cancel' in st %}
+                      <span class="badge text-bg-secondary" style="font-size:0.62rem;">{{ t.estado }}</span>
+                      {% else %}
+                      <span class="badge text-bg-success" style="font-size:0.62rem;">{{ t.estado or 'Programado' }}</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                  {% endfor %}
+                {% else %}
+                <span class="text-muted small">—</span>
+                {% endif %}
+              </td>
+              {% endfor %}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="ap-empty">
+      <i class="bi bi-calendar-x"></i>
+      {{ tr('page.area.empty_sched') }}
+    </div>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  <section id="ap-fichaje" class="ap-block">
+    <h2><i class="bi bi-clock-history text-warning"></i> {{ tr('page.area.fichaje_title') }}</h2>
+    <p class="ap-block-lead">{{ tr('page.area.fichaje_lead') }}</p>
+    <div class="ap-fich-grid">
+      <a href="/fichaje" class="ap-fich-tile">
+        <span class="ic text-primary"><i class="bi bi-box-arrow-in-right"></i></span>
+        <h3>{{ tr('page.area.tile_clock_title') }}</h3>
+        <p>{{ tr('page.area.tile_clock_desc') }}</p>
+        <span class="cta">{{ tr('page.area.tile_clock_cta') }} <i class="bi bi-arrow-right-short"></i></span>
+      </a>
+      <a href="/fichajes" class="ap-fich-tile">
+        <span class="ic text-success"><i class="bi bi-list-ul"></i></span>
+        <h3>{{ tr('page.area.tile_hist_title') }}</h3>
+        <p>{{ tr('page.area.tile_hist_desc') }}</p>
+        <span class="cta">{{ tr('page.area.tile_hist_cta') }} <i class="bi bi-arrow-right-short"></i></span>
+      </a>
+    </div>
+  </section>
+
+</div>
+
+{% endblock %}

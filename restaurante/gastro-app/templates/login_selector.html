@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ tr('meta.default_title') }}{% endblock %}
+
+{% block estilos %}
+<style>
+.access-landing {
+  min-height: calc(100vh - 8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem 3rem;
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(var(--brand-primary-rgb), 0.18), transparent 55%),
+    linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
+.access-brand {
+  text-align: center;
+  margin-bottom: 2rem;
+  max-width: 420px;
+}
+.access-brand .logo-wrap {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 1rem;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #0f172a 0%, var(--brand-primary) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.2);
+}
+.access-brand .logo-wrap img {
+  max-width: 48px;
+  max-height: 48px;
+  object-fit: contain;
+}
+.access-brand h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #0f172a;
+  margin: 0 0 0.35rem 0;
+}
+.access-brand p {
+  margin: 0;
+  font-size: 0.92rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+.access-grid {
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.access-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+.access-card:hover {
+  border-color: rgba(var(--brand-primary-rgb), 0.45);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.1);
+  transform: translateY(-2px);
+  color: inherit;
+}
+.access-card:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+.access-card .ac-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+.access-card .ac-icon.admin {
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+  color: #3730a3;
+}
+.access-card .ac-icon.emp {
+  background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%);
+  color: #0f766e;
+}
+.access-card .ac-icon.cli {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  color: #334155;
+}
+.access-card .ac-body { min-width: 0; flex: 1; }
+.access-card .ac-title {
+  font-weight: 600;
+  font-size: 1.02rem;
+  color: #0f172a;
+  margin: 0 0 0.2rem 0;
+}
+.access-card .ac-desc {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.35;
+}
+.access-card .ac-arrow {
+  color: #94a3b8;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+.access-card:hover .ac-arrow {
+  color: var(--brand-primary);
+}
+.access-foot {
+  margin-top: 2rem;
+  text-align: center;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  max-width: 360px;
+  line-height: 1.45;
+}
+</style>
+{% endblock %}
+
+{% block contenido %}
+
+<div class="access-landing">
+  <header class="access-brand">
+    <div class="logo-wrap">
+      {% if branding.logo_url %}
+      <img src="{{ branding.logo_url }}" alt="">
+      {% else %}
+      <i class="bi bi-grid-1x2-fill text-white fs-2"></i>
+      {% endif %}
+    </div>
+    <h1>{{ branding.nombre_mostrar }}</h1>
+    <p>{{ tr('login_selector.subtitle') }}</p>
+  </header>
+
+  <div class="access-grid">
+    <a href="/login{% if next_url %}?next={{ next_url|urlencode }}{% endif %}" class="access-card">
+      <div class="ac-icon admin" aria-hidden="true"><i class="bi bi-shield-lock"></i></div>
+      <div class="ac-body">
+        <div class="ac-title">{{ tr('login_selector.admin_title') }}</div>
+        <p class="ac-desc">{{ tr('login_selector.admin_desc') }}</p>
+      </div>
+      <i class="bi bi-chevron-right ac-arrow" aria-hidden="true"></i>
+    </a>
+
+    {% if not reservas_only %}
+    <a href="/login_empleado" class="access-card">
+      <div class="ac-icon emp" aria-hidden="true"><i class="bi bi-person-badge"></i></div>
+      <div class="ac-body">
+        <div class="ac-title">{{ tr('login_selector.emp_title') }}</div>
+        <p class="ac-desc">{{ tr('login_selector.emp_desc') }}</p>
+      </div>
+      <i class="bi bi-chevron-right ac-arrow" aria-hidden="true"></i>
+    </a>
+    {% endif %}
+
+    <a href="{{ url_for('public.tablet_acceso') }}" class="access-card">
+      <div class="ac-icon cli" aria-hidden="true"><i class="bi bi-tablet-landscape"></i></div>
+      <div class="ac-body">
+        <div class="ac-title">{{ tr('login_selector.tablet_title') }}</div>
+        <p class="ac-desc">{{ tr('login_selector.tablet_desc') }}</p>
+      </div>
+      <i class="bi bi-chevron-right ac-arrow" aria-hidden="true"></i>
+    </a>
+  </div>
+
+  <p class="access-foot">{{ tr('login_selector.foot') }}</p>
+</div>
+
+{% endblock %}

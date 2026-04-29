@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ tr('page.login.admin.meta') }}{% endblock %}
+
+{% block estilos %}
+<style>
+.adm-login-wrap {
+  min-height: calc(85vh - 24px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background:
+    radial-gradient(ellipse 100% 60% at 50% -10%, rgba(var(--brand-primary-rgb), 0.14), transparent 50%),
+    linear-gradient(180deg, #f8fafc, #f1f5f9);
+}
+.adm-login-card {
+  width: 100%;
+  max-width: 400px;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.1);
+  overflow: hidden;
+}
+.adm-login-card .head {
+  background: linear-gradient(135deg, #0f172a 0%, var(--brand-primary) 100%);
+  color: #fff;
+  padding: 1.75rem 1.5rem 1.5rem;
+  text-align: center;
+}
+.adm-login-card .head .bi {
+  font-size: 2rem;
+  opacity: 0.95;
+  margin-bottom: 0.75rem;
+}
+.adm-login-card .head h1 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 0 0.35rem 0;
+  letter-spacing: -0.02em;
+}
+.adm-login-card .head p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.82);
+}
+.adm-login-card .body {
+  padding: 1.5rem 1.5rem 1.75rem;
+}
+.adm-login-card .back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: #64748b;
+  text-decoration: none;
+  margin-bottom: 1rem;
+}
+.adm-login-card .back:hover { color: var(--brand-primary); }
+</style>
+{% endblock %}
+
+{% block contenido %}
+
+<div class="adm-login-wrap">
+  <div class="adm-login-card">
+    <div class="head">
+      {% if branding.logo_url %}
+      <div class="d-inline-flex align-items-center justify-content-center rounded-3 bg-white bg-opacity-10 px-3 py-2 mb-2">
+        <img src="{{ branding.logo_url }}" alt="" style="max-height:36px;max-width:140px;object-fit:contain;">
+      </div>
+      {% else %}
+      <i class="bi bi-shield-lock d-block"></i>
+      {% endif %}
+      <h1>{{ tr('page.login.admin.h1') }}</h1>
+      <p>{{ tr('page.login.admin.p') }}</p>
+    </div>
+    <div class="body">
+      <a href="{{ gastro_login_home_url(next_url) }}" class="back"><i class="bi bi-arrow-left"></i> {{ tr('page.login.admin.back') }}</a>
+
+      {% if error %}
+      <div class="alert alert-danger py-2 small mb-3">{{ tr('page.login.admin.err_pin') }}</div>
+      {% endif %}
+
+      <form method="post" action="/verificar_admin">
+        <input type="hidden" name="next" value="{{ next_url or '' }}">
+        <label class="form-label small text-muted">{{ tr('page.login.admin.label_pin') }}</label>
+        <input type="password" name="pin" class="form-control form-control-lg mb-3" placeholder="{{ tr('page.login.admin.ph_pin') }}" required autofocus autocomplete="current-password">
+        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">{{ tr('page.login.admin.btn') }}</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block titulo %}{% if solo_mis_fichajes %}Mis horas{% else %}Historial de fichajes{% endif %}{% endblock %}
+
+{% block estilos %}
+<style>
+  .fh-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .fh-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+  .fh-sub {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin: 0.25rem 0 0;
+  }
+  .fh-card.app-surface {
+    padding: 0;
+    overflow: hidden;
+  }
+  .fh-table-wrap { overflow-x: auto; }
+  .fh-table {
+    margin: 0;
+    font-size: 0.9rem;
+  }
+  .fh-table thead th {
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+  }
+  .fh-table tbody td {
+    padding: 0.85rem 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+  }
+  .fh-table tbody tr:hover { background: #fafbfc; }
+  .fh-table tbody tr:last-child td { border-bottom: none; }
+  .fh-emp {
+    font-weight: 600;
+    color: #0f172a;
+  }
+  .fh-time {
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, monospace;
+    font-size: 0.88rem;
+    color: #64748b;
+  }
+  .fh-hours {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    color: #0d9488;
+    font-size: 0.95rem;
+  }
+  .fh-empty {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: #94a3b8;
+  }
+  .fh-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    background: #f1f5f9;
+    color: #64748b;
+  }
+</style>
+{% endblock %}
+
+{% block contenido %}
+{% include 'partials/volver_bar.html' %}
+<div class="app-page">
+<div class="app-hero-light fh-head mb-3">
+  <div>
+    <h1 class="fh-title">{% if solo_mis_fichajes %}Mis horas{% else %}Historial de fichajes{% endif %}</h1>
+    <p class="fh-sub mb-0">{% if solo_mis_fichajes %}Solo tus registros (entrada, salida, pausas).{% else %}Todos los empleados: cada línea es un evento.{% endif %}</p>
+  </div>
+  <span class="fh-badge">{{ fichajes|length }} registros</span>
+</div>
+
+<div class="fh-card app-surface">
+  <div class="fh-table-wrap">
+    <table class="table fh-table mb-0">
+      <thead>
+        <tr>
+          {% if not solo_mis_fichajes %}<th>Empleado</th>{% endif %}
+          <th>Fecha</th>
+          <th>Hora</th>
+          <th>Tipo</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in fichajes %}
+        <tr>
+          {% if not solo_mis_fichajes %}<td class="fh-emp">{{ f.nombre }}</td>{% endif %}
+          <td><span class="text-nowrap">{{ f.fecha }}</span></td>
+          <td class="fh-time">{{ f.hora }}</td>
+          <td><span class="badge text-bg-light text-dark border">{{ f.tipo }}</span></td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="{% if solo_mis_fichajes %}3{% else %}4{% endif %}" class="fh-empty">No hay fichajes registrados todavía.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+<div class="viz-mapa">
+
+<div class="mapa-inner">
+
+{% for m in mesas %}
+
+<div class="mesa-pin"
+     data-id="{{ m.id }}"
+     style="
+     left: {{ m.x }}px;
+     top: {{ m.y }}px;
+     width: {{ m.width }}px;
+     height: {{ m.height }}px;
+     transform: rotate({{ m.rotacion }}deg);
+     ">
+
+    <img src="/static/img/{{ m.imagen }}"
+         style="
+         width:100%;
+         height:100%;
+         object-fit:contain;
+         ">
+
+    <div class="mesa-label">
+        {{ m.nombre }}
+    </div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+</div>

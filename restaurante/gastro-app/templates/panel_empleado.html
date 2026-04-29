@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ tr('page.portal.meta_title') }}{% endblock %}
+
+{% block estilos %}
+<style>
+.portal-hero {
+  background: linear-gradient(135deg, var(--brand-primary) 0%, #0f172a 50%, #0a0f18 100%);
+  color: #fff;
+  border-radius: 16px;
+  padding: 28px 32px 32px;
+  margin-bottom: 28px;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.25);
+}
+.portal-hero h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 6px 0;
+}
+.portal-hero p {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.95rem;
+  max-width: 40rem;
+  line-height: 1.5;
+}
+.portal-hero .badge-soft {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.1);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #e2e8f0;
+}
+
+.portal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.portal-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 22px 22px 18px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.portal-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
+  transform: translateY(-2px);
+  color: inherit;
+}
+.portal-card .icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  margin-bottom: 14px;
+}
+.portal-card .icon-wrap.accent-1 { background: #e0f2fe; color: #0369a1; }
+.portal-card .icon-wrap.accent-2 { background: #ede9fe; color: #5b21b6; }
+.portal-card .icon-wrap.accent-3 { background: #fef3c7; color: #b45309; }
+.portal-card .icon-wrap.accent-4 { background: #dcfce7; color: #15803d; }
+
+.portal-card h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+  color: #0f172a;
+}
+.portal-card .desc {
+  font-size: 0.875rem;
+  color: #64748b;
+  line-height: 1.45;
+  flex: 1;
+  margin-bottom: 16px;
+}
+.portal-card .cta {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #3b82f6;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.portal-card:hover .cta { color: #2563eb; }
+
+.portal-links {
+  margin-top: 8px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+}
+.portal-links a {
+  font-size: 0.85rem;
+  color: #64748b;
+  text-decoration: none;
+}
+.portal-links a:hover { color: #2563eb; }
+</style>
+{% endblock %}
+
+{% block contenido %}
+
+<div class="portal-hero">
+  <h1>{{ tr('page.portal.greeting', name=session.empleado_nombre) }}</h1>
+  <p><strong>{{ tr('page.portal.hero_s1') }}</strong> {{ tr('page.portal.hero_r1') }} <strong>{{ tr('page.portal.hero_s2') }}</strong> {{ tr('page.portal.hero_r2') }}</p>
+  <span class="badge-soft">{{ tr('page.portal.badge') }}</span>
+</div>
+
+<div class="portal-grid">
+
+  <a href="{{ url_for('empleado.area_personal') }}" class="portal-card">
+    <div class="icon-wrap accent-1"><i class="bi bi-calendar-week"></i></div>
+    <h2>{{ tr('page.portal.card_sched_title') }}</h2>
+    <p class="desc">{{ tr('page.portal.card_sched_p1') }}<strong>{{ tr('page.portal.card_sched_em') }}</strong>{{ tr('page.portal.card_sched_p2') }}</p>
+    <span class="cta">{{ tr('page.portal.cta_open') }} <i class="bi bi-arrow-right-short"></i></span>
+  </a>
+
+  <a href="{{ url_for('empleado.peticiones_rrhh') }}" class="portal-card">
+    <div class="icon-wrap accent-2"><i class="bi bi-chat-dots"></i></div>
+    <h2>{{ tr('page.portal.card_rrhh_title') }}</h2>
+    <p class="desc">
+      {{ tr('page.portal.card_rrhh_desc') }}
+      {% if n_rrhh_pend or n_sol_pend %}
+      <span class="badge text-bg-warning text-dark mt-1">{{ tr('page.portal.pending', n=(n_rrhh_pend or 0) + (n_sol_pend or 0)) }}</span>
+      {% endif %}
+    </p>
+    <span class="cta">{{ tr('page.portal.cta_open') }} <i class="bi bi-arrow-right-short"></i></span>
+  </a>
+
+  <a href="/reservas" class="portal-card">
+    <div class="icon-wrap accent-3"><i class="bi bi-calendar-event"></i></div>
+    <h2>{{ tr('page.portal.card_reserv_title') }}</h2>
+    <p class="desc">{{ tr('page.portal.card_reserv_desc') }}</p>
+    <span class="cta">{{ tr('page.portal.cta_module') }} <i class="bi bi-arrow-right-short"></i></span>
+  </a>
+
+  <a href="{{ url_for('empleado.conformidad_jornada') }}" class="portal-card">
+    <div class="icon-wrap accent-4"><i class="bi bi-journal-check"></i></div>
+    <h2>{{ tr('page.portal.card_conform_title') }}</h2>
+    <p class="desc">{{ tr('page.portal.card_conform_desc') }}</p>
+    <span class="cta">{{ tr('page.portal.cta_open') }} <i class="bi bi-arrow-right-short"></i></span>
+  </a>
+
+</div>
+
+<div class="portal-links">
+  <span class="small text-muted me-1">{{ tr('page.portal.quick_label') }}</span>
+  <a href="/fichaje"><i class="bi bi-clock-history me-1"></i>{{ tr('page.portal.quick_clock') }}</a>
+  <a href="/fichajes"><i class="bi bi-list-ul me-1"></i>{{ tr('page.portal.quick_hours') }}</a>
+  <a href="/panel_empleado"><i class="bi bi-grid-1x2 me-1"></i>{{ tr('page.portal.quick_panel') }}</a>
+</div>
+
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block titulo %}Fichaje registrado{% endblock %}
+
+{% block contenido %}
+
+<div class="d-flex justify-content-center align-items-center" style="height:75vh;">
+
+<div class="card text-center shadow-lg p-5" style="width:460px; border-radius:18px;">
+
+<!-- LOGO -->
+
+<div class="mb-3">
+
+<img
+src="/static/logo.png"
+alt="GastroManager"
+style="
+height:90px;
+width:auto;
+object-fit:contain;
+display:block;
+margin:auto;
+"
+/>
+
+</div>
+
+<!-- NOMBRE EMPLEADO -->
+
+<h2 class="fw-bold mb-3">
+
+{{ nombre }} {{ apellido }}
+
+</h2>
+
+<!-- MENSAJE -->
+
+{% if tipo == "entrada" %}
+
+<div class="alert alert-success fs-5">
+
+✔ Gracias por fichar ENTRADA
+
+</div>
+
+{% else %}
+
+<div class="alert alert-warning fs-5">
+
+✔ Gracias por fichar SALIDA
+
+</div>
+
+{% endif %}
+
+<!-- HORA -->
+
+<p class="fs-4 mt-3">
+
+Hora: <strong>{{ hora }}</strong>
+
+</p>
+
+<!-- BOTON -->
+
+<a
+href="/fichaje"
+class="btn btn-primary w-100 mt-4"
+style="
+font-size:16px;
+padding:10px;
+border-radius:10px;
+"
+>
+
+Volver al fichaje
+
+</a>
+
+</div>
+
+</div>
+
+{% endblock %}

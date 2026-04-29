@@ -1,0 +1,931 @@
+{% extends "base.html" %}
+
+{% block titulo %}
+{{ tr('page.reservas.meta_title') }}
+{% endblock %}
+
+{% block estilos %}
+<style>
+
+.top-bar.app-surface {
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.turno-card {
+    background: white;
+    border-radius: 18px;
+    padding: 18px;
+    margin-bottom: 22px;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.06);
+}
+
+.reserva-card {
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border-left: 6px solid #e5e7eb;
+    background: #ffffff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    transition: all 0.18s ease;
+}
+
+.reserva-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 22px rgba(0,0,0,0.08);
+}
+
+.estado-Pendiente { border-left-color: #facc15; }
+.estado-Confirmada { border-left-color: #3b82f6; }
+.estado-Llegó { border-left-color: #22c55e; }
+.estado-Finalizada { border-left-color: #9ca3af; }
+.estado-Cancelada { border-left-color: #ef4444; }
+
+.reserva-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.reserva-hora {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.reserva-nombre {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.reserva-datos {
+    color: #4b5563;
+    margin-top: 4px;
+}
+
+.estado-badge {
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #f1f5f9;
+}
+
+.timer {
+    font-weight: 700;
+    color: #22c55e;
+}
+
+.nota {
+    font-size: 13px;
+    color: #6b7280;
+    font-style: italic;
+    margin-top: 4px;
+}
+
+.titulo-turno {
+    font-weight: 700;
+    margin-bottom: 14px;
+}
+
+.botones-reserva {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.botones-reserva .btn {
+    font-size: 12px;
+    padding: 4px 8px;
+}
+
+/* Tablet: botones grandes y mejor distribución táctil */
+.tablet-touch .botones-reserva {
+    gap: 8px;
+}
+.tablet-touch .botones-reserva .btn {
+    font-size: 0.9rem;
+    font-weight: 600;
+    min-height: 44px;
+    padding: 10px 12px;
+    border-radius: 10px;
+}
+
+@media (max-width: 991.98px) {
+    .tablet-touch .botones-reserva .btn {
+        flex: 1 1 calc(50% - 8px);
+    }
+}
+
+@media (max-width: 520px) {
+    .tablet-touch .botones-reserva .btn {
+        flex: 1 1 100%;
+    }
+}
+
+/* Barra de filtros y navegación más legible en tablet */
+.tablet-touch .top-bar .btn {
+    min-height: 44px;
+    border-radius: 10px;
+}
+.tablet-touch .top-bar .form-control,
+.tablet-touch .top-bar .form-select {
+    min-height: 44px;
+}
+
+.reserva-toolbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+}
+
+.reserva-toolbar-actions .btn {
+    min-height: 42px;
+    border-radius: 10px;
+    min-width: 120px;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .reserva-toolbar-actions .btn {
+        flex: 1 1 calc(50% - 8px);
+        min-width: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .reserva-toolbar-actions .btn {
+        flex: 1 1 100%;
+    }
+}
+
+/* Vista resumen para "ver todas" */
+.resumen-dia {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+}
+.resumen-dia-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+.resumen-dia-head h6 {
+    margin: 0;
+    font-weight: 700;
+}
+.resumen-lista {
+    display: grid;
+    gap: 6px;
+}
+.resumen-item {
+    display: grid;
+    grid-template-columns: 70px 1fr auto auto;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+.resumen-item .hora { font-weight: 700; color: #0f172a; }
+.resumen-item .main { min-height: auto; }
+.resumen-item .main .nom { font-weight: 600; color: #0f172a; }
+.resumen-item .main .meta { font-size: .82rem; color: #64748b; }
+.resumen-item .estado-badge { white-space: nowrap; }
+.resumen-item .acciones .btn { min-height: 36px; border-radius: 8px; }
+@media (max-width: 700px) {
+    .resumen-item {
+        grid-template-columns: 1fr;
+        align-items: start;
+    }
+}
+
+.walkin-alert {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 1085;
+    width: min(420px, calc(100vw - 24px));
+    max-height: 70vh;
+    overflow: auto;
+}
+.walkin-alert .card {
+    border-radius: 14px;
+    border: 1px solid #fde68a;
+}
+.walkin-alert .item {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 8px;
+    background: #fff;
+}
+
+#crear_cliente_alerta:empty { display: none; }
+
+</style>
+{% endblock %}
+
+{% block contenido %}
+{% include 'partials/volver_bar.html' %}
+<div class="app-page">
+
+<h3 class="mb-1">
+{{ tr('page.reservas.heading') }}
+</h3>
+{% if session.get('modo_tablet') %}
+<p class="small text-muted mb-3">{{ tr('page.reservas.tablet_note')|safe }}</p>
+{% endif %}
+{% if error == 'mesa_ocupada' %}
+<div class="alert alert-warning py-2 mb-3" role="alert">{{ tr('page.reservas.err_mesa_ocupada') }}</div>
+{% elif error == 'campos' %}
+<div class="alert alert-danger py-2 mb-3" role="alert">{{ tr('page.reservas.err_campos') }}</div>
+{% endif %}
+
+<!-- CREAR RESERVA -->
+
+<div class="top-bar app-surface">
+
+<form method="post" action="/crear" class="row g-2" id="form_crear_reserva">
+
+<div class="col-md-4 cliente-ac-wrap" id="crear_cliente_autowrap">
+  <div class="row g-2">
+    <div class="col-sm-6">
+      <input name="nombre" id="reserva_crear_nombre" placeholder="{{ tr('page.reservas.ph_name') }}" class="form-control" required autocomplete="off">
+    </div>
+    <div class="col-sm-6">
+      <input name="telefono" id="reserva_crear_telefono" placeholder="{{ tr('page.reservas.ph_phone') }}" class="form-control" required inputmode="tel" autocomplete="off">
+    </div>
+  </div>
+  <div id="crear_cliente_suggest" class="cliente-ac-suggest list-group d-none" aria-live="polite"></div>
+</div>
+
+<div class="col-12 py-0" id="crear_cliente_alerta"></div>
+
+<div class="col-md-1">
+<input name="personas" type="number" id="reserva_crear_personas" placeholder="{{ tr('page.reservas.ph_people') }}" class="form-control" required min="1">
+</div>
+
+<div class="col-md-2">
+<input type="date" name="fecha" id="reserva_crear_fecha" value="{{ fecha }}" class="form-control" required>
+</div>
+
+<div class="col-md-2">
+<input type="time" name="hora" id="reserva_crear_hora" class="form-control" required>
+</div>
+
+<div class="col-md-2">
+<select name="mesa" id="reserva_crear_mesa" class="form-control" required>
+
+<option value="">
+{{ tr('page.reservas.opt_table') }}
+</option>
+
+{% for m in mesas %}
+<option value="{{ m.nombre }}" data-capacidad="{{ m.capacidad|int }}">{{ tr('page.reservas.mesa_with_pax', nombre=m.nombre, n=m.capacidad) }}</option>
+{% endfor %}
+
+</select>
+<small class="text-danger d-none mt-1" id="reserva_crear_mesa_empty_msg">No hay mesas disponibles para ese número de comensales en esta hora.</small>
+{% if mesas %}
+<small class="text-muted d-block mt-1">{{ tr('page.reservas.mesa_filtro_hint') }}</small>
+{% endif %}
+{% if not mesas %}
+<small class="text-warning d-block mt-1">
+  {{ tr('page.reservas.no_mesas') }}
+  {% if not session.get('modo_tablet') %}
+  <a href="/editar_salon">{{ tr('page.reservas.link_editor') }}</a>
+  {% else %}
+  {{ tr('page.reservas.tablet_map_help') }}
+  {% endif %}
+</small>
+{% endif %}
+</div>
+
+<div class="col-12 mt-1 d-none" id="reserva_crear_union_sug" role="status">
+  <div class="alert alert-info py-2 mb-0 small">
+    <div class="fw-semibold mb-1">{{ tr('page.reservas.union_sug_title', min_pax=sugerencia_union_desde_pax) }}</div>
+    <div class="d-flex flex-wrap gap-1" id="reserva_crear_union_sug_btns"></div>
+    <div class="text-muted mt-1 d-none" id="reserva_crear_union_sug_empty">{{ tr('page.reservas.union_sug_empty') }}</div>
+  </div>
+</div>
+
+<div class="col-md-1">
+<input name="notas" placeholder="{{ tr('page.reservas.ph_notes') }}" class="form-control">
+</div>
+
+<div class="col-md-12 text-end mt-2">
+
+<button class="btn btn-primary">
+{{ tr('page.reservas.btn_create') }}
+</button>
+
+</div>
+
+</form>
+
+</div>
+
+<!-- BUSCAR / FILTRAR -->
+
+<div class="top-bar app-surface">
+
+<form method="get" class="row g-2 align-items-center">
+
+<div class="col-md-3">
+<input type="date" name="fecha" value="{{ fecha }}" class="form-control">
+</div>
+
+<div class="col-md-5">
+<input type="text" name="buscar" placeholder="{{ tr('page.reservas.search_ph') }}" class="form-control">
+</div>
+
+<div class="col-md-4 d-grid">
+<button class="btn btn-outline-primary">
+{{ tr('page.reservas.btn_search') }}
+</button>
+</div>
+
+<div class="col-12 mt-2">
+  <div class="reserva-toolbar-actions">
+    {% if not session.get('modo_tablet') or (tablet_cfg_modo and tablet_cfg_modo.permitir_ver_todas_reservas) %}
+    <a href="/reservas?todas=1" class="btn btn-outline-primary">{{ tr('page.reservas.btn_all') }}</a>
+    {% endif %}
+
+    {% if not session.get('modo_tablet') or (tablet_cfg_modo and tablet_cfg_modo.permitir_visualizar_sala) %}
+    <a href="/visualizar?fecha={{ fecha }}" class="btn btn-outline-primary">{{ tr('page.reservas.sala_live') }}</a>
+    {% endif %}
+
+    {% if not session.get('modo_tablet') %}
+    <a href="{{ url_for('admin.lista_clientes') }}" class="btn btn-outline-secondary"><i class="bi bi-person-lines-fill me-1"></i>{{ tr('page.reservas.link_clients_db') }}</a>
+    {% endif %}
+
+    <a href="/reservas?fecha={{ ayer }}" class="btn btn-outline-primary">{{ tr('page.reservas.yesterday') }}</a>
+    <a href="/reservas?fecha={{ hoy }}" class="btn btn-outline-primary">{{ tr('page.reservas.today') }}</a>
+    <a href="/reservas?fecha={{ manana }}" class="btn btn-outline-primary">{{ tr('page.reservas.tomorrow') }}</a>
+  </div>
+</div>
+
+</form>
+
+</div>
+
+<!-- LISTADO -->
+{% if todas_activo %}
+<div class="app-surface">
+  <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+    <h5 class="mb-0 fw-semibold">Resumen de todas las reservas</h5>
+    <span class="badge bg-light text-dark border">{{ total }} total</span>
+  </div>
+  {% for dia in reservas_todas|groupby('fecha') %}
+  <div class="resumen-dia">
+    <div class="resumen-dia-head">
+      <h6>{{ dia.grouper }}</h6>
+      <span class="small text-muted">{{ dia.list|length }} reserva(s)</span>
+    </div>
+    <div class="resumen-lista">
+      {% for r in dia.list %}
+      <div class="resumen-item">
+        <div class="hora">{{ r.hora }}</div>
+        <div class="main">
+          <div class="nom">{{ r.nombre }}</div>
+          <div class="meta">{{ r.personas }} {{ tr('page.reservas.persons') }} · {{ tr('page.reservas.table_lbl') }}: <strong>{{ r.mesa }}</strong></div>
+        </div>
+        <div><span class="estado-badge">{{ r.estado }}</span></div>
+        <div class="acciones">
+          {% if r.cliente_id and not session.get('modo_tablet') %}
+          <a href="{{ url_for('admin.cliente_ficha', cid=r.cliente_id) }}" class="btn btn-outline-secondary btn-sm" title="{{ tr('page.clientes.detail_title') }}"><i class="bi bi-person-lines-fill"></i></a>
+          {% endif %}
+          <a href="/editar/{{ r.id }}?fecha={{ r.fecha }}" class="btn btn-outline-primary btn-sm">Editar</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="row">
+
+{% for shift_key, lista in [
+('page.reservas.shift_morning', reservas_manana),
+('page.reservas.shift_mid', reservas_mediodia),
+('page.reservas.shift_night', reservas_noche)
+] %}
+
+<div class="col-md-4">
+
+<div class="turno-card">
+
+<h5 class="titulo-turno">
+{{ tr(shift_key) }}
+</h5>
+
+{% for r in lista %}
+
+<div class="reserva-card estado-{{ r.estado }}">
+
+<div class="reserva-header">
+
+<div class="reserva-hora">
+{{ r.hora }}
+</div>
+
+<div class="estado-badge">
+{{ r.estado }}
+</div>
+
+</div>
+
+<div class="reserva-nombre">
+{{ r.nombre }}
+</div>
+
+<div class="reserva-datos">
+
+{{ r.personas }} {{ tr('page.reservas.persons') }}  
+{{ tr('page.reservas.table_lbl') }}: <strong>{{ r.mesa }}</strong>
+
+</div>
+
+{% if r.notas %}
+
+<div class="nota">
+{{ tr('page.reservas.notes_lbl') }}: {{ r.notas }}
+</div>
+
+{% endif %}
+
+{% if "Lleg" in r.estado %}
+
+<div style="margin-top:6px;">
+
+{{ tr('page.reservas.time_at_table') }}:
+
+<span
+class="timer"
+data-hora="{{ r.hora_llegada }}">
+
+{{ r.tiempo_mesa }}
+
+</span>
+
+</div>
+
+{% endif %}
+
+<div class="botones-reserva">
+
+{% if r.cliente_id and not session.get('modo_tablet') %}
+<a href="{{ url_for('admin.cliente_ficha', cid=r.cliente_id) }}" class="btn btn-outline-secondary btn-sm" title="{{ tr('page.clientes.detail_title') }}"><i class="bi bi-person-lines-fill"></i></a>
+{% endif %}
+
+<a href="/estado/{{ r.id }}/Confirmada?fecha={{ fecha }}"
+class="btn btn-warning btn-sm">
+{{ tr('page.reservas.btn_confirm') }}
+</a>
+
+<a href="/estado/{{ r.id }}/Llegó?fecha={{ fecha }}"
+class="btn btn-success btn-sm">
+{{ tr('page.reservas.btn_arrived') }}
+</a>
+
+<a href="/estado/{{ r.id }}/Finalizada?fecha={{ fecha }}"
+class="btn btn-secondary btn-sm">
+{{ tr('page.reservas.btn_finish') }}
+</a>
+
+{% if session.get('modo_tablet') %}
+
+<button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#tabletPinModal"
+        data-tablet-rid="{{ r.id }}" data-tablet-accion="cancelar">{{ tr('page.reservas.btn_cancel_pin') }}</button>
+<button type="button" class="btn btn-dark btn-sm" data-bs-toggle="modal" data-bs-target="#tabletPinModal"
+        data-tablet-rid="{{ r.id }}" data-tablet-accion="eliminar">{{ tr('page.reservas.btn_delete_pin') }}</button>
+
+{% else %}
+
+<a href="/estado/{{ r.id }}/Cancelada?fecha={{ fecha }}"
+class="btn btn-danger btn-sm">
+{{ tr('page.reservas.btn_cancel') }}
+</a>
+
+{% if session.get("rol") == "admin"
+or session.get("puesto") in ["Encargado", "Gerente"] %}
+
+<form method="post"
+action="/eliminar/{{ r.id }}"
+style="display:inline;">
+
+<input type="hidden"
+name="fecha"
+value="{{ fecha }}">
+
+<button
+type="submit"
+class="btn btn-dark btn-sm">
+
+{{ tr('page.reservas.btn_delete') }}
+
+</button>
+
+</form>
+
+{% endif %}
+
+{% endif %}
+
+</div>
+
+</div>
+
+{% else %}
+
+<div class="text-muted">
+Sin reservas
+</div>
+
+{% endfor %}
+
+</div>
+
+</div>
+
+{% endfor %}
+
+</div>
+{% endif %}
+
+<script>
+
+function actualizarTimers() {
+
+    const timers = document.querySelectorAll(".timer");
+
+    timers.forEach(timer => {
+
+        let hora = timer.dataset.hora;
+
+        if (!hora) return;
+
+        hora = hora.replace(" ", "T");
+
+        const llegada = new Date(hora);
+        const ahora = new Date();
+
+        const diff = Math.floor((ahora - llegada) / 1000);
+
+        if (diff < 0) return;
+
+        const horas = Math.floor(diff / 3600);
+        const minutos = Math.floor((diff % 3600) / 60);
+
+        const hh = String(horas).padStart(2, "0");
+        const mm = String(minutos).padStart(2, "0");
+
+        timer.innerText = hh + ":" + mm;
+
+    });
+
+}
+
+actualizarTimers();
+setInterval(actualizarTimers, 60000);
+
+</script>
+{% if mesas %}
+<script>
+(function () {
+  var fechaEl = document.getElementById('reserva_crear_fecha');
+  var horaEl = document.getElementById('reserva_crear_hora');
+  var mesaSel = document.getElementById('reserva_crear_mesa');
+  var paxEl = document.getElementById('reserva_crear_personas');
+  var unionBox = document.getElementById('reserva_crear_union_sug');
+  var unionBtns = document.getElementById('reserva_crear_union_sug_btns');
+  var unionEmpty = document.getElementById('reserva_crear_union_sug_empty');
+  var mesaEmptyMsg = document.getElementById('reserva_crear_mesa_empty_msg');
+  if (!fechaEl || !horaEl || !mesaSel) return;
+  var MARGEN_SEG = {{ margen_solapamiento_mesa_seg|default(7200) }};
+  var MIN_PAX_UNION_SUG = {{ sugerencia_union_desde_pax | int }};
+  var unionTimer = null;
+  var cache = {};
+  cache[{{ fecha|tojson }}] = {{ ocupacion_mesas_dia|default({})|tojson }};
+  function normalizaNombreMesa(s) {
+    return String(s || '').replace(/\ufeff|\u200b/g, '').trim().replace(/\s+/g, ' ').toLowerCase();
+  }
+  function horasParaMesa(occ, nombreMesa) {
+    if (!occ || typeof occ !== 'object') return [];
+    var nk = normalizaNombreMesa(nombreMesa);
+    if (!nk) return [];
+    if (Object.prototype.hasOwnProperty.call(occ, nk) && occ[nk] != null) return occ[nk];
+    for (var key in occ) {
+      if (!Object.prototype.hasOwnProperty.call(occ, key)) continue;
+      if (normalizaNombreMesa(key) === nk) return occ[key] || [];
+    }
+    return [];
+  }
+  function minutosReloj(s) {
+    if (s == null || s === '') return null;
+    var t = String(s).trim();
+    if (t.indexOf('T') !== -1) t = t.split('T').pop();
+    if (t.indexOf(' ') !== -1) {
+      var parts = t.split(/\s+/);
+      t = parts[parts.length - 1];
+    }
+    t = t.length >= 5 ? t.substring(0, 5) : t;
+    var p = t.split(':');
+    var h = parseInt(p[0], 10);
+    var mi = parseInt(p[1] || '0', 10);
+    if (isNaN(h) || isNaN(mi)) return null;
+    return h * 60 + mi;
+  }
+  function conflicto(horaNueva, horasOtras) {
+    var mn = minutosReloj(horaNueva);
+    if (mn === null) return false;
+    for (var i = 0; i < horasOtras.length; i++) {
+      var mo = minutosReloj(horasOtras[i]);
+      if (mo === null) continue;
+      if (Math.abs(mn - mo) * 60 < MARGEN_SEG) return true;
+    }
+    return false;
+  }
+  var mesaOptionsTemplate = [];
+  for (var i = 0; i < mesaSel.options.length; i++) {
+    var o = mesaSel.options[i];
+    var cap = parseInt(o.getAttribute('data-capacidad') || '0', 10);
+    if (!isFinite(cap)) cap = 0;
+    mesaOptionsTemplate.push({ v: o.value, t: o.textContent, c: cap });
+  }
+  function appendOpt(v, t, c) {
+    var opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = t;
+    if (c && c > 0) opt.setAttribute('data-capacidad', String(c));
+    mesaSel.appendChild(opt);
+  }
+  function rebuildAllMesas() {
+    mesaSel.innerHTML = '';
+    mesaOptionsTemplate.forEach(function (o) { appendOpt(o.v, o.t, o.c || 0); });
+  }
+  function restoreSelection(selVal) {
+    for (var j = 0; j < mesaSel.options.length; j++) {
+      if (mesaSel.options[j].value === selVal) {
+        mesaSel.selectedIndex = j;
+        return;
+      }
+    }
+    mesaSel.selectedIndex = 0;
+  }
+  function updateMesaEmptyState() {
+    if (!mesaEmptyMsg) return;
+    var hasValid = false;
+    for (var i = 0; i < mesaSel.options.length; i++) {
+      if (mesaSel.options[i].value) {
+        hasValid = true;
+        break;
+      }
+    }
+    mesaEmptyMsg.classList.toggle('d-none', hasValid);
+  }
+  function scheduleUnionSug() {
+    if (unionTimer) clearTimeout(unionTimer);
+    unionTimer = setTimeout(runUnionSug, 400);
+  }
+  function runUnionSug() {
+    if (!unionBox || !unionBtns || !paxEl) return;
+    var mx = parseInt(paxEl.value, 10) || 0;
+    var fecha = fechaEl.value;
+    var hora = (horaEl.value || '').trim();
+    if (mx < MIN_PAX_UNION_SUG || !fecha || !hora) {
+      unionBox.classList.add('d-none');
+      unionBtns.innerHTML = '';
+      if (unionEmpty) unionEmpty.classList.add('d-none');
+      return;
+    }
+    var u = '/api/sugerencias_union_mesa?pax=' + encodeURIComponent(String(mx))
+      + '&fecha=' + encodeURIComponent(fecha) + '&hora=' + encodeURIComponent(hora);
+    fetch(u, { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || !j.ok) {
+          unionBox.classList.add('d-none');
+          return;
+        }
+        unionBtns.innerHTML = '';
+        if (!j.activo || !j.uniones || !j.uniones.length) {
+          unionBox.classList.add('d-none');
+          if (unionEmpty) {
+            if (j.motivo === 'sin_opciones' && mx >= MIN_PAX_UNION_SUG) {
+              unionEmpty.classList.remove('d-none');
+              unionBox.classList.remove('d-none');
+            } else {
+              unionEmpty.classList.add('d-none');
+            }
+          }
+          return;
+        }
+        if (unionEmpty) unionEmpty.classList.add('d-none');
+        j.uniones.forEach(function (u2) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'btn btn-sm btn-outline-primary';
+          b.textContent = u2.nombre + ' (' + u2.capacidad + 'p)';
+          b.addEventListener('click', function () {
+            var found = false;
+            for (var i = 0; i < mesaSel.options.length; i++) {
+              if (mesaSel.options[i].value === u2.nombre) {
+                mesaSel.selectedIndex = i;
+                found = true;
+                break;
+              }
+            }
+            if (!found) {
+              appendOpt(u2.nombre, u2.nombre + ' (' + u2.capacidad + ' pax)');
+              mesaSel.selectedIndex = mesaSel.options.length - 1;
+            }
+          });
+          unionBtns.appendChild(b);
+        });
+        unionBox.classList.remove('d-none');
+      })
+      .catch(function () { unionBox.classList.add('d-none'); });
+  }
+  function fetchOcc(fecha) {
+    if (cache[fecha]) return Promise.resolve(cache[fecha]);
+    return fetch('/api/ocupacion_mesas?fecha=' + encodeURIComponent(fecha), { credentials: 'same-origin' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('ocupacion');
+        return r.json();
+      })
+      .then(function (j) {
+        if (j == null || typeof j !== 'object' || j.error) throw new Error('ocupacion');
+        cache[fecha] = j;
+        return j;
+      });
+  }
+  function refresh() {
+    var fecha = fechaEl.value;
+    var hora = (horaEl.value || '').trim();
+    var pax = paxEl ? (parseInt(paxEl.value, 10) || 0) : 0;
+    var selVal = mesaSel.value;
+    if (!hora) {
+      rebuildAllMesas();
+      restoreSelection(selVal);
+      updateMesaEmptyState();
+      scheduleUnionSug();
+      return;
+    }
+    function aplicarOcupacion(occ) {
+      mesaSel.innerHTML = '';
+      for (var k = 0; k < mesaOptionsTemplate.length; k++) {
+        var o = mesaOptionsTemplate[k];
+        if (o.v === '') {
+          appendOpt(o.v, o.t, o.c || 0);
+          continue;
+        }
+        if (pax > 0 && (parseInt(o.c || 0, 10) || 0) < pax) continue;
+        var horasMes = horasParaMesa(occ, o.v);
+        if (conflicto(hora, horasMes)) continue;
+        appendOpt(o.v, o.t, o.c || 0);
+      }
+      restoreSelection(selVal);
+      updateMesaEmptyState();
+    }
+    fetchOcc(fecha).then(function (occ) {
+      aplicarOcupacion(occ);
+      scheduleUnionSug();
+    }).catch(function () {
+      var prev = cache[fecha];
+      if (prev && typeof prev === 'object' && !prev.error) aplicarOcupacion(prev);
+      else {
+        rebuildAllMesas();
+        restoreSelection(selVal);
+        updateMesaEmptyState();
+      }
+      scheduleUnionSug();
+    });
+  }
+  fechaEl.addEventListener('change', refresh);
+  horaEl.addEventListener('change', refresh);
+  horaEl.addEventListener('input', refresh);
+  horaEl.addEventListener('blur', refresh);
+  if (paxEl) {
+    paxEl.addEventListener('input', scheduleUnionSug);
+    paxEl.addEventListener('change', scheduleUnionSug);
+  }
+  refresh();
+  updateMesaEmptyState();
+})();
+</script>
+{% endif %}
+
+{% set ac_wrap_id = 'crear_cliente_autowrap' %}
+{% set ac_suggest_id = 'crear_cliente_suggest' %}
+{% set ac_alert_id = 'crear_cliente_alerta' %}
+{% set ac_nombre_id = 'reserva_crear_nombre' %}
+{% set ac_tel_id = 'reserva_crear_telefono' %}
+{% include 'partials/cliente_autocomplete_reserva.html' %}
+
+{% if session.get('modo_tablet') %}
+<div class="modal fade" id="tabletPinModal" tabindex="-1" aria-labelledby="tabletPinModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow rounded-4">
+      <div class="modal-header border-0 pb-0">
+        <h2 class="modal-title h5 fw-bold" id="tabletPinModalLabel">PIN de administrador</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <form method="post" action="/reserva_autorizada">
+        <div class="modal-body pt-2">
+          <input type="hidden" name="reserva_id" id="tablet_reserva_id" value="">
+          <input type="hidden" name="accion" id="tablet_accion" value="">
+          <input type="hidden" name="fecha" value="{{ fecha }}">
+          <p class="small text-muted mb-2" id="tablet_pin_desc">Introduce el PIN de administrador para continuar.</p>
+          <label class="form-label small">PIN</label>
+          <input type="password" name="pin_autorizacion" class="form-control form-control-lg" required autocomplete="off" inputmode="numeric">
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+          <button type="submit" class="btn btn-primary">Confirmar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  var modal = document.getElementById('tabletPinModal');
+  if (!modal) return;
+  modal.addEventListener('show.bs.modal', function (ev) {
+    var btn = ev.relatedTarget;
+    if (!btn || !btn.dataset) return;
+    var rid = btn.getAttribute('data-tablet-rid');
+    var acc = btn.getAttribute('data-tablet-accion');
+    document.getElementById('tablet_reserva_id').value = rid || '';
+    document.getElementById('tablet_accion').value = acc || '';
+    var desc = document.getElementById('tablet_pin_desc');
+    if (desc) {
+      desc.textContent = acc === 'eliminar'
+        ? 'Se eliminará la reserva de forma permanente.'
+        : 'La reserva pasará a estado Cancelada.';
+    }
+  });
+})();
+</script>
+{% endif %}
+
+{% if walkins_expirados %}
+<div class="walkin-alert" id="walkinAlertBox">
+  <div class="card shadow">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-bell-fill text-warning me-1"></i>Walk-ins +3h</h6>
+        <button type="button" class="btn-close" aria-label="Cerrar" onclick="document.getElementById('walkinAlertBox').remove();"></button>
+      </div>
+      <p class="small text-muted mb-2">Revisar si siguen en mesa o eliminar para liberar ocupación.</p>
+      {% for w in walkins_expirados %}
+      <div class="item" data-walkin-item="{{ w.id }}">
+        <div class="small fw-semibold">{{ w.nombre }} · Mesa {{ w.mesa }}</div>
+        <div class="small text-muted mb-2">{{ w.fecha }} {{ w.hora }} · en mesa {{ w.tiempo_mesa }}</div>
+        <div class="d-flex flex-wrap gap-2">
+          <button type="button" class="btn btn-sm btn-outline-primary" onclick="resolverWalkin({{ w.id }}, 'mantener')">Sigue en mesa</button>
+          <button type="button" class="btn btn-sm btn-outline-danger" onclick="resolverWalkin({{ w.id }}, 'eliminar')">Eliminar</button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+<script>
+function resolverWalkin(reservaId, accion) {
+  fetch('/api/walkin/revision', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify({ reserva_id: reservaId, accion: accion })
+  })
+  .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+  .then(function (x) {
+    if (!x.ok || !x.j || !x.j.ok) {
+      alert('No se pudo aplicar la acción.');
+      return;
+    }
+    var el = document.querySelector('[data-walkin-item="' + reservaId + '"]');
+    if (el) el.remove();
+    var box = document.getElementById('walkinAlertBox');
+    if (box && box.querySelectorAll('[data-walkin-item]').length === 0) box.remove();
+    if (accion === 'eliminar') window.location.reload();
+  })
+  .catch(function () { alert('Error de red al actualizar walk-in.'); });
+}
+</script>
+{% endif %}
+
+</div>
+{% endblock %}

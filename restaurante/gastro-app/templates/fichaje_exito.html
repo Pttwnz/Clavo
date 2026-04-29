@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block titulo %}Fichaje registrado{% endblock %}
+
+{% block estilos %}
+<style>
+  .fx-page {
+    min-height: calc(100vh - 120px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: linear-gradient(165deg, #f0fdf4 0%, #ecfdf5 40%, #f8fafc 100%);
+  }
+  .fx-card {
+    width: 100%;
+    max-width: 420px;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(15, 23, 42, 0.04);
+    padding: 2.25rem 1.75rem;
+    text-align: center;
+  }
+  .fx-icon {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 1.25rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+  }
+  .fx-icon--in {
+    background: linear-gradient(145deg, #dcfce7, #bbf7d0);
+    color: #15803d;
+  }
+  .fx-icon--out {
+    background: linear-gradient(145deg, #ffedd5, #fed7aa);
+    color: #c2410c;
+  }
+  .fx-time {
+    font-variant-numeric: tabular-nums;
+    font-size: 2.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #0f172a;
+    line-height: 1.1;
+    margin: 0.5rem 0 0.25rem;
+  }
+  .fx-date {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin-bottom: 1.5rem;
+  }
+  .fx-name {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 0.25rem;
+  }
+  .fx-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 1rem;
+  }
+  .fx-badge--in { background: #ecfdf5; color: #047857; }
+  .fx-badge--out { background: #fff7ed; color: #c2410c; }
+  .fx-btn {
+    border-radius: 12px;
+    font-weight: 600;
+    padding: 0.65rem 1.25rem;
+  }
+</style>
+{% endblock %}
+
+{% block contenido %}
+<div class="fx-page">
+  <div class="fx-card">
+    {% if tipo_fichaje == 'entrada' %}
+    <div class="fx-icon fx-icon--in"><i class="bi bi-box-arrow-in-right"></i></div>
+    <span class="fx-badge fx-badge--in"><i class="bi bi-sunrise"></i> Entrada</span>
+    {% elif tipo_fichaje == 'salida' %}
+    <div class="fx-icon fx-icon--out"><i class="bi bi-box-arrow-right"></i></div>
+    <span class="fx-badge fx-badge--out"><i class="bi bi-moon"></i> Salida</span>
+    {% elif tipo_fichaje == 'pausa_inicio' %}
+    <div class="fx-icon fx-icon--out" style="background:linear-gradient(145deg,#e0e7ff,#c7d2fe);color:#4338ca;"><i class="bi bi-pause-circle"></i></div>
+    <span class="fx-badge" style="background:#eef2ff;color:#4338ca;"><i class="bi bi-cup-hot"></i> Inicio pausa</span>
+    {% else %}
+    <div class="fx-icon fx-icon--out" style="background:linear-gradient(145deg,#e0e7ff,#c7d2fe);color:#4338ca;"><i class="bi bi-play-circle"></i></div>
+    <span class="fx-badge" style="background:#eef2ff;color:#4338ca;"><i class="bi bi-check2"></i> Fin pausa</span>
+    {% endif %}
+
+    <p class="fx-name mb-0">{{ nombre }}</p>
+    <p class="small text-muted mb-3">Registro correcto</p>
+
+    <div class="fx-time">{{ hora }}</div>
+    <p class="fx-date">{{ fecha }}</p>
+
+    <a href="{{ url_for('admin.fichaje') }}" class="btn btn-dark fx-btn w-100">
+      <i class="bi bi-arrow-left me-1"></i> Volver al fichaje
+    </a>
+  </div>
+</div>
+{% endblock %}

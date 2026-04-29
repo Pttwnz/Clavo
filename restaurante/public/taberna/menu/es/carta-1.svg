@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1270" viewBox="0 0 900 1270">
+  <rect width="900" height="1270" fill="#f5f0e8"/>
+  <rect x="48" y="48" width="804" height="1174" fill="none" stroke="#8f1d1d" stroke-width="3" rx="4"/>
+  <text x="450" y="520" text-anchor="middle" font-family="Georgia,serif" font-size="32" fill="#2d2420">Taberna El Clavo</text>
+  <text x="450" y="580" text-anchor="middle" font-family="Georgia,serif" font-size="22" fill="#5c4f47">Carta · página 1</text>
+  <text x="450" y="640" text-anchor="middle" font-family="system-ui,sans-serif" font-size="15" fill="#8f7364">Sustituye este archivo por el escaneo/foto real:</text>
+  <text x="450" y="675" text-anchor="middle" font-family="ui-monospace,monospace" font-size="14" fill="#6b5348">public/taberna/menu/es/carta-1.webp (o .png / .jpg)</text>
+  <text x="450" y="730" text-anchor="middle" font-family="system-ui,sans-serif" font-size="14" fill="#8f7364">Otros idiomas: public/taberna/menu/en/ & fr/ & de/</text>
+</svg>

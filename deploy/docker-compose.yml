@@ -1,0 +1,66 @@
+# Taberna El Clavo — stack VPS (puertos altos para no chocar con 80/443/3000/5050…)
+#
+# Uso (desde esta carpeta `deploy/`):
+#   cp env.example .env   # y edita
+#   docker compose build
+#   docker compose up -d
+#
+# Web:  http://IP_O_DOMINIO:37891
+# Gastro: http://IP_O_DOMINIO:37892  (panel /login, tablet, API reservas vía proxy Next)
+
+services:
+  gastro:
+    build:
+      context: ../restaurante/gastro-app
+      dockerfile: Dockerfile
+    ports:
+      - "${CLAVO_GASTRO_PUBLISH:-37892}:37892"
+    environment:
+      FLASK_PRODUCTION: "1"
+      SECRET_KEY: ${GASTRO_SECRET_KEY:?Definir GASTRO_SECRET_KEY en .env}
+      DATABASE: /data/gastro.db
+      PORT: "37892"
+      # Opcional: contraseña SMTP sin guardarla solo en la BD (ver env.example)
+      CIERRE_CAJA_SMTP_PASSWORD: ${CIERRE_CAJA_SMTP_PASSWORD:-}
+      # Tras proxy HTTPS hacia app.gastromanager.es: pon FLASK_SECURE_COOKIES=1 en .env
+      FLASK_SECURE_COOKIES: ${FLASK_SECURE_COOKIES:-0}
+      # 1 si Nginx sirve la web Next en la raíz del mismo dominio que Gastro (p. ej. elclavo… → Next + /panel → Gastro)
+      FLASK_MERGED_HOST_ROOT: ${FLASK_MERGED_HOST_ROOT:-0}
+    volumes:
+      - clavo_gastro_sqlite:/data
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ../restaurante
+      dockerfile: Dockerfile
+      args:
+        # Se inyecta en el bundle del cliente en el BUILD; debe ser la URL pública del gastro (mismo host + puerto 37892).
+        NEXT_PUBLIC_GASTRO_BASE_URL: ${NEXT_PUBLIC_GASTRO_BASE_URL:?Definir NEXT_PUBLIC_GASTRO_BASE_URL en .env (ej. http://TU_IP:37892)}
+    ports:
+      - "${CLAVO_WEB_PUBLISH:-37891}:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: file:/data/clavo.db
+      # Servidor Next → Flask (red interna Docker)
+      GASTRO_RESERVAS_BASE_URL: http://gastro:37892
+      # Misma URL pública que en el build (enlaces en el navegador: pie, tablet…)
+      NEXT_PUBLIC_GASTRO_BASE_URL: ${NEXT_PUBLIC_GASTRO_BASE_URL}
+      # URL pública de esta web Next (Auth / cookies), ej. https://clavo.gastromanager.es
+      AUTH_URL: ${AUTH_URL:-}
+      AUTH_SECRET: ${AUTH_SECRET:?Definir AUTH_SECRET en .env}
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    volumes:
+      - clavo_prisma_sqlite:/data
+      # Opcional (descomenta): fotos de carta en el VPS sin rebuild — carpeta con subcarpetas es/, en/, …
+      # - type: bind
+      #   source: ./taberna-menu
+      #   target: /app/public/taberna/menu
+    depends_on:
+      - gastro
+    restart: unless-stopped
+
+volumes:
+  clavo_gastro_sqlite:
+  clavo_prisma_sqlite:

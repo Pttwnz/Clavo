@@ -1,0 +1,137 @@
+// https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Employee {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?  @unique
+  role      String   @default("STAFF") // STAFF | MANAGER
+  pinHash   String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  timeEntries      TimeEntry[]
+  signedDocuments  SignedDocument[]
+}
+
+model TimeEntry {
+  id         String    @id @default(cuid())
+  employeeId String
+  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  clockIn    DateTime
+  clockOut   DateTime?
+  note       String?
+  createdAt  DateTime  @default(now())
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  SEATED
+  COMPLETED
+}
+
+/// Origen de la reserva (visibilidad en panel / tablet)
+enum ReservationSource {
+  WEB
+  TABLET_PHONE
+  TABLET_WALKIN
+}
+
+/// Franjas en las que la web puede reservar (hora local Europa/Madrid)
+model BookingSlot {
+  id          String  @id @default(cuid())
+  /// 1 = lunes … 7 = domingo (ISO)
+  weekday     Int
+  /// Minutos desde medianoche [0, 1440)
+  startMinute Int
+  endMinute   Int
+  label       String?
+  /// % del aforo total de mesas (suma de capacidades) reservable vía web en esta franja
+  webPercent  Int     @default(70)
+  active      Boolean @default(true)
+  sortOrder   Int     @default(0)
+}
+
+/// Mesas físicas del local (mapa de sala)
+model DiningTable {
+  id        String   @id @default(cuid())
+  label     String
+  zone      String? // "Sala", "Terraza"…
+  capacity  Int      @default(4)
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  /// Ocupación manual: clientes sin reserva (walk-in). Solo aplica si no hay reserva activa en la mesa.
+  walkInOccupied  Boolean @default(false)
+  walkInPartySize Int?
+  /// Inicio de ocupación walk-in (cronómetro tiempo en mesa)
+  walkInStartedAt DateTime?
+
+  reservations Reservation[]
+}
+
+model Reservation {
+  id             String              @id @default(cuid())
+  customerName   String
+  customerEmail  String?
+  phone          String
+  partySize      Int
+  startsAt       DateTime
+  /// Fin de franja (opcional). Si null, se usa duración por defecto para solapes.
+  endsAt         DateTime?
+  /// Hora real de llegada del comensal (sala)
+  arrivedAt      DateTime?
+  /// Texto libre legado o copia de la etiqueta de mesa al asignar `tableId`
+  assignedTable  String?
+  tableId        String?
+  diningTable    DiningTable?        @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  /// Notas del cliente (formulario web)
+  notes          String?
+  /// Notas internas solo equipo / administración
+  staffNotes     String?
+  source         ReservationSource   @default(WEB)
+  status         ReservationStatus   @default(PENDING)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+}
+
+model SignedDocument {
+  id              String   @id @default(cuid())
+  employeeId      String
+  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  title           String
+  documentKind    String   @default("ACK") // ACK | CONTRACT | OTHER
+  signaturePngB64 String
+  pdfBytes        Bytes?
+  sha256          String
+  signedAt        DateTime @default(now())
+}
+
+/// Carta editable desde el panel (JSON de `MenuItem[]`). Una sola fila `singleton`.
+model MenuCartaStore {
+  id        String   @id @default("singleton")
+  itemsJson String   @default("")
+  updatedAt DateTime @updatedAt
+}
+
+/// Vista de página pública (telemetría agregada en panel admin).
+model PageView {
+  id        String   @id @default(cuid())
+  /// Ruta + query, p. ej. `/menu?lang=es`
+  path      String
+  referrer  String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([path])
+}

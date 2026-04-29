@@ -1,0 +1,10 @@
+{# Barra tornar enrere. Opcional: volver_href, volver_etiqueta. volver_ocultar=true la amaga.
+   En modo tablet no se muestra: la cabecera unificada ya lleva «Inicio» / «Salir». #}
+{% if not (volver_ocultar is defined and volver_ocultar) and not session.get('modo_tablet') %}
+<div class="nav-volver-bar mb-3">
+  <a href="{% if volver_href is defined and volver_href %}{{ volver_href }}{% elif session.get('rol') == 'admin' %}{{ url_for('admin.panel') }}{% elif session.get('rol') == 'empleado' %}{{ url_for('empleado.panel_empleado') }}{% elif session.get('rol') == 'tablet' %}{{ url_for('public.tablet_inicio') }}{% else %}{{ url_for('public.inicio') }}{% endif %}"
+     class="btn btn-outline-secondary btn-sm text-nowrap">
+    <i class="bi bi-arrow-left me-1"></i>{% if volver_etiqueta is defined and volver_etiqueta %}{{ volver_etiqueta }}{% elif session.get('rol') == 'tablet' %}{{ tr('back.tablet_home') }}{% elif session.get('rol') in ('admin', 'empleado') %}{{ tr('back.panel') }}{% else %}{{ tr('back.home') }}{% endif %}
+  </a>
+</div>
+{% endif %}

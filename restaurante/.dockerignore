@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.env
+.env.*
+!.env.example
+*.md
+coverage
+.vscode
+.idea
+**/*.log
+gastro-app

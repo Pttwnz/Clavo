@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 200" role="img" aria-label="Motivo decorativo azulejo">
+  <defs>
+    <pattern id="t" width="48" height="48" patternUnits="userSpaceOnUse">
+      <rect width="48" height="48" fill="#f5f0e8"/>
+      <path d="M0 0 H48 V48 H0 Z" fill="none" stroke="#c4b5a8" stroke-width="1"/>
+      <circle cx="24" cy="24" r="3" fill="#8f1d1d" opacity="0.35"/>
+    </pattern>
+    <linearGradient id="e" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8f1d1d" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#1a0f0f" stop-opacity="0.25"/>
+    </linearGradient>
+  </defs>
+  <rect width="480" height="200" fill="#ebe4d9"/>
+  <rect width="480" height="200" fill="url(#t)"/>
+  <rect width="480" height="200" fill="url(#e)"/>
+</svg>

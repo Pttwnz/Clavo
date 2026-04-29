@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block titulo %}Albaranes{% endblock %}
+{% block contenido %}
+{% include 'partials/volver_bar.html' %}
+<div class="app-page">
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+  <div>
+    <h1 class="h4 mb-0"><i class="bi bi-file-earmark-arrow-up me-2"></i>Albaranes de compra</h1>
+    <p class="small text-muted mb-0">Sube el escaneo o foto del albarán y registra las líneas de entrada a almacén.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('admin.inventario_albaran_nuevo') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Nuevo albarán</a>
+    <a href="{{ url_for('admin.inventario_index') }}" class="btn btn-outline-secondary btn-sm">Inventario</a>
+  </div>
+</div>
+<div class="table-responsive border rounded-3 bg-white">
+  <table class="table table-hover mb-0">
+    <thead class="table-light">
+      <tr>
+        <th>#</th>
+        <th>Fecha</th>
+        <th>Proveedor</th>
+        <th>Documento</th>
+        <th>Estado</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in albaranes %}
+      <tr>
+        <td>{{ a.id }}</td>
+        <td>{{ a.fecha or '—' }}</td>
+        <td>{{ a.proveedor or '—' }}</td>
+        <td>{{ a.numero_documento or '—' }}</td>
+        <td>
+          {% if a.estado == 'confirmado' %}
+          <span class="badge text-bg-success">Confirmado</span>
+          {% else %}
+          <span class="badge text-bg-warning text-dark">Borrador</span>
+          {% endif %}
+        </td>
+        <td><a href="{{ url_for('admin.inventario_albaran_edit', id=a.id) }}" class="btn btn-sm btn-outline-primary">Abrir</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="text-center text-muted py-4">No hay albaranes. Crea uno para registrar entradas.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</div>
+{% endblock %}

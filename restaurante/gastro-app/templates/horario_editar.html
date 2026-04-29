@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block titulo %}Editar turno{% endblock %}
+
+{% block contenido %}
+
+<div class="container" style="max-width: 560px;">
+  <h1 class="h4 mb-3"><i class="bi bi-pencil-square me-2"></i>Editar turno</h1>
+  <p class="small text-muted mb-4">Modifica empleado, fecha, horas o estado del turno.</p>
+
+  <form method="post" class="border rounded-3 p-3 bg-white shadow-sm">
+    <input type="hidden" name="redirect_to" value="{{ redirect_to|e }}">
+
+    <div class="mb-3">
+      <label class="form-label">Empleado</label>
+      <select name="empleado_id" class="form-select" required>
+        {% for e in empleados %}
+        <option value="{{ e.id }}" {% if e.id == h.empleado_id %}selected{% endif %}>{{ e.nombre }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Fecha</label>
+      <input type="date" name="fecha" class="form-control" required value="{{ (h.fecha or '')[:10] }}">
+    </div>
+
+    <div class="row g-2 mb-3">
+      <div class="col-6">
+        <label class="form-label">Inicio</label>
+        <input type="time" name="hora_inicio" class="form-control" required value="{{ (h.hora_inicio or '')[:5] }}">
+      </div>
+      <div class="col-6">
+        <label class="form-label">Fin</label>
+        <input type="time" name="hora_fin" class="form-control" required value="{{ (h.hora_fin or '')[:5] }}">
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Turno <span class="text-muted fw-normal">(opcional)</span></label>
+      <input type="text" name="turno" class="form-control" value="{{ h.turno or '' }}" placeholder="Mañana, tarde…">
+    </div>
+
+    <div class="mb-4">
+      <label class="form-label">Estado</label>
+      <select name="estado" class="form-select">
+        <option value="Programado" {% if (h.estado or '') == 'Programado' %}selected{% endif %}>Programado</option>
+        <option value="Cancelado" {% if (h.estado or '') == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+      </select>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+      <button type="submit" class="btn btn-primary">Guardar</button>
+      <a href="{{ redirect_to or url_for('admin.horarios') }}" class="btn btn-outline-secondary">Volver</a>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block titulo %}Movimientos de stock{% endblock %}
+{% block contenido %}
+<div class="app-page">
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+  <h1 class="h4 mb-0"><i class="bi bi-arrow-left-right me-2"></i>Historial de movimientos</h1>
+  <a href="{{ url_for('admin.inventario_index') }}" class="btn btn-outline-secondary btn-sm">Volver a inventario</a>
+</div>
+<div class="table-responsive border rounded-3 bg-white">
+  <table class="table table-sm table-hover mb-0">
+    <thead class="table-light">
+      <tr>
+        <th>Fecha</th>
+        <th>Ingrediente</th>
+        <th>Tipo</th>
+        <th class="text-end">Cantidad</th>
+        <th>Notas</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in movimientos %}
+      <tr>
+        <td class="text-nowrap small">{{ m.creado_en }}</td>
+        <td>{{ m.ing_nombre }} <span class="text-muted">({{ m.unidad }})</span></td>
+        <td><span class="badge text-bg-light text-dark border">{{ m.tipo }}</span></td>
+        <td class="text-end font-monospace {% if m.cantidad < 0 %}text-danger{% else %}text-success{% endif %}">{{ "%.4f"|format(m.cantidad) }}</td>
+        <td class="small text-muted">{{ m.notas or '—' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="text-center text-muted py-4">Sin movimientos todavía.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="small text-muted mt-2">Mostrando hasta {{ lim }} registros.</p>
+</div>
+{% endblock %}

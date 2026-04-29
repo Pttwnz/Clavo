@@ -1,0 +1,1726 @@
+{% extends "base.html" %}
+{% block titulo %}{{ tr('page.salon.meta_editor') }}{% endblock %}
+{% block body_extra_class %}sal-editor-live{% endblock %}
+{% block content_container_class %}app-content-shell app-content-shell--sala mt-2 mt-md-3{% endblock %}
+
+{% block estilos %}
+<style>
+/* Misma línea visual que «Sala en vivo» (fondo oscuro + mapa) */
+body.sal-editor-live { background: #050810 !important; }
+body.sal-editor-live .main { background: #050810; }
+body.sal-editor-live .topbar {
+  background: rgba(15, 23, 42, 0.92);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  box-shadow: none;
+}
+body.sal-editor-live .footer {
+  background: #0a0f1a;
+  color: #94a3b8;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+body.sal-editor-live .topbar .form-control {
+  background: rgba(2, 6, 23, 0.55);
+  border-color: rgba(148, 163, 184, 0.2);
+  color: #f1f5f9;
+}
+body.sal-editor-live .topbar .form-control::placeholder {
+  color: #64748b;
+}
+body.sal-editor-live .sal-ed-panel {
+  border-color: rgba(148, 163, 184, 0.22);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.sal-ed.app-page { max-width: none; }
+.sal-ed-top.app-hero {
+  background: radial-gradient(1200px 500px at 15% 0%, rgba(56, 189, 248, 0.14), transparent),
+              radial-gradient(800px 400px at 100% 0%, rgba(167, 139, 250, 0.1), transparent),
+              linear-gradient(165deg, #0b1224 0%, #070b14 55%, #050810 100%);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 18px;
+}
+.sal-ed-top.app-hero h1 { font-size: 1.3rem; color: #f8fafc; }
+.sal-ed-top.app-hero p { margin: 0.35rem 0 0; opacity: 0.9; font-size: 0.88rem; max-width: 34rem; line-height: 1.45; color: #94a3b8; }
+.sal-ed-top .sal-ed-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.sal-ed-top .sal-ed-actions .btn-light { color: #0f172a; font-weight: 600; }
+.sal-ed-top .sal-ed-actions .btn-outline-light { color: #e2e8f0; border-color: rgba(248, 250, 252, 0.35); font-weight: 500; }
+.sal-ed-top .sal-ed-actions .btn-outline-light:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.5); }
+.sal-ed-top .sal-ed-actions .btn-warning { border: none; }
+
+.sal-ed-layout { display: grid; grid-template-columns: 340px 1fr; gap: 1rem; align-items: start; }
+@media (max-width: 1100px) { .sal-ed-layout { grid-template-columns: 1fr; } }
+
+.sal-ed-panel {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(15,23,42,0.06);
+}
+.sal-ed-panel h2 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 0 0 0.6rem 0;
+}
+.sal-ed-panel + .sal-ed-panel { margin-top: 0.75rem; }
+
+.sal-ed-row { display: flex; gap: 6px; align-items: stretch; flex-wrap: wrap; }
+.sal-ed-row .form-select { flex: 1; min-width: 140px; }
+
+.sal-tools {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.sal-tools button {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 8px 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #334155;
+  transition: background 0.15s, border-color 0.15s;
+  line-height: 1.2;
+}
+.sal-tools button i { display: block; font-size: 1.1rem; margin-bottom: 4px; color: #475569; }
+.sal-tools button:hover { background: #f1f5f9; border-color: #cbd5e1; }
+.sal-tools button.active {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1e40af;
+  box-shadow: 0 0 0 1px #3b82f6 inset;
+}
+.sal-tools button.active i { color: #2563eb; }
+
+.sal-hint {
+  font-size: 0.72rem;
+  color: #64748b;
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
+.sal-canvas-outer {
+  position: relative;
+  background: #080d18;
+  border-radius: 0 0 18px 18px;
+  border: none;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+  min-height: 560px;
+  overflow: auto;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.sal-canvas-outer.placing { cursor: crosshair; }
+.sal-canvas-outer.drawing-wall { cursor: crosshair; }
+.sal-zoom-inner {
+  position: relative;
+  transform-origin: 0 0;
+  transition: transform 0.12s ease;
+}
+.sal-canvas {
+  position: relative;
+  background-color: #080d18;
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% 35%, rgba(30, 64, 120, 0.22), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 80% 90%, rgba(88, 28, 135, 0.08), transparent),
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
+}
+/* Mapa simplificado: sin paredes ni mobiliario fijo (barra, barril…), solo mesas */
+.sal-canvas.sal-solo-mesas .sal-obj-arquitectura,
+.sal-canvas.sal-solo-mesas .sal-obj-mobiliario { opacity: 0; visibility: hidden; pointer-events: none; }
+
+.sal-obj {
+  position: absolute;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  z-index: 2;
+}
+.sal-obj:active { cursor: grabbing; }
+.sal-obj-decor { z-index: 1; }
+
+.sal-mesa-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sal-mesa-inner--foto {
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 2px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f1f5f9;
+}
+.sal-mesa-foto {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+.sal-mesa-foto-nombre {
+  width: 100%;
+  flex-shrink: 0;
+  margin-top: 2px;
+  padding: 2px 4px;
+  text-align: center;
+}
+/* Mesas — estilo plano limpio (mismas coords que Sala en vivo) */
+.plano-mesa {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.plano-mesa-tablero {
+  position: relative;
+  z-index: 2;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(165deg, #f8fafc 0%, #e2e8f0 100%);
+  border: 1.5px solid rgba(71, 85, 105, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.75),
+    0 6px 18px -4px rgba(0, 0, 0, 0.35);
+}
+.sal-canvas .plano-mesa {
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.35));
+}
+.plano-mesa--redonda .plano-mesa-tablero {
+  width: 50%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.8),
+    inset 0 -8px 20px rgba(15, 23, 42, 0.04),
+    0 8px 20px -6px rgba(15, 23, 42, 0.12);
+}
+.plano-mesa--cuadrada .plano-mesa-tablero {
+  width: 56%;
+  height: 50%;
+  border-radius: 10px;
+}
+.plano-mesa-centro {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 4px;
+  z-index: 3;
+  pointer-events: none;
+}
+.plano-mesa-centro .plano-mesa-inp { pointer-events: auto; }
+.plano-mesa-nombre, .plano-mesa-inp {
+  width: 92%;
+  max-width: 100%;
+  text-align: center;
+  font-size: clamp(10px, 2.2vmin, 13px);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #1e293b;
+  text-shadow: 0 1px 1px rgba(255,255,255,0.9);
+  line-height: 1.2;
+}
+.plano-mesa-cap {
+  font-size: clamp(7px, 1.65vmin, 10px);
+  font-weight: 600;
+  color: #64748b;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+}
+.plano-mesa-inp {
+  background: rgba(255,255,255,0.45);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 6px;
+  padding: 2px 4px;
+}
+.plano-mesa-inp:focus {
+  outline: none;
+  border-color: rgba(59, 130, 246, 0.55);
+  background: rgba(255,255,255,0.92);
+}
+.sal-obj--sel { outline: 2px solid #3b82f6; outline-offset: 2px; border-radius: 4px; z-index: 5; }
+.sal-inspector .btn { font-size: 0.75rem; }
+.sal-resize-handle {
+  position: absolute;
+  right: -8px;
+  bottom: -8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: #2563eb;
+  box-shadow: 0 2px 6px rgba(15,23,42,0.25);
+  cursor: nwse-resize;
+  z-index: 6;
+}
+.sal-size-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+.sal-size-row label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+  color: #475569;
+  margin-bottom: 2px;
+}
+.sal-size-row input[type="range"] { width: 100%; }
+
+.sal-decor-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  border-radius: 4px;
+}
+/* Paredes y elementos fijos (dibujo simple) */
+.sal-arch {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  box-sizing: border-box;
+  pointer-events: none;
+  overflow: hidden;
+}
+.sal-arch--pared {
+  background: linear-gradient(180deg, #a8a29e 0%, #78716c 48%, #57534e 100%);
+  border: 2px solid #44403c;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 2px 6px rgba(0,0,0,0.12);
+}
+.sal-arch--separador {
+  background: repeating-linear-gradient(90deg, #d6d3d1 0 6px, #e7e5e4 6px 12px);
+  border: 1px solid #a8a29e;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.sal-arch--columna {
+  border-radius: 6px;
+  background: linear-gradient(135deg, #d6d3d1, #a8a29e);
+  border: 2px solid #57534e;
+  box-shadow: inset 2px 2px 4px rgba(255,255,255,0.35), 2px 3px 8px rgba(0,0,0,0.15);
+}
+.sal-arch--puerta {
+  background: linear-gradient(180deg, #92400e 0%, #78350f 100%);
+  border: 2px solid #451a03;
+  border-radius: 4px 4px 2px 2px;
+  box-shadow: inset 0 -6px 0 rgba(0,0,0,0.2);
+}
+.sal-arch--puerta::after {
+  content: "";
+  position: absolute;
+  right: 15%;
+  top: 35%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ca8a04;
+  box-shadow: 0 0 0 1px #451a03;
+}
+.sal-arch--ventana {
+  background: linear-gradient(180deg, #bae6fd 0%, #7dd3fc 40%, #38bdf8 100%);
+  border: 3px solid #64748b;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5);
+}
+.sal-arch--ventana::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 48%, #475569 48%, #475569 52%, transparent 52%),
+              linear-gradient(0deg, transparent 48%, #475569 48%, #475569 52%, transparent 52%);
+  opacity: 0.55;
+}
+.sal-arch--bano {
+  background: repeating-linear-gradient(
+    -45deg,
+    #f1f5f9,
+    #f1f5f9 4px,
+    #e2e8f0 4px,
+    #e2e8f0 8px
+  );
+  border: 2px solid #94a3b8;
+  border-radius: 6px;
+}
+.sal-arch--bano::after {
+  content: "WC";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: #64748b;
+  letter-spacing: 0.05em;
+}
+
+.sal-map-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(7, 11, 20, 0.88) 100%);
+  border-radius: 18px 18px 0 0;
+}
+.sal-map-toolbar .form-check-label { color: #94a3b8; font-size: 0.8rem; }
+.sal-map-toolbar .form-check-input {
+  width: 2.5rem;
+  height: 1.35rem;
+  margin-top: 0;
+}
+.sal-badge {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+.sal-wall-preview {
+  position: absolute;
+  z-index: 20;
+  pointer-events: none;
+  border: 2px dashed #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border-radius: 4px;
+}
+
+.sal-ed-map-column {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 18px;
+  overflow: hidden;
+  background: #0f1629;
+}
+.sal-inspector {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(7, 11, 20, 0.95) 100%);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18) !important;
+  color: #e2e8f0;
+}
+.sal-inspector .text-muted { color: #94a3b8 !important; }
+.sal-inspector .text-dark { color: #f1f5f9 !important; }
+.sal-inspector .btn-outline-dark { color: #e2e8f0; border-color: rgba(148,163,184,0.35); }
+.sal-inspector .btn-outline-dark:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.sal-inspector .btn-outline-secondary { color: #cbd5e1; border-color: rgba(148,163,184,0.3); }
+.sal-inspector .btn-outline-secondary:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.sal-inspector .btn-outline-primary { border-color: rgba(56, 189, 248, 0.45); color: #7dd3fc; }
+.sal-size-presets .btn { min-width: 2.5rem; font-variant-numeric: tabular-nums; }
+.sal-size-num-row input {
+  max-width: 5rem;
+  font-size: 0.8rem;
+  text-align: center;
+}
+.sal-inspector .form-control {
+  background: rgba(2, 6, 23, 0.55);
+  border-color: rgba(148, 163, 184, 0.25);
+  color: #f1f5f9;
+}
+.sal-inspector .form-check-input {
+  background-color: rgba(2, 6, 23, 0.5);
+  border-color: rgba(148, 163, 184, 0.35);
+}
+.sal-inspector .form-check-input:checked {
+  background-color: #0ea5e9;
+  border-color: #38bdf8;
+}
+.sal-inspector .form-check-label { color: #cbd5e1; }
+</style>
+{% endblock %}
+
+{% block contenido %}
+{% include 'partials/volver_bar.html' %}
+
+<div class="sal-ed app-page">
+  <div class="sal-ed-top app-hero">
+    <div>
+      <h1><i class="bi bi-grid-3x3-gap me-2 text-warning"></i>{{ tr('page.salon.editor_title') }}</h1>
+      <p>{{ tr('page.salon.editor_intro') }}</p>
+    </div>
+    <div class="sal-ed-actions">
+      <button type="button" class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#modalAyudaSalon">
+        <i class="bi bi-question-circle me-1"></i>{{ tr('page.salon.btn_help') }}
+      </button>
+      <a href="{{ visualizar_url }}" class="btn btn-warning btn-sm text-dark"><i class="bi bi-display me-1"></i>{{ tr('page.salon.btn_view_live') }}</a>
+      <a href="{{ url_for('admin.reservas') }}" class="btn btn-light btn-sm"><i class="bi bi-calendar-event me-1"></i>{{ tr('page.salon.btn_reservations') }}</a>
+    </div>
+  </div>
+
+  <div class="sal-ed-layout">
+    <div>
+      <div class="sal-ed-panel">
+        <h2>Local y diseño</h2>
+        {% if salones|length %}
+        <label class="form-label small text-muted mb-1">Espacio</label>
+        <div class="sal-ed-row mb-2">
+          <select id="sel-salon" class="form-select form-select-sm">
+            {% for s in salones %}
+            <option value="{{ s.id }}" {% if salon_id_actual and s.id == salon_id_actual %}selected{% endif %}>{{ s.nombre }}</option>
+            {% endfor %}
+          </select>
+          <button type="button" class="btn btn-outline-primary btn-sm" id="btn-nuevo-salon" title="Añadir otro espacio">+</button>
+        </div>
+        {% endif %}
+        <label class="form-label small text-muted mb-1">Diseño guardado</label>
+        <div class="sal-ed-row mb-2">
+          <select id="sel-esquema" class="form-select form-select-sm">
+            {% for e in esquemas %}
+            <option value="{{ e.id }}" {% if e.id == esquema_activo_id %}selected{% endif %}{% if e.activo %} data-activo="1"{% endif %}>
+              {{ e.salon_nombre }} — {{ e.nombre }}{% if e.activo %} ✓{% endif %}
+            </option>
+            {% endfor %}
+          </select>
+          <button type="button" class="btn btn-outline-primary btn-sm" id="btn-nuevo-esquema" title="Crear otro diseño vacío">+</button>
+        </div>
+        <button type="button" class="btn btn-success btn-sm w-100" id="btn-activar-esquema">
+          <i class="bi bi-check-circle me-1"></i>Usar este diseño ahora
+        </button>
+      </div>
+
+      <div class="sal-ed-panel">
+        <h2>Añadir mesas y más</h2>
+        <div class="sal-tools mb-2" id="sal-tool-group">
+          <button type="button" class="sal-tool active" data-tool="pointer" title="Seleccionar, mover y cambiar tamaño">
+            <i class="bi bi-cursor"></i>Seleccionar
+          </button>
+        </div>
+        <p class="small text-muted mb-1 fw-semibold">Mesas redondas</p>
+        <div class="sal-tools mb-2" id="sal-tools-round">
+          <button type="button" class="sal-tool" data-tool="place" data-tipo="mesa_redonda" data-cap="2" data-w="80" data-h="80">○ 2</button>
+          <button type="button" class="sal-tool" data-tool="place" data-tipo="mesa_redonda" data-cap="4" data-w="96" data-h="96">○ 4</button>
+          <button type="button" class="sal-tool" data-tool="place" data-tipo="mesa_redonda" data-cap="6" data-w="112" data-h="112">○ 6</button>
+          <button type="button" class="sal-tool" data-tool="place" data-tipo="mesa_redonda" data-cap="8" data-w="128" data-h="128">○ 8</button>
+        </div>
+        <p class="small text-muted mb-1 fw-semibold">Mesas cuadradas</p>
+        <div class="sal-tools mb-2" id="sal-tools-square">
+          <button type="button" class="sal-tool" data-tool="place" data-tipo="mesa_cuadrada" data-cap="2" data-w="80" data-h="64">□ 2</button>
+          <button type="button" class="sal-tool" data-tool="place" data-tipo="mesa_cuadrada" data-cap="4" data-w="96" data-h="80">□ 4</button>
+          <button type="button" class="sal-tool" data-tool="place" data-tipo="mesa_cuadrada" data-cap="6" data-w="112" data-h="92">□ 6</button>
+          <button type="button" class="sal-tool" data-tool="place" data-tipo="mesa_cuadrada" data-cap="8" data-w="128" data-h="100">□ 8</button>
+        </div>
+        <p class="small text-muted mb-1 fw-semibold">Barra</p>
+        <div class="sal-tools mb-2">
+          <button type="button" class="sal-tool" data-tool="place" data-tipo="barra" data-w="240" data-h="48"><i class="bi bi-cup-straw d-block mb-1"></i>Barra</button>
+          <button type="button" class="sal-tool" data-tool="place" data-tipo="barril" data-w="44" data-h="44"><i class="bi bi-circle d-block mb-1"></i>Barril</button>
+        </div>
+        <details class="border rounded px-2 py-2 bg-light">
+          <summary class="small fw-semibold text-secondary" style="cursor:pointer;">Paredes, puertas y baño</summary>
+          <p class="sal-hint mb-2 mt-1">Para orientar el espacio en el dibujo.</p>
+          <div class="sal-tools" id="sal-tool-arq">
+            <button type="button" class="sal-tool" data-tool="pared" data-tipo="pared" data-w="220" data-h="16">
+              <i class="bi bi-border-all"></i>Pared
+            </button>
+            <button type="button" class="sal-tool" data-tool="separador" data-tipo="separador" data-w="160" data-h="8">
+              <i class="bi bi-distribute-vertical"></i>Tabique
+            </button>
+            <button type="button" class="sal-tool" data-tool="columna" data-tipo="columna" data-w="28" data-h="28">
+              <i class="bi bi-circle-fill"></i>Columna
+            </button>
+            <button type="button" class="sal-tool" data-tool="puerta" data-tipo="puerta" data-w="56" data-h="12">
+              <i class="bi bi-door-open"></i>Puerta
+            </button>
+            <button type="button" class="sal-tool" data-tool="ventana" data-tipo="ventana" data-w="72" data-h="56">
+              <i class="bi bi-window"></i>Ventana
+            </button>
+            <button type="button" class="sal-tool" data-tool="bano" data-tipo="bano" data-w="52" data-h="48">
+              <i class="bi bi-droplet"></i>Baño
+            </button>
+          </div>
+        </details>
+        <p class="sal-hint mb-0 mt-2" id="sal-tool-hint">Con <strong>Seleccionar</strong> arrastra las piezas. Elige mesa/barra y <strong>haz clic en el dibujo</strong>. Para <strong>Pared</strong> o <strong>Tabique</strong>, <strong>arrastra</strong> para dibujar el largo. <kbd>Esc</kbd> vuelve atrás.</p>
+      </div>
+
+      <div class="sal-ed-panel">
+        <h2>Atajo</h2>
+        <button type="button" class="btn btn-primary btn-sm w-100 mb-2" id="btn-mesa-rapida">
+          <i class="bi bi-plus-lg me-1"></i>Mesa cuadrada para 4 (esquina del dibujo)
+        </button>
+        <details class="small">
+          <summary class="text-muted" style="cursor:pointer;">Mesa con imagen propia</summary>
+          <form id="form-nueva-mesa" class="mb-0 mt-2" enctype="multipart/form-data">
+            <input type="hidden" name="tipo" value="mesa">
+            <input type="hidden" name="esquema_id" id="inp-esquema-crear" value="{{ esquema_activo_id or '' }}">
+            <label class="form-label small">Nombre</label>
+            <input name="nombre" class="form-control form-control-sm mb-2" placeholder="Ej. Mesa VIP" required>
+            <label class="form-label small">Comensales</label>
+            <select name="capacidad" class="form-select form-select-sm mb-2">
+              <option value="2">2 personas</option>
+              <option value="4" selected>4 personas</option>
+              <option value="6">6 personas</option>
+              <option value="8">8 personas</option>
+            </select>
+            <label class="form-label small">Foto de la mesa</label>
+            <input type="file" name="archivo_mesa" class="form-control form-control-sm mb-1" accept="image/png,image/jpeg,image/webp,image/gif">
+            <p class="small text-muted mb-2">PNG, JPG, WebP o GIF. Máximo 2&nbsp;MB. Si eliges archivo, se usa en lugar de la galería.</p>
+            {% if mesa_imagenes|length %}
+            <label class="form-label small">O imagen ya en la app</label>
+            <select name="imagen_mesa" class="form-select form-select-sm mb-2">
+              <option value="">Automático</option>
+              {% for rel in mesa_imagenes %}
+              <option value="{{ rel }}">{{ rel }}</option>
+              {% endfor %}
+            </select>
+            {% endif %}
+            <button type="submit" class="btn btn-outline-secondary btn-sm w-100">Añadir mesa con esta imagen</button>
+          </form>
+        </details>
+      </div>
+
+      <div class="sal-ed-panel">
+        <h2>Uniones de mesas</h2>
+        <p class="sal-hint mt-0 mb-2">Selecciona 2 o más mesas del plano para crear una unión guardada. Capacidad real: suma de plazas menos 2 por cada unión (ej: 4+4=6).</p>
+        <div class="d-grid gap-2 mb-2">
+          <button type="button" class="btn btn-outline-primary btn-sm" id="btn-union-seleccion">
+            <i class="bi bi-link-45deg me-1"></i>Unir mesas seleccionadas
+          </button>
+        </div>
+        <div id="union-empty" class="small text-muted">No hay uniones creadas.</div>
+        <div id="union-list" class="d-grid gap-1">
+          {% for u in uniones_mesas %}
+          <div class="d-flex align-items-center justify-content-between border rounded px-2 py-1 union-item" data-union-id="{{ u.id }}">
+            <div class="small">
+              <div class="fw-semibold text-dark">{{ u.nombre }}</div>
+              <div class="text-muted">{{ u.capacidad_total }} plazas</div>
+            </div>
+            <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 btn-union-del" data-union-id="{{ u.id }}" title="Eliminar unión">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="sal-ed-panel sal-ed-map-column p-0 overflow-hidden">
+      <div class="sal-map-toolbar">
+        <span class="sal-badge"><i class="bi bi-grid-3x3"></i> {{ num_mesas }} mesas{% if (objetos_plano|length) - num_mesas > 0 %} · {{ (objetos_plano|length) - num_mesas }} más{% endif %}</span>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" id="sal-toggle-estructura" checked>
+          <label class="form-check-label small" for="sal-toggle-estructura">Mostrar paredes y servicios</label>
+        </div>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" id="sal-toggle-snap" checked>
+          <label class="form-check-label small" for="sal-toggle-snap">Alinear al cuadriculado (36 px)</label>
+        </div>
+        <button type="button" class="btn btn-outline-danger btn-sm" id="btn-vaciar-plano" title="Quita todo lo dibujado en este diseño">
+          <i class="bi bi-trash3 me-1"></i>Borrar todo
+        </button>
+        <div class="btn-group btn-group-sm ms-auto">
+          <button type="button" class="btn btn-outline-light" id="sal-zoom-out" title="Ver más pequeño">−</button>
+          <button type="button" class="btn btn-outline-light" id="sal-zoom-in" title="Ver más grande">+</button>
+          <button type="button" class="btn btn-outline-light" id="sal-zoom-reset" title="Tamaño normal">100%</button>
+        </div>
+      </div>
+      <div class="sal-inspector border-bottom px-3 py-2 d-none" id="sal-inspector">
+        <div class="small text-muted mb-1" id="sal-inspector-kicker">Seleccionado</div>
+        <p class="small text-dark mb-2 fw-medium" id="sal-inspector-title">—</p>
+        <div class="d-flex flex-wrap gap-1" id="sal-inspector-actions">
+          <button type="button" class="btn btn-outline-dark btn-sm" id="sal-act-rot" title="Girar"><i class="bi bi-arrow-clockwise me-1"></i>Girar</button>
+          <button type="button" class="btn btn-outline-primary btn-sm" id="sal-act-dup" title="Duplicar"><i class="bi bi-files me-1"></i>Duplicar</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="sal-act-center-x" title="Centrar horizontal">Centrar X</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="sal-act-center-y" title="Centrar vertical">Centrar Y</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="sal-act-wp" title="Más ancho">Más ancho</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="sal-act-wm" title="Menos ancho">Menos ancho</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="sal-act-hp" title="Más largo">Más largo</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="sal-act-hm" title="Menos largo">Menos largo</button>
+          <button type="button" class="btn btn-danger btn-sm" id="sal-act-del" title="Quitar"><i class="bi bi-trash me-1"></i>Quitar</button>
+        </div>
+        <div class="sal-size-grid" id="sal-size-controls">
+          <div class="form-check form-switch mb-1">
+            <input class="form-check-input" type="checkbox" id="sal-size-link" checked>
+            <label class="form-check-label small" for="sal-size-link">{{ tr('page.salon.editor_size_equal') }}</label>
+          </div>
+          <div class="sal-size-presets mb-2">
+            <div class="small text-muted mb-1">{{ tr('page.salon.editor_size_presets') }}</div>
+            <div class="d-flex flex-wrap gap-1">
+              <button type="button" class="btn btn-outline-secondary btn-sm sal-preset-size" data-w="72" data-h="72">72²</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm sal-preset-size" data-w="80" data-h="80">80²</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm sal-preset-size" data-w="96" data-h="96">96²</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm sal-preset-size" data-w="104" data-h="104">104²</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm sal-preset-size" data-w="112" data-h="112">112²</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm sal-preset-size" data-w="120" data-h="120">120²</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm sal-preset-size" data-w="128" data-h="128">128²</button>
+            </div>
+            <div class="d-flex flex-wrap gap-1 mt-1">
+              <button type="button" class="btn btn-outline-secondary btn-sm sal-preset-size" data-w="80" data-h="64" title="Mesa cuadrada 2 px">80×64</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm sal-preset-size" data-w="96" data-h="80" title="Mesa cuadrada 4 px">96×80</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm sal-preset-size" data-w="112" data-h="92" title="Mesa cuadrada 6 px">112×92</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm sal-preset-size" data-w="128" data-h="100" title="Mesa cuadrada 8 px">128×100</button>
+            </div>
+          </div>
+          <div class="sal-size-num-row d-flex flex-wrap align-items-center gap-2 mb-1">
+            <label class="small text-muted mb-0">{{ tr('page.salon.editor_size_w') }}</label>
+            <input type="number" class="form-control form-control-sm" id="sal-size-w-num" min="24" max="420" step="1" value="80">
+            <label class="small text-muted mb-0">{{ tr('page.salon.editor_size_h') }}</label>
+            <input type="number" class="form-control form-control-sm" id="sal-size-h-num" min="16" max="420" step="1" value="80">
+          </div>
+          <div class="sal-size-row">
+            <label for="sal-size-w">{{ tr('page.salon.editor_size_w') }} <strong id="sal-size-w-val">0 px</strong></label>
+            <input type="range" id="sal-size-w" min="24" max="420" step="1" value="80">
+          </div>
+          <div class="sal-size-row">
+            <label for="sal-size-h">{{ tr('page.salon.editor_size_h') }} <strong id="sal-size-h-val">0 px</strong></label>
+            <input type="range" id="sal-size-h" min="16" max="420" step="1" value="80">
+          </div>
+        </div>
+      </div>
+      <div class="sal-canvas-outer" id="sal-canvas-wrap">
+        <div class="mapa-inner sal-zoom-inner" id="sal-zoom-inner">
+        <div class="sal-canvas" id="sal-canvas"
+             style="min-width: {{ plano_ancho|int }}px; min-height: {{ plano_alto|int }}px;">
+          {% for o in objetos_plano %}
+          {% set t = (o.tipo or 'mesa')|lower %}
+          {% if t in ('mesa', 'mesa_redonda', 'mesa_cuadrada') %}
+          <div class="sal-obj tpv-mesa"
+               data-id="{{ o.id }}"
+               data-tipo="{{ t }}"
+               data-cap="{{ o.capacidad|default(4) }}"
+               data-rot="{{ o.rotacion|default(0)|float }}"
+               style="left: {{ o.x|float }}px; top: {{ o.y|float }}px;
+                      width: {{ o.width|default(88)|float }}px;
+                      height: {{ o.height|default(88)|float }}px;
+                      transform: rotate({{ o.rotacion|default(0)|float }}deg);">
+            <div class="sal-mesa-inner {% if t == 'mesa' and o.mesa_foto_rel %}sal-mesa-inner--foto{% endif %}">
+              {% if t == 'mesa' and o.mesa_foto_rel %}
+              <img class="sal-mesa-foto" src="{{ url_for('static', filename=o.mesa_foto_rel) }}" alt="">
+              <input type="text" class="form-control form-control-sm sal-inp-nombre sal-mesa-foto-nombre" value="{{ o.nombre }}"
+                     data-id="{{ o.id }}" autocomplete="off" style="font-size:11px;">
+              {% else %}
+              {% set mesa_editor = true %}
+              {% include '_mesa_vector.html' %}
+              {% endif %}
+            </div>
+          </div>
+          {% else %}
+          {% set arq_t = t in ['pared', 'separador', 'columna', 'puerta', 'ventana', 'bano'] %}
+          <div class="sal-obj sal-obj-decor {% if arq_t %}sal-obj-arquitectura{% else %}sal-obj-mobiliario{% endif %} sal-decor-{{ t }}"
+               data-id="{{ o.id }}"
+               data-tipo="{{ t }}"
+               data-rot="{{ o.rotacion|default(0)|float }}"
+               style="left: {{ o.x|float }}px; top: {{ o.y|float }}px;
+                      width: {{ o.width|default(40)|float }}px;
+                      height: {{ o.height|default(40)|float }}px;
+                      transform: rotate({{ o.rotacion|default(0)|float }}deg);">
+            {% if arq_t %}
+            <div class="sal-arch sal-arch--{{ t }}" aria-hidden="true"></div>
+            {% else %}
+            <img class="sal-decor-img" src="{{ url_for('static', filename=o.img_decor) }}" alt="">
+            {% endif %}
+            <input type="text" class="form-control form-control-sm mt-1 sal-inp-nombre-decor" value="{{ o.nombre }}"
+                   style="max-width:140px;font-size:10px;" data-id="{{ o.id }}">
+          </div>
+          {% endif %}
+          {% else %}
+          <div class="p-5 text-center text-muted small">No hay objetos. Añade paredes o una mesa.</div>
+          {% endfor %}
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalAyudaSalon" tabindex="-1" aria-labelledby="modalAyudaSalonLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title" id="modalAyudaSalonLabel">{{ tr('page.salon.modal_help_title') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <ol class="small mb-0 ps-3">
+          <li class="mb-2">Con <strong>+</strong> puedes crear otro espacio u otro diseño. El botón verde hace que ese diseño sea el que se usa en reservas y en la vista del local.</li>
+          <li class="mb-2">Elige una mesa (redonda o cuadrada, de 2 a 8 comensales) y haz clic en el dibujo. Los nombres se asignan solos (Mesa 1, Mesa 2…).</li>
+          <li class="mb-2">Barra y barril usan las imágenes que tengas en la aplicación, si las hay.</li>
+          <li class="mb-2">Paredes y similares son opcionales; sirven para orientarte. Si activas alinear al cuadriculado, al soltar una pieza se ajusta sola.</li>
+        </ol>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">{{ tr('page.salon.modal_understood') }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const GRID = 36;
+  const canvas = document.getElementById('sal-canvas');
+  const wrap = document.getElementById('sal-canvas-wrap');
+  const zoomInner = document.getElementById('sal-zoom-inner');
+  if (!canvas || !wrap) return;
+
+  const selEsq = document.getElementById('sel-esquema');
+
+  let dragEl = null, ox = 0, oy = 0;
+  let resizeState = null;
+  let wallDrawState = null;
+  let activeTool = 'pointer';
+  let snapEnabled = true;
+  let vizScale = 1;
+  const unionListEl = document.getElementById('union-list');
+  const unionEmptyEl = document.getElementById('union-empty');
+
+  function snap(v) {
+    if (!snapEnabled) return v;
+    return Math.round(v / GRID) * GRID;
+  }
+
+  document.querySelectorAll('.sal-tool').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const tool = btn.getAttribute('data-tool');
+      activeTool = tool || 'pointer';
+      document.querySelectorAll('.sal-tool').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const hint = document.getElementById('sal-tool-hint');
+      if (tool === 'pointer') {
+        wrap.classList.remove('placing');
+        if (hint) hint.innerHTML = 'Arrastra las piezas o usa los botones de abajo. Para añadir, elige mesa o barra y <strong>haz clic en el dibujo</strong>.';
+      } else {
+        wrap.classList.add('placing');
+        if (hint) hint.innerHTML = 'Haz clic en el dibujo para colocar. <kbd>Esc</kbd> para volver.';
+      }
+    });
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      wallDrawState = null;
+      document.querySelectorAll('.sal-wall-preview').forEach(function (n) { n.remove(); });
+      wrap.classList.remove('drawing-wall');
+      activeTool = 'pointer';
+      wrap.classList.remove('placing');
+      const p = document.querySelector('.sal-tool[data-tool="pointer"]');
+      if (p) {
+        document.querySelectorAll('.sal-tool').forEach(b => b.classList.remove('active'));
+        p.classList.add('active');
+      }
+      const hint = document.getElementById('sal-tool-hint');
+      if (hint) hint.innerHTML = 'Arrastra lo que ya tienes o elige algo nuevo y <strong>haz clic en el dibujo</strong>. <kbd>Esc</kbd> para salir.';
+    }
+  });
+
+  const chkSnap = document.getElementById('sal-toggle-snap');
+  if (chkSnap) {
+    chkSnap.addEventListener('change', function () { snapEnabled = chkSnap.checked; });
+  }
+
+  const chkEst = document.getElementById('sal-toggle-estructura');
+  if (chkEst && canvas) {
+    const k = 'salEditorVerEstructura';
+    chkEst.checked = localStorage.getItem(k) !== '0';
+    function apply() {
+      canvas.classList.toggle('sal-solo-mesas', !chkEst.checked);
+      localStorage.setItem(k, chkEst.checked ? '1' : '0');
+    }
+    chkEst.addEventListener('change', apply);
+    apply();
+  }
+
+  function applyZoom() {
+    if (zoomInner) zoomInner.style.transform = 'scale(' + vizScale + ')';
+  }
+  document.getElementById('sal-zoom-in')?.addEventListener('click', function () {
+    vizScale = Math.min(2.2, vizScale + 0.1);
+    applyZoom();
+  });
+  document.getElementById('sal-zoom-out')?.addEventListener('click', function () {
+    vizScale = Math.max(0.45, vizScale - 0.1);
+    applyZoom();
+  });
+  document.getElementById('sal-zoom-reset')?.addEventListener('click', function () {
+    vizScale = 1;
+    applyZoom();
+  });
+
+  function canvasXYFromEvent(e) {
+    const r = canvas.getBoundingClientRect();
+    const wx = wrap.scrollLeft + (e.clientX - r.left);
+    const wy = wrap.scrollTop + (e.clientY - r.top);
+    return { x: wx, y: wy };
+  }
+  function removeWallPreview() {
+    document.querySelectorAll('.sal-wall-preview').forEach(function (n) { n.remove(); });
+  }
+
+  function mesaVectorHtml(tipo, nombre, cap) {
+    const forma = tipo === 'mesa_redonda' ? 'redonda' : 'cuadrada';
+    const safeNom = (nombre || 'Mesa').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const capTxt = parseInt(cap || 4, 10) || 4;
+    return '' +
+      '<div class="plano-mesa plano-mesa--' + forma + '">' +
+        '<div class="plano-mesa-tablero"></div>' +
+        '<div class="plano-mesa-centro">' +
+          '<input type="text" class="form-control form-control-sm sal-inp-nombre plano-mesa-inp" value="' + safeNom + '" autocomplete="off" style="font-size:11px;">' +
+          '<div class="plano-mesa-cap">' + capTxt + ' plazas</div>' +
+        '</div>' +
+      '</div>';
+  }
+  function staticSrc(path) {
+    if (!path) return '';
+    const p = String(path).replace(/^\/+/, '');
+    return '/static/' + p;
+  }
+  function mesaFotoHtml(src, nombre) {
+    const safeNom = (nombre || 'Mesa').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return '' +
+      '<div class="sal-mesa-inner sal-mesa-inner--foto">' +
+        '<img class="sal-mesa-foto" src="' + src + '" alt="">' +
+        '<input type="text" class="form-control form-control-sm sal-inp-nombre sal-mesa-foto-nombre" value="' + safeNom + '" autocomplete="off" style="font-size:11px;">' +
+      '</div>';
+  }
+  function decorLabel(tipo) {
+    const t = (tipo || '').toLowerCase();
+    const m = { pared: 'Pared', separador: 'Tabique', columna: 'Columna', puerta: 'Puerta', ventana: 'Ventana', bano: 'Baño', barra: 'Barra', barril: 'Barril' };
+    return m[t] || 'Elemento';
+  }
+  function appendObjToCanvas(obj) {
+    if (!obj || !canvas) return null;
+    const tipo = (obj.tipo || '').toLowerCase();
+    const isMesa = (tipo === 'mesa' || tipo === 'mesa_redonda' || tipo === 'mesa_cuadrada');
+    const wrapObj = document.createElement('div');
+    wrapObj.className = isMesa ? 'sal-obj tpv-mesa' : 'sal-obj sal-obj-decor sal-obj-mobiliario sal-decor-' + tipo;
+    if (!isMesa && ['pared', 'separador', 'columna', 'puerta', 'ventana', 'bano'].includes(tipo)) {
+      wrapObj.classList.add('sal-obj-arquitectura');
+      wrapObj.classList.remove('sal-obj-mobiliario');
+    }
+    wrapObj.dataset.id = String(obj.id);
+    wrapObj.dataset.tipo = tipo;
+    wrapObj.dataset.rot = String(obj.rotacion || 0);
+    if (isMesa) wrapObj.dataset.cap = String(obj.capacidad || 4);
+    wrapObj.style.left = (obj.x || 0) + 'px';
+    wrapObj.style.top = (obj.y || 0) + 'px';
+    wrapObj.style.width = (obj.width || 80) + 'px';
+    wrapObj.style.height = (obj.height || 80) + 'px';
+    wrapObj.style.transform = 'rotate(' + (obj.rotacion || 0) + 'deg)';
+
+    if (isMesa) {
+      const inner = document.createElement('div');
+      const fotoRel = obj.mesa_foto_rel || ((tipo === 'mesa' && obj.imagen) ? obj.imagen : '');
+      if (fotoRel) {
+        inner.innerHTML = mesaFotoHtml(staticSrc(fotoRel), obj.nombre || 'Mesa');
+      } else {
+        inner.className = 'sal-mesa-inner';
+        inner.innerHTML = mesaVectorHtml(tipo, obj.nombre || 'Mesa', obj.capacidad || 4);
+      }
+      const inp = inner.querySelector('.sal-inp-nombre');
+      if (inp) inp.dataset.id = String(obj.id);
+      wrapObj.appendChild(inner);
+    } else {
+      if (['pared', 'separador', 'columna', 'puerta', 'ventana', 'bano'].includes(tipo)) {
+        const arch = document.createElement('div');
+        arch.className = 'sal-arch sal-arch--' + tipo;
+        arch.setAttribute('aria-hidden', 'true');
+        wrapObj.appendChild(arch);
+      } else {
+        const ph = document.createElement('div');
+        ph.className = 'sal-arch sal-arch--separador';
+        wrapObj.appendChild(ph);
+      }
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.className = 'form-control form-control-sm mt-1 sal-inp-nombre-decor';
+      inp.style.maxWidth = '140px';
+      inp.style.fontSize = '10px';
+      inp.value = obj.nombre || decorLabel(tipo);
+      inp.dataset.id = String(obj.id);
+      inp.addEventListener('change', function () {
+        saveNombre(parseInt(inp.dataset.id, 10), inp.value.trim());
+      });
+      wrapObj.appendChild(inp);
+    }
+    canvas.appendChild(wrapObj);
+    return wrapObj;
+  }
+
+  function updateUnionEmptyState() {
+    if (!unionListEl || !unionEmptyEl) return;
+    unionEmptyEl.style.display = unionListEl.children.length ? 'none' : '';
+  }
+
+  function addUnionRow(union) {
+    if (!unionListEl || !union || !union.id) return;
+    const row = document.createElement('div');
+    row.className = 'd-flex align-items-center justify-content-between border rounded px-2 py-1 union-item';
+    row.dataset.unionId = String(union.id);
+    row.innerHTML =
+      '<div class="small">' +
+      '<div class="fw-semibold text-dark"></div>' +
+      '<div class="text-muted"></div>' +
+      '</div>' +
+      '<button type="button" class="btn btn-outline-danger btn-sm py-0 px-2 btn-union-del" title="Eliminar unión">' +
+      '<i class="bi bi-x-lg"></i>' +
+      '</button>';
+    row.querySelector('.fw-semibold').textContent = union.nombre || ('Unión ' + union.id);
+    row.querySelector('.text-muted').textContent = String(union.capacidad_total || 0) + ' plazas';
+    const delBtn = row.querySelector('.btn-union-del');
+    delBtn.dataset.unionId = String(union.id);
+    unionListEl.appendChild(row);
+    updateUnionEmptyState();
+  }
+
+  function removeUnionRow(unionId) {
+    if (!unionListEl) return;
+    const row = unionListEl.querySelector('[data-union-id="' + String(unionId) + '"]');
+    if (row) row.remove();
+    updateUnionEmptyState();
+  }
+
+  let salSelectedEl = null;
+  let salPrimaryEl = null;
+  function clearSalSelection() {
+    document.querySelectorAll('.sal-resize-handle').forEach(function (h) { h.remove(); });
+    document.querySelectorAll('.sal-obj--sel').forEach(function (n) { n.classList.remove('sal-obj--sel'); });
+    salSelectedEl = null;
+    salPrimaryEl = null;
+    const ins = document.getElementById('sal-inspector');
+    if (ins) ins.classList.add('d-none');
+  }
+  function getSelectedElements() {
+    return Array.from(document.querySelectorAll('.sal-obj--sel'));
+  }
+  function selectSalObj(el, options) {
+    const opts = options || {};
+    if (!opts.keepExisting) {
+      document.querySelectorAll('.sal-obj--sel').forEach(function (n) { n.classList.remove('sal-obj--sel'); });
+    }
+    el.classList.add('sal-obj--sel');
+    salSelectedEl = el;
+    salPrimaryEl = el;
+    const ins = document.getElementById('sal-inspector');
+    const title = document.getElementById('sal-inspector-title');
+    if (ins) ins.classList.remove('d-none');
+    if (!title) return;
+    const selected = getSelectedElements();
+    if (selected.length > 1) {
+      const mesas = selected.filter(function (n) { return n.classList.contains('tpv-mesa'); }).length;
+      title.textContent = 'Selección múltiple: ' + selected.length + ' elementos (' + mesas + ' mesas)';
+      const sc = document.getElementById('sal-size-controls');
+      if (sc) sc.style.display = 'none';
+      return;
+    }
+    if (el.classList.contains('tpv-mesa')) {
+      const cap = el.dataset.cap || '?';
+      const tipo = (el.dataset.tipo || '').toLowerCase();
+      const form = tipo === 'mesa_redonda' ? 'Redonda' : 'Cuadrada';
+      const inp = el.querySelector('.plano-mesa-inp') || el.querySelector('.sal-mesa-foto-nombre');
+      const nom = inp ? inp.value.trim() : 'Mesa';
+      title.textContent = nom + ' — ' + form + ', ' + cap + ' personas';
+    } else {
+      var nombresTipo = {
+        pared: 'Pared', separador: 'Tabique', columna: 'Columna', puerta: 'Puerta',
+        ventana: 'Ventana', bano: 'Baño', barra: 'Barra', barril: 'Barril'
+      };
+      const tipo = (el.dataset.tipo || '').toLowerCase();
+      const dec = el.querySelector('.sal-inp-nombre-decor');
+      const etiqueta = nombresTipo[tipo] || (tipo ? tipo.charAt(0).toUpperCase() + tipo.slice(1) : 'Elemento');
+      const sub = dec && dec.value.trim() ? ' · ' + dec.value.trim() : '';
+      title.textContent = etiqueta + sub;
+    }
+    ensureResizeHandle(el);
+    const sc = document.getElementById('sal-size-controls');
+    if (sc) sc.style.display = el.classList.contains('tpv-mesa') ? '' : 'none';
+    const lk = document.getElementById('sal-size-link');
+    if (lk && el.classList.contains('tpv-mesa')) {
+      const tipo = (el.dataset.tipo || '').toLowerCase();
+      lk.checked = tipo === 'mesa_redonda';
+      syncSizeUi(el);
+    }
+  }
+  function persistObjUpdate(id, payload) {
+    return fetch('/actualizar_objeto', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ id: id }, payload))
+    });
+  }
+  function persistObjMove(id, x, y) {
+    return fetch('/mover_objeto', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id, x: x, y: y })
+    });
+  }
+  function ensureResizeHandle(el) {
+    if (!el) return;
+    el.querySelectorAll('.sal-resize-handle').forEach(function (h) { h.remove(); });
+    const h = document.createElement('button');
+    h.type = 'button';
+    h.className = 'sal-resize-handle';
+    h.title = 'Arrastra para cambiar tamaño';
+    h.addEventListener('mousedown', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const curW = parseFloat(el.style.width) || el.offsetWidth || 80;
+      const curH = parseFloat(el.style.height) || el.offsetHeight || 80;
+      const lk = document.getElementById('sal-size-link');
+      resizeState = {
+        el: el,
+        sx: ev.clientX,
+        sy: ev.clientY,
+        sw: curW,
+        sh: curH,
+        lock: !!(lk && lk.checked && el.classList.contains('tpv-mesa')),
+      };
+    });
+    el.appendChild(h);
+  }
+  function syncSizeUi(el) {
+    const wInp = document.getElementById('sal-size-w');
+    const hInp = document.getElementById('sal-size-h');
+    const wVal = document.getElementById('sal-size-w-val');
+    const hVal = document.getElementById('sal-size-h-val');
+    const wNum = document.getElementById('sal-size-w-num');
+    const hNum = document.getElementById('sal-size-h-num');
+    if (!el || !wInp || !hInp || !wVal || !hVal) return;
+    const w = Math.round(parseFloat(el.style.width) || el.offsetWidth || 80);
+    const h = Math.round(parseFloat(el.style.height) || el.offsetHeight || 80);
+    wInp.value = String(w);
+    hInp.value = String(h);
+    wVal.textContent = w + ' px';
+    hVal.textContent = h + ' px';
+    if (wNum) wNum.value = String(w);
+    if (hNum) hNum.value = String(h);
+  }
+
+  function readSizeLink() {
+    const lk = document.getElementById('sal-size-link');
+    return !!(lk && lk.checked);
+  }
+
+  function commitSizePixels(w, h) {
+    if (!salSelectedEl || !salSelectedEl.classList.contains('tpv-mesa')) return;
+    w = Math.round(Math.max(24, w));
+    h = Math.round(Math.max(16, h));
+    if (readSizeLink()) {
+      const s = Math.max(w, h);
+      w = h = s;
+    }
+    salSelectedEl.style.width = w + 'px';
+    salSelectedEl.style.height = h + 'px';
+    syncSizeUi(salSelectedEl);
+    queuePersistSize();
+  }
+  function getSelectedId() {
+    const el = salPrimaryEl || document.querySelector('.sal-obj--sel');
+    return el ? parseInt(el.dataset.id, 10) : null;
+  }
+  function getSelectedMesaIds() {
+    return Array.from(document.querySelectorAll('.sal-obj--sel.tpv-mesa'))
+      .map(function (el) { return parseInt(el.dataset.id || '0', 10); })
+      .filter(function (id) { return Number.isFinite(id) && id > 0; });
+  }
+  function moveElTo(el, x, y) {
+    if (!el) return;
+    const nx = Math.max(0, Math.min(x, canvas.offsetWidth - el.offsetWidth));
+    const ny = Math.max(0, Math.min(y, canvas.offsetHeight - el.offsetHeight));
+    el.style.left = Math.round(nx) + 'px';
+    el.style.top = Math.round(ny) + 'px';
+  }
+
+  wrap.addEventListener('mousedown', function (e) {
+    if (e.target.closest('.sal-obj')) return;
+    if (activeTool === 'pointer') clearSalSelection();
+  });
+
+  wrap.addEventListener('click', function (e) {
+    if (activeTool === 'pointer') return;
+    if (e.target.closest('.sal-obj')) return;
+    const btn = document.querySelector('.sal-tool.active');
+    if (!btn || btn.getAttribute('data-tool') === 'pointer') return;
+    const tipo = btn.getAttribute('data-tipo');
+    if (!tipo) return;
+    if (activeTool === 'pared' || activeTool === 'separador') return;
+    const w = parseFloat(btn.getAttribute('data-w')) || 80;
+    const h = parseFloat(btn.getAttribute('data-h')) || 40;
+    const xy = canvasXYFromEvent(e);
+    let px = snap(xy.x - w / 2);
+    let py = snap(xy.y - h / 2);
+    px = Math.max(0, px);
+    py = Math.max(0, py);
+    const fd = new FormData();
+    fd.append('tipo', tipo);
+    fd.append('esquema_id', selEsq ? selEsq.value : '');
+    fd.append('x', String(px));
+    fd.append('y', String(py));
+    const cap = btn.getAttribute('data-cap');
+    if (cap && (tipo === 'mesa_redonda' || tipo === 'mesa_cuadrada')) {
+      fd.append('capacidad', cap);
+    }
+    fetch('/crear_objeto', { method: 'POST', body: fd })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j.ok) {
+          const el = appendObjToCanvas(j.obj);
+          if (el) selectSalObj(el);
+        }
+        else alert(j.error || 'No se pudo crear');
+      });
+  });
+
+  canvas.addEventListener('mousedown', function (e) {
+    if (activeTool === 'pared' || activeTool === 'separador') {
+      if (e.target.closest('.sal-obj') || e.target.closest('input')) return;
+      const btnAct = document.querySelector('.sal-tool.active');
+      const tipoWall = btnAct ? btnAct.getAttribute('data-tipo') : '';
+      if (!tipoWall) return;
+      const xy = canvasXYFromEvent(e);
+      removeWallPreview();
+      const preview = document.createElement('div');
+      preview.className = 'sal-wall-preview';
+      preview.style.left = Math.round(xy.x) + 'px';
+      preview.style.top = Math.round(xy.y) + 'px';
+      preview.style.width = '1px';
+      preview.style.height = '1px';
+      canvas.appendChild(preview);
+      wallDrawState = { tipo: tipoWall, x0: xy.x, y0: xy.y, preview: preview };
+      wrap.classList.add('drawing-wall');
+      e.preventDefault();
+      return;
+    }
+    const el = e.target.closest('.sal-obj');
+    if (!el) return;
+    if (e.ctrlKey || e.metaKey) {
+      if (el.classList.contains('sal-obj--sel')) {
+        el.classList.remove('sal-obj--sel');
+        const left = getSelectedElements();
+        if (!left.length) {
+          clearSalSelection();
+        } else {
+          selectSalObj(left[left.length - 1], { keepExisting: true });
+        }
+      } else {
+        selectSalObj(el, { keepExisting: true });
+      }
+    } else {
+      selectSalObj(el);
+    }
+    if (e.target.closest('input')) return;
+    if (activeTool !== 'pointer') return;
+    if (getSelectedElements().length > 1) return;
+    dragEl = el;
+    const r = el.getBoundingClientRect();
+    ox = e.clientX - r.left;
+    oy = e.clientY - r.top;
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', function (e) {
+    if (wallDrawState && wallDrawState.preview) {
+      const xy = canvasXYFromEvent(e);
+      const x0 = wallDrawState.x0;
+      const y0 = wallDrawState.y0;
+      const dx = xy.x - x0;
+      const dy = xy.y - y0;
+      let w = Math.abs(dx);
+      let h = Math.abs(dy);
+      const thick = wallDrawState.tipo === 'separador' ? 8 : 16;
+      if (w >= h) {
+        h = thick;
+      } else {
+        w = thick;
+      }
+      const left = dx >= 0 ? x0 : (x0 - w);
+      const top = dy >= 0 ? y0 : (y0 - h);
+      wallDrawState.preview.style.left = Math.round(left) + 'px';
+      wallDrawState.preview.style.top = Math.round(top) + 'px';
+      wallDrawState.preview.style.width = Math.max(8, Math.round(w)) + 'px';
+      wallDrawState.preview.style.height = Math.max(8, Math.round(h)) + 'px';
+      return;
+    }
+    if (resizeState && resizeState.el) {
+      const dx = e.clientX - resizeState.sx;
+      const dy = e.clientY - resizeState.sy;
+      let nw = Math.max(24, resizeState.sw + dx);
+      let nh = Math.max(16, resizeState.sh + dy);
+      if (resizeState.lock) {
+        const d = (Math.abs(dx) >= Math.abs(dy)) ? dx : dy;
+        const s = Math.max(24, Math.max(resizeState.sw + d, resizeState.sh + d));
+        nw = nh = s;
+      }
+      resizeState.el.style.width = Math.round(nw) + 'px';
+      resizeState.el.style.height = Math.round(nh) + 'px';
+      syncSizeUi(resizeState.el);
+      return;
+    }
+    if (!dragEl) return;
+    const r = canvas.getBoundingClientRect();
+    let x = e.clientX - r.left + wrap.scrollLeft - ox;
+    let y = e.clientY - r.top + wrap.scrollTop - oy;
+    x = Math.max(0, Math.min(x, canvas.offsetWidth - dragEl.offsetWidth));
+    y = Math.max(0, Math.min(y, canvas.offsetHeight - dragEl.offsetHeight));
+    dragEl.style.left = x + 'px';
+    dragEl.style.top = y + 'px';
+  });
+
+  document.addEventListener('mouseup', function () {
+    if (wallDrawState) {
+      const p = wallDrawState.preview;
+      const x = Math.max(0, Math.round(parseFloat(p.style.left) || 0));
+      const y = Math.max(0, Math.round(parseFloat(p.style.top) || 0));
+      const w = Math.max(8, Math.round(parseFloat(p.style.width) || 8));
+      const h = Math.max(8, Math.round(parseFloat(p.style.height) || 8));
+      removeWallPreview();
+      wrap.classList.remove('drawing-wall');
+      const tipo = wallDrawState.tipo;
+      wallDrawState = null;
+      if (w < 14 && h < 14) return;
+      const fd = new FormData();
+      fd.append('tipo', tipo);
+      fd.append('esquema_id', selEsq ? selEsq.value : '');
+      fd.append('x', String(x));
+      fd.append('y', String(y));
+      fd.append('width', String(w));
+      fd.append('height', String(h));
+      fetch('/crear_objeto', { method: 'POST', body: fd })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (j.ok) {
+            const el = appendObjToCanvas(j.obj);
+            if (el) selectSalObj(el);
+          } else {
+            alert(j.error || 'No se pudo crear');
+          }
+        });
+      return;
+    }
+    if (resizeState && resizeState.el) {
+      const idR = parseInt(resizeState.el.dataset.id, 10);
+      const wR = Math.max(24, Math.round(parseFloat(resizeState.el.style.width) || 80));
+      const hR = Math.max(16, Math.round(parseFloat(resizeState.el.style.height) || 80));
+      resizeState.el.style.width = wR + 'px';
+      resizeState.el.style.height = hR + 'px';
+      persistObjUpdate(idR, { width: wR, height: hR });
+      resizeState = null;
+      return;
+    }
+    if (!dragEl) return;
+    const id = dragEl.dataset.id;
+    let x = parseFloat(dragEl.style.left) || 0;
+    let y = parseFloat(dragEl.style.top) || 0;
+    if (snapEnabled) {
+      x = snap(x);
+      y = snap(y);
+      dragEl.style.left = x + 'px';
+      dragEl.style.top = y + 'px';
+    }
+    fetch('/mover_objeto', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: parseInt(id, 10), x: x, y: y })
+    });
+    dragEl = null;
+  });
+
+  function saveNombre(id, nombre) {
+    fetch('/actualizar_objeto', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id, nombre: nombre })
+    }).then(function (r) {
+      if (r.ok && typeof mostrarToast === 'function') mostrarToast('Guardado');
+      else if (!r.ok) alert('No se pudo guardar');
+    });
+  }
+
+  canvas.addEventListener('change', function (e) {
+    const inp = e.target.closest('.sal-inp-nombre');
+    if (inp) {
+      saveNombre(parseInt(inp.dataset.id, 10), inp.value.trim());
+      const wrapM = inp.closest('.tpv-mesa');
+      if (wrapM) selectSalObj(wrapM);
+    }
+  });
+  document.querySelectorAll('.sal-inp-nombre-decor').forEach(function (inp) {
+    inp.addEventListener('change', function () {
+      saveNombre(parseInt(inp.dataset.id, 10), inp.value.trim());
+    });
+  });
+
+  window.salRotar = function (id) {
+    const el = document.querySelector('.sal-obj[data-id="' + id + '"]');
+    if (!el) return;
+    let r = parseFloat(el.dataset.rot || '0') + 90;
+    if (r >= 360) r = 0;
+    el.dataset.rot = String(r);
+    el.style.transform = 'rotate(' + r + 'deg)';
+    persistObjUpdate(id, { rotacion: r });
+  };
+
+  window.salTam = function (id, axis, delta) {
+    const el = document.querySelector('.sal-obj[data-id="' + id + '"]');
+    if (!el) return;
+    let w = parseFloat(el.style.width) || 80;
+    let h = parseFloat(el.style.height) || 80;
+    if (axis === 'w') w = Math.max(24, w + delta);
+    else h = Math.max(16, h + delta);
+    w = Math.round(w); h = Math.round(h);
+    if (el.classList.contains('tpv-mesa') && readSizeLink()) {
+      const s = Math.max(w, h);
+      w = h = s;
+    }
+    el.style.width = w + 'px';
+    el.style.height = h + 'px';
+    syncSizeUi(el);
+    persistObjUpdate(id, { width: w, height: h });
+  };
+
+  window.salBorrar = function (id, kind) {
+    const msg = kind === 'decor' ? '¿Quitar este elemento del dibujo?' : '¿Quitar esta mesa?';
+    if (!confirm(msg)) return;
+    fetch('/eliminar_mesa/' + id, { method: 'POST' })
+      .then(function () {
+        const el = document.querySelector('.sal-obj[data-id="' + id + '"]');
+        if (el) el.remove();
+        clearSalSelection();
+      });
+  };
+  window.salDuplicar = function (id) {
+    const el = document.querySelector('.sal-obj[data-id="' + id + '"]');
+    if (!el) return;
+    const tipo = (el.dataset.tipo || '').toLowerCase();
+    const fd = new FormData();
+    fd.append('tipo', tipo || 'mesa_cuadrada');
+    fd.append('esquema_id', selEsq ? selEsq.value : '');
+    const ox = (parseFloat(el.style.left) || 0) + GRID;
+    const oy = (parseFloat(el.style.top) || 0) + GRID;
+    fd.append('x', String(Math.max(0, Math.round(ox))));
+    fd.append('y', String(Math.max(0, Math.round(oy))));
+    fd.append('width', String(Math.max(8, Math.round(parseFloat(el.style.width) || 80))));
+    fd.append('height', String(Math.max(8, Math.round(parseFloat(el.style.height) || 80))));
+    if (tipo === 'mesa_redonda' || tipo === 'mesa_cuadrada' || tipo === 'mesa') {
+      fd.append('capacidad', String(parseInt(el.dataset.cap || '4', 10) || 4));
+      if (tipo === 'mesa') {
+        const img = el.querySelector('.sal-mesa-foto');
+        if (img && img.getAttribute('src')) {
+          const src = img.getAttribute('src').replace(/^\/?static\//, '');
+          fd.append('imagen_mesa', src);
+        }
+      }
+    } else {
+      const nInp = el.querySelector('.sal-inp-nombre-decor');
+      if (nInp && nInp.value) fd.append('nombre', nInp.value + ' copia');
+    }
+    fetch('/crear_objeto', { method: 'POST', body: fd })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || !j.ok) { alert((j && j.error) || 'No se pudo duplicar'); return; }
+        const neo = appendObjToCanvas(j.obj);
+        if (neo) selectSalObj(neo);
+      });
+  };
+  window.salCenter = function (id, axis) {
+    const el = document.querySelector('.sal-obj[data-id="' + id + '"]');
+    if (!el) return;
+    let x = parseFloat(el.style.left) || 0;
+    let y = parseFloat(el.style.top) || 0;
+    if (axis === 'x') {
+      x = (canvas.offsetWidth - el.offsetWidth) / 2;
+    } else {
+      y = (canvas.offsetHeight - el.offsetHeight) / 2;
+    }
+    if (snapEnabled) {
+      x = snap(x);
+      y = snap(y);
+    }
+    moveElTo(el, x, y);
+    persistObjMove(parseInt(id, 10), parseFloat(el.style.left) || 0, parseFloat(el.style.top) || 0);
+  };
+
+  document.getElementById('sal-act-rot')?.addEventListener('click', function () { const id = getSelectedId(); if (id) salRotar(id); });
+  document.getElementById('sal-act-dup')?.addEventListener('click', function () { const id = getSelectedId(); if (id) salDuplicar(id); });
+  document.getElementById('sal-act-center-x')?.addEventListener('click', function () { const id = getSelectedId(); if (id) salCenter(id, 'x'); });
+  document.getElementById('sal-act-center-y')?.addEventListener('click', function () { const id = getSelectedId(); if (id) salCenter(id, 'y'); });
+  document.getElementById('sal-act-wp')?.addEventListener('click', function () { const id = getSelectedId(); if (id) salTam(id, 'w', 8); });
+  document.getElementById('sal-act-wm')?.addEventListener('click', function () { const id = getSelectedId(); if (id) salTam(id, 'w', -8); });
+  document.getElementById('sal-act-hp')?.addEventListener('click', function () { const id = getSelectedId(); if (id) salTam(id, 'h', 8); });
+  document.getElementById('sal-act-hm')?.addEventListener('click', function () { const id = getSelectedId(); if (id) salTam(id, 'h', -8); });
+  document.getElementById('sal-act-del')?.addEventListener('click', function () {
+    const el = document.querySelector('.sal-obj--sel');
+    if (!el) return;
+    const id = parseInt(el.dataset.id, 10);
+    const kind = el.classList.contains('tpv-mesa') ? 'mesa' : 'decor';
+    salBorrar(id, kind);
+  });
+
+  document.getElementById('btn-vaciar-plano')?.addEventListener('click', function () {
+    const eid = selEsq && selEsq.value;
+    if (!eid) return;
+    if (!confirm('Se borrará todo lo dibujado en este diseño (mesas, paredes, barra…). ¿Seguro?')) return;
+    fetch('/vaciar_esquema/' + encodeURIComponent(eid), { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j.ok) {
+          document.querySelectorAll('.sal-obj').forEach(function (n) { n.remove(); });
+          clearSalSelection();
+        }
+        else alert('No se pudo vaciar');
+      });
+  });
+
+  if (selEsq) {
+    selEsq.addEventListener('change', function () {
+      window.location = '/editar_salon?esquema_id=' + encodeURIComponent(this.value);
+    });
+  }
+  const selSal = document.getElementById('sel-salon');
+  if (selSal && selEsq) {
+    selSal.addEventListener('change', function () {
+      fetch('/api/salon/' + this.value + '/esquemas')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          const list = data.esquemas || [];
+          if (!list.length) {
+            window.location = '/editar_salon';
+            return;
+          }
+          const pick = list.find(function (e) { return e.activo; }) || list[0];
+          window.location = '/editar_salon?esquema_id=' + encodeURIComponent(pick.id);
+        });
+    });
+  }
+
+  const hidCre = document.getElementById('inp-esquema-crear');
+  if (hidCre && selEsq) hidCre.value = selEsq.value;
+
+  document.getElementById('btn-nuevo-salon')?.addEventListener('click', function () {
+    const nombre = prompt('Nombre del espacio (por ejemplo Terraza):', 'Terraza');
+    if (!nombre || !nombre.trim()) return;
+    fetch('/api/salon/crear', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre: nombre.trim() })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j.ok) { alert(j.error || 'Error'); return; }
+        fetch('/api/esquema/crear', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ salon_id: j.id, nombre: 'Principal' })
+        })
+          .then(function (r2) { return r2.json(); })
+          .then(function (j2) {
+            if (j2.ok) window.location = '/editar_salon?esquema_id=' + j2.id;
+            else window.location = '/editar_salon';
+          });
+      });
+  });
+
+  document.getElementById('btn-nuevo-esquema')?.addEventListener('click', function () {
+    const salonId = selSal ? selSal.value : null;
+    if (!salonId) return;
+    const nombre = prompt('Nombre del nuevo diseño (por ejemplo Invierno):', 'Invierno');
+    if (!nombre || !nombre.trim()) return;
+    fetch('/api/esquema/crear', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ salon_id: parseInt(salonId, 10), nombre: nombre.trim() })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j.ok) window.location = '/editar_salon?esquema_id=' + j.id;
+        else alert(j.error || 'Error');
+      });
+  });
+
+  const formMesa = document.getElementById('form-nueva-mesa');
+  if (formMesa) {
+    formMesa.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      const fd = new FormData(ev.target);
+      if (selEsq) fd.set('esquema_id', selEsq.value);
+      fetch('/crear_objeto', { method: 'POST', body: fd })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (j.ok) {
+            const el = appendObjToCanvas(j.obj);
+            if (el) selectSalObj(el);
+            ev.target.reset();
+          }
+          else alert(j.error || 'No se pudo crear');
+        });
+    });
+  }
+
+  document.getElementById('btn-mesa-rapida')?.addEventListener('click', function () {
+    const fd = new FormData();
+    fd.append('tipo', 'mesa_cuadrada');
+    fd.append('capacidad', '4');
+    fd.append('esquema_id', selEsq ? selEsq.value : '');
+    fetch('/crear_objeto', { method: 'POST', body: fd })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j.ok) {
+          const el = appendObjToCanvas(j.obj);
+          if (el) selectSalObj(el);
+        }
+        else alert(j.error || 'No se pudo crear');
+      });
+  });
+
+  document.getElementById('btn-union-seleccion')?.addEventListener('click', function () {
+    const mesaIds = getSelectedMesaIds();
+    if (mesaIds.length < 2) {
+      alert('Selecciona al menos 2 mesas para crear una unión.');
+      return;
+    }
+    const nombre = prompt('Nombre de la unión (opcional):', '');
+    const payload = { mesa_ids: mesaIds };
+    if (nombre && nombre.trim()) payload.nombre = nombre.trim();
+    fetch('/api/union_mesas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || !j.ok) {
+          alert((j && j.error) || 'No se pudo crear la unión');
+          return;
+        }
+        addUnionRow(j);
+        if (typeof mostrarToast === 'function') mostrarToast('Unión creada');
+      });
+  });
+
+  unionListEl?.addEventListener('click', function (e) {
+    const btn = e.target.closest('.btn-union-del');
+    if (!btn) return;
+    const unionId = parseInt(btn.dataset.unionId || '0', 10);
+    if (!unionId) return;
+    if (!confirm('¿Eliminar esta unión de mesas?')) return;
+    fetch('/api/union_mesas/' + unionId, { method: 'DELETE' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || !j.ok) {
+          alert((j && j.error) || 'No se pudo eliminar la unión');
+          return;
+        }
+        removeUnionRow(unionId);
+      });
+  });
+
+  document.getElementById('btn-activar-esquema')?.addEventListener('click', function () {
+    const id = selEsq && selEsq.value;
+    if (!id) return;
+    fetch('/api/esquema/' + id + '/activar', { method: 'POST' })
+      .then(function () {
+        if (typeof mostrarToast === 'function') mostrarToast('Diseño activado');
+      });
+  });
+
+  const sizeW = document.getElementById('sal-size-w');
+  const sizeH = document.getElementById('sal-size-h');
+  const sizeWNum = document.getElementById('sal-size-w-num');
+  const sizeHNum = document.getElementById('sal-size-h-num');
+  const sizeWVal = document.getElementById('sal-size-w-val');
+  const sizeHVal = document.getElementById('sal-size-h-val');
+  const sizeLink = document.getElementById('sal-size-link');
+  let sizeSaveTimer = null;
+  function queuePersistSize() {
+    if (!salSelectedEl) return;
+    const id = parseInt(salSelectedEl.dataset.id, 10);
+    const w = Math.max(24, Math.round(parseFloat(salSelectedEl.style.width) || 80));
+    const h = Math.max(16, Math.round(parseFloat(salSelectedEl.style.height) || 80));
+    clearTimeout(sizeSaveTimer);
+    sizeSaveTimer = setTimeout(function () {
+      persistObjUpdate(id, { width: w, height: h });
+    }, 180);
+  }
+  sizeW?.addEventListener('input', function () {
+    if (!salSelectedEl) return;
+    const w = Math.max(24, parseFloat(this.value) || 80);
+    const h0 = Math.max(16, parseFloat(sizeH && sizeH.value) || 80);
+    const h = readSizeLink() ? w : h0;
+    if (readSizeLink() && sizeH) sizeH.value = String(Math.round(h));
+    commitSizePixels(w, h);
+  });
+  sizeH?.addEventListener('input', function () {
+    if (!salSelectedEl) return;
+    const h = Math.max(16, parseFloat(this.value) || 80);
+    const w0 = Math.max(24, parseFloat(sizeW && sizeW.value) || 80);
+    const w = readSizeLink() ? h : w0;
+    if (readSizeLink() && sizeW) sizeW.value = String(Math.round(w));
+    commitSizePixels(w, h);
+  });
+  sizeWNum?.addEventListener('change', function () {
+    if (!salSelectedEl) return;
+    const w = Math.max(24, parseFloat(this.value) || 80);
+    const h0 = Math.max(16, parseFloat(sizeHNum && sizeHNum.value) || 80);
+    const h = readSizeLink() ? w : h0;
+    commitSizePixels(w, h);
+  });
+  sizeHNum?.addEventListener('change', function () {
+    if (!salSelectedEl) return;
+    const h = Math.max(16, parseFloat(this.value) || 80);
+    const w0 = Math.max(24, parseFloat(sizeWNum && sizeWNum.value) || 80);
+    const w = readSizeLink() ? h : w0;
+    commitSizePixels(w, h);
+  });
+  sizeLink?.addEventListener('change', function () {
+    if (!salSelectedEl || !readSizeLink()) return;
+    const w = Math.max(24, parseFloat(salSelectedEl.style.width) || 80);
+    commitSizePixels(w, parseFloat(salSelectedEl.style.height) || w);
+  });
+  document.querySelectorAll('.sal-preset-size').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (!salSelectedEl) return;
+      const w = parseFloat(btn.getAttribute('data-w')) || 80;
+      const h = parseFloat(btn.getAttribute('data-h')) || 80;
+      if (sizeLink) {
+        if (Math.round(w) === Math.round(h)) sizeLink.checked = true;
+        else sizeLink.checked = false;
+      }
+      commitSizePixels(w, h);
+    });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (!salSelectedEl) return;
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) return;
+    const id = parseInt(salSelectedEl.dataset.id || '0', 10);
+    if (!id) return;
+    const step = e.shiftKey ? 8 : 2;
+    let x = parseFloat(salSelectedEl.style.left) || 0;
+    let y = parseFloat(salSelectedEl.style.top) || 0;
+    let moved = false;
+    if (e.key === 'ArrowLeft') { x -= step; moved = true; }
+    else if (e.key === 'ArrowRight') { x += step; moved = true; }
+    else if (e.key === 'ArrowUp') { y -= step; moved = true; }
+    else if (e.key === 'ArrowDown') { y += step; moved = true; }
+    if (!moved) return;
+    e.preventDefault();
+    moveElTo(salSelectedEl, x, y);
+    clearTimeout(sizeSaveTimer);
+    sizeSaveTimer = setTimeout(function () {
+      persistObjMove(id, parseFloat(salSelectedEl.style.left) || 0, parseFloat(salSelectedEl.style.top) || 0);
+    }, 120);
+  });
+
+  updateUnionEmptyState();
+})();
+</script>
+{% endblock %}

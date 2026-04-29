@@ -1,0 +1,74 @@
+# Despliegue al VPS por SSH tras push (opcional) o manual (Actions → Run workflow).
+#
+# Configuración en GitHub → Settings → Secrets and variables → Actions:
+#   VPS_HOST          IP o hostname del VPS
+#   VPS_USER          usuario SSH (ej. root o deploy)
+#   VPS_SSH_KEY       clave privada PEM completa (OpenSSH) con acceso al VPS
+#   VPS_SSH_PORT      opcional, por defecto 22
+#   VPS_REPO_PATH     ruta absoluta del clon en el servidor (ej. /root/Clavo o /home/deploy/Clavo)
+#
+# Opcional (repo → Settings → Variables → Actions):
+#   VPS_DEPLOY_AUTO   pon a 1 para ejecutar este workflow en cada push a main/master
+
+name: Deploy VPS
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Rama a desplegar"
+        required: false
+        default: "main"
+  push:
+    branches:
+      - main
+      - master
+
+concurrency:
+  group: deploy-vps-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: SSH pull + Docker rebuild
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && vars.VPS_DEPLOY_AUTO == '1' &&
+       (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'))
+
+    steps:
+      - name: Rama a desplegar
+        id: meta
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "branch=${{ inputs.branch }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "branch=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Desplegar en el VPS
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          REPO_PATH: ${{ secrets.VPS_REPO_PATH }}
+          GIT_BRANCH: ${{ steps.meta.outputs.branch }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          envs: REPO_PATH,GIT_BRANCH
+          script_stop: true
+          script: |
+            set -euo pipefail
+            RP="${REPO_PATH:-}"
+            if [ -z "$RP" ]; then RP="$HOME/Clavo"; fi
+            if [ ! -d "$RP/.git" ]; then
+              echo "No hay repo git en $RP. Crea el secret VPS_REPO_PATH con la ruta absoluta del clon."
+              exit 1
+            fi
+            cd "$RP"
+            git fetch origin --prune
+            git checkout "$GIT_BRANCH"
+            git pull --ff-only "origin/$GIT_BRANCH" || git pull --ff-only
+            exec bash deploy/vps-pull-rebuild.sh

@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block titulo %}Libro de firmas{% endblock %}
+
+{% block estilos %}
+<style>
+  /* .app-page, .app-hero en base.html */
+  .lf-filters.app-surface {
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+  .lf-table-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid #e2e8f0; background: #fff; }
+  .lf-table { margin: 0; font-size: 0.9rem; }
+  .lf-table thead th {
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+  }
+  .lf-table tbody td { padding: 0.75rem 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+  .lf-table tbody tr:hover { background: #fafbfc; }
+  .lf-actions .btn { border-radius: 10px; font-weight: 600; }
+  .lf-emp { font-weight: 600; color: #0f172a; }
+  .lf-mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, monospace; font-size: 0.88rem; color: #475569; }
+  .lf-hours { font-weight: 700; color: #0d9488; font-variant-numeric: tabular-nums; }
+</style>
+{% endblock %}
+
+{% block contenido %}
+{% include 'partials/volver_bar.html' %}
+<div class="app-page">
+  <div class="lf-hero app-hero">
+    <h1><i class="bi bi-journal-bookmark me-2"></i>Libro de registro de jornada</h1>
+    <p class="sub mb-0">Registro diario objetivo (art. 34.9 ET): pausas, horas ordinarias y extraordinarias. PDF y ZIP para archivo.</p>
+  </div>
+
+  {% if empleado_id and conformidad_mes %}
+  <div class="alert alert-success border-0 mb-3" style="border-radius:12px;">
+    <i class="bi bi-shield-check me-1"></i>
+    El trabajador registró <strong>conformidad digital</strong> para este mes
+    ({{ conformidad_mes.creado_en or '—' }}{% if conformidad_mes.ip %} · IP {{ conformidad_mes.ip }}{% endif %}).
+  </div>
+  {% elif empleado_id %}
+  <div class="alert alert-secondary border-0 mb-3" style="border-radius:12px;">
+    <i class="bi bi-info-circle me-1"></i>
+    Aún no hay conformidad del trabajador para este mes (puede firmarla desde su área personal).
+  </div>
+  {% endif %}
+
+  {% if not (empresa.razon_social or empresa.cif) %}
+  <div class="alert alert-warning border-0 mb-3" style="border-radius:12px;">
+    <i class="bi bi-building me-1"></i>
+    Configura el <strong>razón social, CIF y datos de la empresa</strong> en
+    <a href="{{ url_for('admin.configuracion_empresa') }}" class="alert-link">Datos de la empresa</a>
+    para que los PDF salgan completos.
+  </div>
+  {% endif %}
+
+  <div class="lf-filters app-surface">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label small text-muted mb-1">Mes</label>
+        <input type="month" name="mes" class="form-control" value="{{ mes }}" required>
+      </div>
+      <div class="col-md-5">
+        <label class="form-label small text-muted mb-1">Trabajador</label>
+        <select name="empleado_id" class="form-select">
+          <option value="">Todos (tabla completa)</option>
+          {% for e in empleados %}
+          <option value="{{ e.id }}" {% if empleado_id == e.id %}selected{% endif %}>
+            {{ e.nombre }}{% if e.apellido %} {{ e.apellido }}{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4 d-flex flex-wrap gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-funnel me-1"></i>Aplicar</button>
+        {% if mes %}
+        {% if empleado_id %}
+        <a class="btn btn-outline-dark" href="{{ url_for('admin.pdf_trabajador', mes=mes, empleado_id=empleado_id) }}">
+          <i class="bi bi-file-earmark-pdf me-1"></i>PDF trabajador
+        </a>
+        {% else %}
+        <button type="button" class="btn btn-outline-secondary" disabled title="Selecciona un trabajador arriba">PDF trabajador</button>
+        {% endif %}
+        <a class="btn btn-outline-success" href="{{ url_for('admin.generar_pdf_mensual', mes=mes) }}">
+          <i class="bi bi-file-zip me-1"></i>ZIP todos
+        </a>
+        {% endif %}
+      </div>
+    </form>
+    <p class="small text-muted mb-0 mt-2">
+      Periodo mostrado: <strong>{{ mes_etiqueta }}</strong>.
+      {% if not empleado_id %}Para PDF de una persona, selecciónala en el desplegable.{% endif %}
+    </p>
+  </div>
+
+  <div class="lf-table-wrap">
+    <table class="table lf-table mb-0">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Empleado</th>
+          <th>Entrada</th>
+          <th>Salida</th>
+          <th>Pausas</th>
+          <th>Total</th>
+          <th>Ord.</th>
+          <th>Extra</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in fichajes %}
+        <tr>
+          <td><span class="text-nowrap">{{ f.fecha }}</span></td>
+          <td class="lf-emp">{{ f.empleado }}</td>
+          <td class="lf-mono">{{ f.entrada }}</td>
+          <td class="lf-mono">{{ f.salida }}</td>
+          <td class="small text-muted">{{ f.pausas }}</td>
+          <td class="lf-hours">{{ f.horas }}</td>
+          <td class="lf-mono small">{{ f.horas_ord }}</td>
+          <td class="lf-mono small">{{ f.horas_ext }}</td>
+          <td>
+            {% if f.estado == 'Completo' %}
+            <span class="badge text-bg-success">Completo</span>
+            {% else %}
+            <span class="badge text-bg-secondary">{{ f.estado }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="9" class="text-center text-muted py-5">No hay registros en este periodo.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

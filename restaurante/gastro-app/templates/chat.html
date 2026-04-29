@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ tr('chat.title') }}{% endblock %}
+
+{% block estilos %}
+<style>
+    .chat-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    .chat-messages {
+        height: 400px;
+        overflow-y: auto;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 20px;
+        background: white;
+        margin-bottom: 15px;
+    }
+    .mensaje-usuario {
+        background: #d4a017;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 14px;
+        margin-bottom: 10px;
+        max-width: 80%;
+        margin-left: auto;
+    }
+    .mensaje-ia {
+        background: #f3f4f6;
+        padding: 10px 15px;
+        border-radius: 14px;
+        margin-bottom: 10px;
+        max-width: 80%;
+    }
+</style>
+{% endblock %}
+
+{% block contenido %}
+{% include 'partials/volver_bar.html' %}
+<div class="chat-container">
+    
+    <h3 class="mb-4">{{ tr('chat.title') }}</h3>
+    
+    <div class="chat-messages" id="chat-messages">
+        {% for m in mensajes %}
+            {% if m.rol == 'usuario' %}
+            <div class="mensaje-usuario">{{ m.texto }}</div>
+            {% else %}
+            <div class="mensaje-ia">{{ m.texto }}</div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    
+    <form method="post" action="/chat" class="d-flex gap-2">
+        <input 
+            type="text" 
+            name="mensaje" 
+            class="form-control" 
+            placeholder="Escribe tu mensaje..."
+            required
+            autofocus>
+        <button class="btn btn-primary">Enviar</button>
+    </form>
+    
+    <div class="mt-3 text-muted">
+        <small>Esta pantalla está desactivada; al enviar se redirige al panel con un aviso.</small>
+    </div>
+    
+</div>
+
+<script>
+    // Auto-scroll al final del chat
+    var chat = document.getElementById('chat-messages');
+    chat.scrollTop = chat.scrollHeight;
+</script>
+{% endblock %}

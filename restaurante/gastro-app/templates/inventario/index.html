@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block titulo %}Inventario{% endblock %}
+{% block estilos %}
+<style>
+  .inv-hero.app-hero { background: linear-gradient(135deg, #0f172a 0%, var(--brand-primary) 100%); }
+  .inv-hero.app-hero h1 { font-size: 1.35rem; }
+  .inv-card.app-surface { padding: 1.25rem; margin-bottom: 1rem; }
+  .inv-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #e2e8f0; }
+  .stock-low { background: #fff7ed !important; }
+  .stock-ok { color: #0d9488; font-weight: 700; }
+</style>
+{% endblock %}
+{% block contenido %}
+{% include 'partials/volver_bar.html' %}
+<div class="app-page">
+<div class="inv-hero app-hero d-flex flex-wrap justify-content-between align-items-start gap-3">
+  <div>
+    <h1><i class="bi bi-box-seam me-2"></i>Inventario y alertas</h1>
+    <p class="sub small mb-0 opacity-90">Stock por ingrediente (escandallo). Umbrales para avisos de reposición.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2 align-items-center">
+    <button type="button" class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#modalAyudaInventario" title="Guía del inventario">
+      <i class="bi bi-question-circle me-1"></i>Cómo funciona
+    </button>
+    {% if puede('mod.escandallo') %}
+    <a href="{{ url_for('admin.escandallos_index') }}" class="btn btn-outline-light btn-sm"><i class="bi bi-calculator me-1"></i>{{ tr('nav.escandallos') }}</a>
+    {% endif %}
+    <a href="{{ url_for('admin.inventario_albaranes') }}" class="btn btn-light btn-sm"><i class="bi bi-file-earmark-arrow-up me-1"></i>Albaranes</a>
+    <a href="{{ url_for('admin.inventario_movimientos') }}" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-left-right me-1"></i>Movimientos</a>
+  </div>
+</div>
+
+<div class="modal fade" id="modalAyudaInventario" tabindex="-1" aria-labelledby="modalAyudaInventarioLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content border-0 shadow" style="border-radius:14px;">
+      <div class="modal-header border-0 pb-0">
+        <h2 class="modal-title h5 fw-bold" id="modalAyudaInventarioLabel"><i class="bi bi-box-seam text-primary me-2"></i>Inventario: guía rápida</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body pt-2">
+        <p class="text-muted small mb-4">Este módulo conecta el <strong>stock físico</strong> con los <strong>ingredientes</strong> que ya gestionas en Escandallos, y te ayuda a no quedarte sin existencias ni perder el rastro de las entradas.</p>
+
+        <h3 class="h6 text-uppercase text-secondary mb-2"><i class="bi bi-gear me-1"></i>Cómo funciona</h3>
+        <ul class="small mb-4 ps-3">
+          <li class="mb-2">Cada ingrediente tiene una <strong>cantidad en almacén</strong> (stock actual) en la unidad que definiste en el escandallo (kg, litros, unidades, etc.).</li>
+          <li class="mb-2">Puedes fijar un <strong>mínimo</strong> por ingrediente: si el stock cae por debajo, el sistema lo marca como alerta para que repongas a tiempo.</li>
+          <li class="mb-2">Todo cambio de stock queda registrado en <strong>movimientos</strong>: ajustes manuales (mermas, inventario físico) y <strong>entradas por albarán</strong> cuando confirmas una compra.</li>
+          <li class="mb-0">Los <strong>albaranes</strong> permiten asociar la compra a un documento (PDF o foto opcional) y cargar varias líneas de producto de una vez al confirmar.</li>
+        </ul>
+
+        <h3 class="h6 text-uppercase text-secondary mb-2"><i class="bi bi-graph-up-arrow me-1"></i>Beneficios de usarlo</h3>
+        <ul class="small mb-4 ps-3">
+          <li class="mb-2"><strong>Menos roturas de stock</strong>: las alertas avisan antes de quedarte sin un ingrediente clave.</li>
+          <li class="mb-2"><strong>Trazabilidad</strong>: el historial de movimientos ayuda a explicar diferencias, cierres o auditorías.</li>
+          <li class="mb-2"><strong>Compras ordenadas</strong>: cada entrada puede ir ligada a un albarán y, si quieres, al archivo escaneado.</li>
+          <li class="mb-0"><strong>Un solo criterio</strong>: el mismo listado de ingredientes que usas para costes sirve para el almacén.</li>
+        </ul>
+
+        <h3 class="h6 text-uppercase text-secondary mb-2"><i class="bi bi-list-check me-1"></i>Cómo usarlo paso a paso</h3>
+        <ol class="small mb-0 ps-3">
+          <li class="mb-2">En <strong>Escandallos</strong>, mantén creados y actualizados los ingredientes que quieras controlar en almacén.</li>
+          <li class="mb-2">En esta pantalla, revisa el stock y escribe el <strong>mínimo</strong> donde te interese; pulsa <strong>Guardar mínimos</strong>.</li>
+          <li class="mb-2">Para un ajuste puntual (por ejemplo una merma o un conteo), usa <strong>Ajuste rápido</strong>: cantidad <strong>positiva</strong> suma stock, <strong>negativa</strong> resta, e indica un motivo breve.</li>
+          <li class="mb-2">Para mercancía nueva: entra en <strong>Albaranes</strong>, crea un borrador, opcionalmente sube el PDF o foto del documento, añade las <strong>líneas</strong> (ingrediente y cantidad) y pulsa <strong>Confirmar y cargar stock</strong>.</li>
+          <li class="mb-0">Consulta <strong>Movimientos</strong> cuando quieras ver el detalle cronológico de entradas y salidas.</li>
+        </ol>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if n_alertas %}
+<div class="alert alert-warning border-0 d-flex align-items-center gap-2" style="border-radius:12px;">
+  <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+  <div><strong>{{ n_alertas }}</strong> ingrediente(s) por debajo del mínimo. Revisa la tabla o configura umbrales.</div>
+</div>
+{% endif %}
+
+{% if alertas|length %}
+<div class="inv-card app-surface">
+  <h2 class="h6 text-uppercase text-muted mb-3"><i class="bi bi-bell me-1"></i>Alertas de reposición</h2>
+  <ul class="list-unstyled mb-0 small">
+    {% for a in alertas %}
+    <li class="mb-1"><strong>{{ a.nombre }}</strong>: {{ "%.2f"|format(a.sa) }} {{ a.unidad }} &lt; mín. {{ "%.2f"|format(a.sm) }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<div class="inv-card app-surface">
+  <h2 class="h6 text-uppercase text-muted mb-3">Ajuste rápido de stock</h2>
+  <form method="post" action="{{ url_for('admin.inventario_ajuste') }}" class="row g-2 align-items-end">
+    <div class="col-md-4">
+      <label class="form-label small">Ingrediente</label>
+      <select name="ingrediente_id" class="form-select form-select-sm" required>
+        <option value="">— Elegir —</option>
+        {% for r in ingredientes %}
+        <option value="{{ r.id }}">{{ r.nombre }} ({{ r.unidad }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label small">Cantidad (+ entrada / − salida)</label>
+      <input type="text" name="cantidad" class="form-control form-control-sm" placeholder="ej. -0.5 o 2" required>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label small">Motivo</label>
+      <input type="text" name="motivo" class="form-control form-control-sm" placeholder="Merma, inventario físico…">
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-primary btn-sm w-100">Registrar</button>
+    </div>
+  </form>
+</div>
+
+<form method="post" action="{{ url_for('admin.inventario_umbrales') }}">
+<div class="inv-card app-surface">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+    <h2 class="h6 text-uppercase text-muted mb-0">Existencias y mínimos</h2>
+    <button type="submit" class="btn btn-outline-primary btn-sm">Guardar mínimos</button>
+  </div>
+  <div class="inv-table-wrap">
+    <table class="table table-sm table-hover mb-0">
+      <thead class="table-light"><tr>
+        <th>Ingrediente</th>
+        <th>Unidad</th>
+        <th class="text-end">Stock actual</th>
+        <th class="text-end" style="min-width:110px;">Mínimo (alerta)</th>
+        <th class="text-end">Estado</th>
+      </tr></thead>
+      <tbody>
+        {% for r in ingredientes %}
+        {% set sa = r.stock_actual %}
+        {% set sm = r.stock_minimo %}
+        <tr class="{% if sm and sm > 0 and sa < sm %}stock-low{% endif %}">
+          <td>{{ r.nombre }}</td>
+          <td class="text-muted">{{ r.unidad }}</td>
+          <td class="text-end font-monospace stock-ok">{{ "%.3f"|format(sa) }}</td>
+          <td class="text-end">
+            <input type="text" class="form-control form-control-sm text-end" name="min_{{ r.id }}" value="{{ sm if sm else '' }}" placeholder="0">
+          </td>
+          <td class="text-end small">
+            {% if sm and sm > 0 and sa < sm %}
+            <span class="badge text-bg-danger">Bajo mínimo</span>
+            {% else %}
+            <span class="badge text-bg-success">OK</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-center text-muted py-4">No hay ingredientes. Crea primero en <a href="/escandallos">Escandallos</a>.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+</form>
+</div>
+{% endblock %}

@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block titulo %}Estadísticas web{% endblock %}
+{% block contenido %}
+
+<div class="mx-auto px-2" style="max-width: 1100px;">
+  <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
+    <div class="min-w-0">
+      <h1 class="h4 mb-1"><i class="bi bi-graph-up-arrow text-primary me-2"></i>Estadísticas de la web</h1>
+      <p class="text-muted small mb-0">
+        Visitas registradas en el sitio Next y reservas creadas en Prisma por origen: web, teléfono/manual en tablet y walk-in en mostrador.
+      </p>
+    </div>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <a href="{{ url_for('admin.panel_web_carta') }}" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-journal-text me-1"></i>Carta pública
+      </a>
+      <form method="get" class="d-flex align-items-center gap-2">
+        <label class="small text-muted mb-0" for="days">Periodo</label>
+        <select name="days" id="days" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+          <option value="7" {% if days == 7 %}selected{% endif %}>7 días</option>
+          <option value="30" {% if days == 30 %}selected{% endif %}>30 días</option>
+          <option value="60" {% if days == 60 %}selected{% endif %}>60 días</option>
+          <option value="90" {% if days == 90 %}selected{% endif %}>90 días</option>
+        </select>
+      </form>
+    </div>
+  </div>
+
+  {% if config_error %}
+  <div class="alert alert-warning">
+    Falta credencial: <code>ADMIN_PASSWORD</code> (misma que el login admin de la web) o
+    <code>CLAVO_INTERNAL_API_SECRET</code> en <code>restaurante/.env</code>. En desarrollo, sin admin en claro,
+    se puede usar <code>AUTH_SECRET</code>. <code>NEXT_SITE_BASE_URL</code> si Next no está en el puerto por defecto.
+    Reinicia Gastro.
+  </div>
+  {% elif http_error %}
+  <div class="alert alert-danger">
+    <p class="mb-2">No se pudieron cargar los datos desde Next. Comprueba que <code>npm run dev</code> esté en marcha
+      (puerto 31047 o el de <code>NEXT_SITE_BASE_URL</code>) y que la contraseña admin coincida con el <code>.env</code>.</p>
+    {% if http_detail %}
+    <pre class="small mb-0 p-2 rounded bg-dark text-white text-wrap" style="white-space:pre-wrap;max-height:220px;overflow:auto;">{{ http_detail }}</pre>
+    {% endif %}
+  </div>
+  {% elif stats %}
+  {% set pv = stats.get('pageViews', {}) %}
+  {% set rv = stats.get('reservations', {}) %}
+  {% set bydays = pv.get('byDay', []) %}
+  {% if bydays and bydays|length %}
+    {% set mx = (bydays | map(attribute='count') | max) %}
+    {% set mx = mx if mx > 0 else 1 %}
+  {% else %}
+    {% set mx = 1 %}
+  {% endif %}
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100 rounded-3">
+        <div class="card-body py-3">
+          <div class="text-muted small text-uppercase fw-semibold">Visitas (7 días)</div>
+          <div class="fs-3 fw-bold text-primary">{{ pv.get('total7d', 0) }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100 rounded-3">
+        <div class="card-body py-3">
+          <div class="text-muted small text-uppercase fw-semibold">Visitas (periodo)</div>
+          <div class="fs-3 fw-bold">{{ pv.get('totalPeriod', 0) }}</div>
+          <div class="small text-muted">{{ days }} días</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100 rounded-3">
+        <div class="card-body py-3">
+          <div class="text-muted small text-uppercase fw-semibold">Reservas (7 días)</div>
+          <div class="fs-3 fw-bold text-success">{{ rv.get('total7d', 0) }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm h-100 rounded-3">
+        <div class="card-body py-3">
+          <div class="text-muted small text-uppercase fw-semibold">Reservas (periodo)</div>
+          <div class="fs-3 fw-bold">{{ rv.get('totalPeriod', 0) }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if pv.get('dbError') %}
+  <div class="alert alert-warning py-2 small">No se pudo leer la tabla de visitas en la base de datos Next.</div>
+  {% endif %}
+  {% if rv.get('dbError') %}
+  <div class="alert alert-warning py-2 small">No se pudo leer el desglose de reservas en la base de datos Next.</div>
+  {% endif %}
+
+  <div class="row g-3 mb-4">
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-header bg-white border-0 pt-3 pb-0">
+          <h2 class="h6 mb-0">Visitas por día</h2>
+          <p class="small text-muted mb-0">Altura proporcional al máximo del gráfico.</p>
+        </div>
+        <div class="card-body">
+          {% if bydays and bydays|length %}
+          <div class="d-flex align-items-end gap-1" style="height: 132px;">
+            {% for row in bydays %}
+            {% set raw = ((row.count / mx) * 118) | int %}
+            {% set bar_h = 0 if not row.count else (raw if raw >= 2 else 2) %}
+            {% set dlabel = (row.date|string)[5:] if row.date else '' %}
+            <div class="flex-grow-1 text-center d-flex flex-column justify-content-end" style="min-width: 0;">
+              <div class="rounded-top mx-auto bg-primary bg-opacity-75" style="height: {{ bar_h }}px; width: 100%; max-width: 26px;" title="{{ row.date }}: {{ row.count }}"></div>
+              <div class="small text-muted text-truncate mt-1" style="font-size: 0.65rem;">{{ dlabel }}</div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="text-muted small mb-0">Sin visitas en este periodo.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-header bg-white border-0 pt-3 pb-0">
+          <h2 class="h6 mb-0">Reservas por origen</h2>
+          <p class="small text-muted mb-0">Comparativa 7 días vs periodo seleccionado.</p>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th class="ps-3">Origen</th>
+                  <th class="text-end">7 días</th>
+                  <th class="text-end pe-3">{{ days }} días</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for key in ['WEB', 'TABLET_PHONE', 'TABLET_WALKIN'] %}
+                <tr>
+                  <td class="ps-3">{{ source_labels.get(key, key) }}</td>
+                  <td class="text-end">{{ (rv.bySource7d or {}).get(key, 0) }}</td>
+                  <td class="text-end pe-3">{{ (rv.bySourcePeriod or {}).get(key, 0) }}</td>
+                </tr>
+                {% endfor %}
+                {% for key, n in (rv.bySourcePeriod or {}).items() %}
+                {% if key not in ['WEB', 'TABLET_PHONE', 'TABLET_WALKIN'] %}
+                <tr>
+                  <td class="ps-3">{{ source_labels.get(key, key) }}</td>
+                  <td class="text-end">{{ (rv.bySource7d or {}).get(key, 0) }}</td>
+                  <td class="text-end pe-3">{{ n }}</td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-header bg-white border-0 pt-3 pb-0">
+      <h2 class="h6 mb-0">Rutas más vistas</h2>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-3">Ruta</th>
+              <th class="text-end pe-3">Vistas</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in pv.get('topPaths') or [] %}
+            <tr>
+              <td class="ps-3"><code class="small">{{ row.path }}</code></td>
+              <td class="text-end pe-3">{{ row.count }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="2" class="text-muted small ps-3 py-3">Sin datos.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

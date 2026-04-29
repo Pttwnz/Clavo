@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block titulo %}Propinas — parámetros{% endblock %}
+{% block estilos %}
+<style>
+  .tpc-wrap { max-width: 520px; margin: 0 auto; padding: 1rem 1rem 2rem; }
+  .tpc-card { background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 1.25rem; margin-bottom: 1rem; }
+  .tablet-touch .btn { min-height: 48px; font-size: 1.05rem; }
+  .tablet-touch .form-control, .tablet-touch .form-select { min-height: 48px; font-size: 1.05rem; }
+  .tpc-wrap textarea.form-control { min-height: 140px; font-size: 0.95rem; }
+</style>
+{% endblock %}
+{% block contenido %}
+{% set volver_href = url_for('public.tablet_propinas') %}
+{% set volver_etiqueta = 'Propinas' %}
+{% include 'partials/volver_bar.html' %}
+<div class="tpc-wrap tablet-touch">
+  <h1 class="h5 mb-2"><i class="bi bi-sliders me-2 text-warning"></i>Parámetros de propinas</h1>
+  <p class="small text-muted mb-3">Define cómo se agrupa el <strong>bote</strong> (día o franjas automáticas/personalizadas), estadísticas y modo por defecto.</p>
+
+  <form method="post" class="tpc-card">
+    <div class="mb-3">
+      <label class="form-label" for="pag">Agrupación del reparto</label>
+      <select name="propinas_agrupacion" id="pag" class="form-select">
+        <option value="dia" {% if cfg.propinas_agrupacion == 'dia' %}selected{% endif %}>Día completo (un bote por día)</option>
+        <option value="franja" {% if cfg.propinas_agrupacion == 'franja' %}selected{% endif %}>Franjas horarias (varios botes al día)</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="pfm">Definición de franjas</label>
+      <select name="propinas_franja_modo" id="pfm" class="form-select">
+        <option value="auto" {% if (cfg.propinas_franja_modo or 'auto') == 'auto' %}selected{% endif %}>Automático (misma duración desde 00:00)</option>
+        <option value="manual" {% if cfg.propinas_franja_modo == 'manual' %}selected{% endif %}>Personalizado (horarios y número de franjas a mano)</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="pfh">Horas por franja (modo automático)</label>
+      <select name="propinas_franja_horas" id="pfh" class="form-select">
+        <option value="4" {% if cfg.propinas_franja_horas == 4 %}selected{% endif %}>4 h</option>
+        <option value="6" {% if cfg.propinas_franja_horas == 6 %}selected{% endif %}>6 h</option>
+        <option value="8" {% if cfg.propinas_franja_horas == 8 %}selected{% endif %}>8 h</option>
+        <option value="12" {% if cfg.propinas_franja_horas == 12 %}selected{% endif %}>12 h</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="pfmt">Ventanas (modo personalizado)</label>
+      <textarea name="propinas_franjas_manual_texto" id="pfmt" class="form-control font-monospace" rows="5"
+        placeholder="Una línea por franja: HH:MM-HH:MM">{{ cfg.propinas_franjas_manual_texto or '' }}</textarea>
+      <div class="form-text small">Solo si reparto por franjas y modo personalizado. Ej.: <code>06:00-14:00</code> y línea siguiente <code>14:00-22:00</code>. Puede terminar en <code>24:00</code>.</div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="ppv">Estadísticas: periodo por defecto</label>
+      <select name="propinas_periodo_vista" id="ppv" class="form-select">
+        <option value="dia" {% if cfg.propinas_periodo_vista == 'dia' %}selected{% endif %}>Día</option>
+        <option value="semana" {% if cfg.propinas_periodo_vista == 'semana' %}selected{% endif %}>Semana (lunes a domingo)</option>
+        <option value="mes" {% if cfg.propinas_periodo_vista == 'mes' %}selected{% endif %}>Mes natural</option>
+      </select>
+    </div>
+    <div class="mb-4">
+      <label class="form-label" for="pmd">Reparto: modo por defecto</label>
+      <select name="propinas_modo_defecto" id="pmd" class="form-select">
+        <option value="igual" {% if cfg.propinas_modo_defecto == 'igual' %}selected{% endif %}>Partes iguales</option>
+        <option value="horas" {% if cfg.propinas_modo_defecto == 'horas' %}selected{% endif %}>Según horas de turno</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-warning w-100 text-dark fw-semibold">Guardar</button>
+  </form>
+
+  <p class="small text-muted text-center mb-0">
+    Los mismos valores están en el panel: <strong>Servicio → Opciones del modo tablet</strong>.
+  </p>
+</div>
+{% endblock %}

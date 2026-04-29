@@ -1,0 +1,110 @@
+# Ejemplo: elclavo.gastromanager.es → web Next en / ; Gastro en /panel, /login, /tablet/*, etc.
+# Copia a sites-available, ajusta certificados y puertos (37891=Next, 37892=Gastro por defecto).
+#
+# En deploy/.env del VPS:
+#   NEXT_PUBLIC_GASTRO_BASE_URL=https://elclavo.gastromanager.es
+#   AUTH_URL=https://elclavo.gastromanager.es
+#   FLASK_MERGED_HOST_ROOT=1
+#   FLASK_SECURE_COOKIES=1
+# Luego: docker compose build web && docker compose up -d
+
+# upstream clavo_next { server 127.0.0.1:37891; }
+# upstream clavo_gastro { server 127.0.0.1:37892; }
+#
+# map $http_upgrade $connection_upgrade {
+#   default upgrade;
+#   '' close;
+# }
+#
+# server {
+#   listen 443 ssl http2;
+#   server_name elclavo.gastromanager.es;
+#   ssl_certificate     /etc/letsencrypt/live/elclavo.gastromanager.es/fullchain.pem;
+#   ssl_certificate_key /etc/letsencrypt/live/elclavo.gastromanager.es/privkey.pem;
+#
+#   # --- Gastro (Flask): rutas que deben ir al backend Python ---
+#   location ^~ /panel { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /login { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /login_empleado { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /login_cliente { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /logout { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location = /verificar_admin { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /acceso-interno { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /set_lang/ { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /visualizar { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /static/ { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location = /sw.js { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /confirmar-reserva { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   # Gastro tablet del local (subrutas); la ruta /tablet «recepción Next» va abajo con location = /tablet
+#   location ^~ /tablet/ { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#
+#   location ^~ /reservas { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /inventario { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /empleados { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /clientes { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /proveedores { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /horarios { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /horario/ { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /calendario { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /cierre_caja { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /configuracion_ { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /fichajes { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /fichaje { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /fichar { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /confirmar_fichaje { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /libro_firmas { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /pdf_trabajador { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /generar_pdf_mensual { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /chat { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /rrhh_peticiones { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /escandallos { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /vacaciones_jornada { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /area_personal { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /peticiones_rrhh { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /panel_empleado { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /buscar_global { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /rangos_permisos { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /mi_horario_pdf/ { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /conformidad_jornada { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /crear_empleado { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /actualizar_empleado/ { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /eliminar_empleado/ { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /editar_salon { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /mover_objeto { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /actualizar_objeto { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /crear_objeto { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /eliminar_mesa/ { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /vaciar_esquema/ { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /editar/ { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /crear { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /actualizar/ { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /estado/ { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /eliminar/ { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /generar_horarios_reglas { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /empleado/ { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /crear_solicitud { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /rrhh_chat { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#   location ^~ /reserva_autorizada { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
+#
+#   # API JSON de Gastro (no solapadas con /api/reservations… de Next)
+#   location ~ ^/api/(web/|sala_vivo|salones|salon/|esquema|esquemas|busqueda|reserva/|empleado/|ocupacion_mesas|sugerencias_union_mesa|sala_mesas_opciones|reserva_estado|walkin|asignar_mesa_reserva|union_mesas|clientes/|calendario_eventos) {
+#     proxy_pass http://clavo_gastro;
+#     include snippets/proxy-gastro.conf;
+#   }
+#
+#   # --- Next.js (todo lo demás: /, /menu, /ingreso, /recepcion, /admin, /api/auth, …) ---
+#   location = /tablet { proxy_pass http://clavo_next; include snippets/proxy-next.conf; }
+#   location / {
+#     proxy_pass http://clavo_next;
+#     include snippets/proxy-next.conf;
+#   }
+# }
+#
+# snippets/proxy-gastro.conf (ejemplo):
+#   proxy_http_version 1.1;
+#   proxy_set_header Host $host;
+#   proxy_set_header X-Real-IP $remote_addr;
+#   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#   proxy_set_header X-Forwarded-Proto $scheme;
+#
+# snippets/proxy-next.conf: mismas cabeceras hacia 37891.

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block titulo %}Equipo y turnos{% endblock %}
+{% block estilos %}
+<style>
+  .teq-wrap { max-width: 900px; margin: 0 auto; padding: 0.5rem 0.75rem 2rem; }
+  .teq-head {
+    background: linear-gradient(135deg, #0f172a 0%, var(--brand-primary) 100%);
+    color: #fff;
+    border-radius: 16px;
+    padding: 1.25rem 1.35rem;
+    margin-bottom: 1rem;
+  }
+  .teq-head h1 { font-size: 1.25rem; font-weight: 700; margin: 0 0 0.35rem 0; }
+  .teq-head p { margin: 0; font-size: 0.88rem; opacity: 0.92; }
+  .teq-nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+  .teq-nav-dates { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+  .teq-today .shift-card { border-color: var(--brand-primary); background: #f0f9ff; }
+  .shift-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 10px;
+  }
+  .shift-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #fafbfc;
+    color: inherit;
+  }
+  .shift-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+    color: #3730a3;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .shift-body { min-width: 0; flex: 1; }
+  .shift-name { font-weight: 600; font-size: 0.95rem; color: #0f172a; line-height: 1.25; }
+  .shift-slot {
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: #0369a1;
+    margin-top: 0.2rem;
+  }
+  .shift-meta { font-size: 0.76rem; color: #64748b; margin-top: 0.15rem; }
+  .shift-empty {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: #94a3b8;
+    border: 1px dashed #e2e8f0;
+    border-radius: 12px;
+    background: #fafafa;
+  }
+</style>
+{% endblock %}
+{% block contenido %}
+{% include 'partials/volver_bar.html' %}
+
+<div class="teq-wrap">
+  <div class="teq-head">
+    <h1><i class="bi bi-people me-2"></i>Equipo y turnos</h1>
+    <p>Horarios programados para el día (quién entra y cuándo).</p>
+  </div>
+
+  <div class="teq-nav">
+    <div class="teq-nav-dates">
+      <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('public.tablet_equipo_hoy', fecha=ayer) }}">← Día anterior</a>
+      <a class="btn btn-outline-primary btn-sm" href="{{ url_for('public.tablet_equipo_hoy', fecha=hoy_iso) }}">Hoy</a>
+      <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('public.tablet_equipo_hoy', fecha=manana) }}">Día siguiente →</a>
+    </div>
+    <div class="text-muted small fw-semibold">{{ fecha_etiqueta }}</div>
+  </div>
+
+  {% if equipo|length %}
+  <div class="shift-grid {% if fecha == hoy_iso %}teq-today{% endif %}">
+    {% for p in equipo %}
+    <div class="shift-card">
+      <div class="shift-avatar" aria-hidden="true">{{ (p.empleado or '?')[:1]|upper }}</div>
+      <div class="shift-body">
+        <div class="shift-name text-truncate">{{ p.empleado or 'Sin nombre' }}</div>
+        <div class="shift-slot">
+          <i class="bi bi-clock me-1"></i>{{ p.hora_inicio or '—' }} – {{ p.hora_fin or '—' }}
+        </div>
+        <div class="shift-meta text-truncate">
+          {% if p.turno %}<span class="text-capitalize">{{ p.turno }}</span>{% if p.puesto %} · {% endif %}{% endif %}
+          {% if p.puesto %}{{ p.puesto }}{% elif not p.turno %}—{% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="shift-empty">
+    <i class="bi bi-calendar-x d-block"></i>
+    No hay turnos cargados para esta fecha en el módulo Horarios.
+    <div class="small mt-2 text-muted">Si falta alguien, el encargado puede revisarlo en el panel (Horarios).</div>
+  </div>
+  {% endif %}
+
+  <p class="mt-4 mb-0">
+    <a href="{{ url_for('public.tablet_inicio') }}" class="btn btn-outline-secondary btn-sm">← Inicio tablet</a>
+  </p>
+</div>
+
+{% endblock %}
