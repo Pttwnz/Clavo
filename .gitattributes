@@ -1,0 +1,6 @@
+# Scripts y configs que deben ser LF en Linux (VPS / Docker / Nginx)
+*.sh text eol=lf
+deploy/nginx-sites/* text eol=lf
+deploy/nginx-*.conf* text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
