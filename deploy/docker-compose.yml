@@ -20,6 +20,11 @@ services:
       SECRET_KEY: ${GASTRO_SECRET_KEY:?Definir GASTRO_SECRET_KEY en .env}
       DATABASE: /data/gastro.db
       PORT: "37892"
+      # Panel Gastro → API interna Next (carta, estadísticas): misma red Docker.
+      NEXT_SITE_BASE_URL: ${NEXT_SITE_BASE_URL:-http://web:3000}
+      CLAVO_INTERNAL_API_SECRET: ${CLAVO_INTERNAL_API_SECRET:-}
+      AUTH_SECRET: ${AUTH_SECRET:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       # Opcional: contraseña SMTP sin guardarla solo en la BD (ver env.example)
       CIERRE_CAJA_SMTP_PASSWORD: ${CIERRE_CAJA_SMTP_PASSWORD:-}
       # Tras proxy HTTPS hacia app.gastromanager.es: pon FLASK_SECURE_COOKIES=1 en .env
@@ -49,6 +54,7 @@ services:
       # URL pública de esta web Next (Auth / cookies), ej. https://clavo.gastromanager.es
       AUTH_URL: ${AUTH_URL:-}
       AUTH_SECRET: ${AUTH_SECRET:?Definir AUTH_SECRET en .env}
+      CLAVO_INTERNAL_API_SECRET: ${CLAVO_INTERNAL_API_SECRET:-}
       ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
     volumes:
