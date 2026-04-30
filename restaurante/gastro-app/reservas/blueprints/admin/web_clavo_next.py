@@ -43,9 +43,9 @@ def panel_web_estadisticas():
 
     if not next_site_internal_secret():
         flash(
-            "Sin credencial para llamar a Next: define ADMIN_PASSWORD o CLAVO_INTERNAL_API_SECRET "
-            "en restaurante/.env (Gastro lee el mismo archivo). Si solo tienes ADMIN_PASSWORD_HASH, "
-            "usa CLAVO_INTERNAL_API_SECRET o añade ADMIN_PASSWORD en entorno seguro. Reinicia Gastro.",
+            "Sin credencial para llamar a Next: CLAVO_INTERNAL_API_SECRET, ADMIN_PASSWORD en claro, "
+            "o (en Docker/VPS) el mismo AUTH_SECRET que Next en deploy/.env. Con solo hash de admin, "
+            "usa CLAVO_* o AUTH_SECRET. Reinicia Gastro tras cambiar .env.",
             "warning",
         )
         return render_template(
@@ -88,8 +88,8 @@ def panel_web_estadisticas():
 def panel_web_carta():
     if not next_site_internal_secret():
         flash(
-            "Sin credencial para Next: misma ADMIN_PASSWORD que el admin web, o CLAVO_INTERNAL_API_SECRET. "
-            "Archivo típico: restaurante/.env. Reinicia Gastro.",
+            "Sin credencial para Next: CLAVO_INTERNAL_API_SECRET, ADMIN_PASSWORD en claro, o AUTH_SECRET "
+            "(mismo valor que en la web; típico deploy/.env en Docker). Reinicia Gastro.",
             "warning",
         )
         return render_template(
@@ -146,7 +146,7 @@ def panel_web_carta():
 @permiso_mod("mod.panel")
 def panel_web_carta_restablecer():
     if not next_site_internal_secret():
-        flash("Falta ADMIN_PASSWORD o CLAVO_INTERNAL_API_SECRET en el .env para llamar a Next.", "warning")
+        flash("Falta credencial para Next (CLAVO_INTERNAL_API_SECRET, ADMIN_PASSWORD o AUTH_SECRET).", "warning")
         return redirect(url_for("admin.panel_web_carta"))
     code, _, err = next_site_request("DELETE", "/api/internal/menu-carta")
     if code != 200:

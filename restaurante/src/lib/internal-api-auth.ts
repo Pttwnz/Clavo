@@ -31,7 +31,7 @@ function isProduction(): boolean {
 
 /**
  * API interna Gastro → Next: mismo criterio que el login admin (ADMIN_PASSWORD / hash),
- * o Bearer CLAVO_INTERNAL_API_SECRET. En desarrollo también AUTH_SECRET.
+ * o Bearer CLAVO_INTERNAL_API_SECRET. Si no hay CLAVO_* definido, también Bearer AUTH_SECRET (prod y dev).
  */
 export async function verifyInternalClavoRequest(req: Request): Promise<boolean> {
   const token = incomingToken(req);
@@ -52,9 +52,11 @@ export async function verifyInternalClavoRequest(req: Request): Promise<boolean>
     }
   }
 
-  if (!isProduction()) {
-    const authSecret = normalizeEnvValue(process.env.AUTH_SECRET);
-    if (authSecret && token === authSecret) return true;
+  const authSecret = normalizeEnvValue(process.env.AUTH_SECRET);
+  if (authSecret && token === authSecret) {
+    if (!isProduction()) return true;
+    // Producción: mismo secreto que Next Auth si no hay API interna dedicada (p. ej. solo ADMIN_PASSWORD_HASH en .env).
+    if (!normalizeEnvValue(process.env.CLAVO_INTERNAL_API_SECRET)) return true;
   }
 
   return false;

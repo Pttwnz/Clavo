@@ -60,10 +60,26 @@ _NEXT_SITE_SECRET = _NEXT_SITE_SECRET or (os.getenv("CLAVO_INTERNAL_API_SECRET")
 # Misma contraseña que el admin de Next (Credentials en auth.ts).
 if not _NEXT_SITE_SECRET:
     _NEXT_SITE_SECRET = _env_strip_quotes(os.getenv("ADMIN_PASSWORD"))
-# Desarrollo: fallback si no hay admin en claro ni CLAVO_*.
-if not _NEXT_SITE_SECRET and not FLASK_PRODUCTION:
+# Último recurso: mismo AUTH_SECRET que Next (deploy/.env en Docker ya lo pasa a gastro).
+# Next acepta este Bearer en API interna solo si no definiste CLAVO_INTERNAL_API_SECRET (ver internal-api-auth.ts).
+if not _NEXT_SITE_SECRET:
     _NEXT_SITE_SECRET = _env_strip_quotes(os.getenv("AUTH_SECRET"))
 NEXT_SITE_INTERNAL_SECRET = _NEXT_SITE_SECRET
+if FLASK_PRODUCTION and NEXT_SITE_INTERNAL_SECRET:
+    _dedicated = (
+        (os.getenv("CLAVO_INTERNAL_API_SECRET") or "").strip()
+        or (os.getenv("NEXT_SITE_INTERNAL_SECRET") or "").strip()
+        or _env_strip_quotes(os.getenv("ADMIN_PASSWORD"))
+    )
+    if (
+        not _dedicated
+        and NEXT_SITE_INTERNAL_SECRET == _env_strip_quotes(os.getenv("AUTH_SECRET"))
+    ):
+        warnings.warn(
+            "API interna Gastro→Next usa AUTH_SECRET. Para separar credenciales, define CLAVO_INTERNAL_API_SECRET.",
+            UserWarning,
+            stacklevel=1,
+        )
 _DEFAULT_WEAK = "clave-secreta-restaurante-2024"
 if FLASK_PRODUCTION and (not SECRET_KEY or SECRET_KEY == _DEFAULT_WEAK):
     warnings.warn(
