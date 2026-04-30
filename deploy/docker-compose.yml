@@ -31,6 +31,11 @@ services:
       FLASK_SECURE_COOKIES: ${FLASK_SECURE_COOKIES:-0}
       # 1 si Nginx sirve la web Next en la raíz del mismo dominio que Gastro (p. ej. elclavo… → Next + /panel → Gastro)
       FLASK_MERGED_HOST_ROOT: ${FLASK_MERGED_HOST_ROOT:-0}
+      # Misma URL pública que el build de Next (enlaces pie/recepción). Opcional: redirigir desde IP (ver GASTRO_LEGACY_HOSTS).
+      GASTRO_PUBLIC_BASE_URL: ${NEXT_PUBLIC_GASTRO_BASE_URL:-}
+      GASTRO_LEGACY_HOSTS: ${GASTRO_LEGACY_HOSTS:-}
+      # Tras Nginx/Caddy: TRUST_PROXY=1 para Host/Proto correctos (cookies HTTPS, redirecciones).
+      TRUST_PROXY: ${TRUST_PROXY:-0}
     volumes:
       - clavo_gastro_sqlite:/data
     restart: unless-stopped

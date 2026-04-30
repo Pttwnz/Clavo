@@ -31,6 +31,18 @@ def create_app():
     if os.getenv("FLASK_SECURE_COOKIES", "").lower() in ("1", "true", "yes"):
         app.config["SESSION_COOKIE_SECURE"] = True
 
+    if os.getenv("TRUST_PROXY", "").lower() in ("1", "true", "yes"):
+        from werkzeug.middleware.proxy_fix import ProxyFix
+
+        app.wsgi_app = ProxyFix(
+            app.wsgi_app,
+            x_for=1,
+            x_proto=1,
+            x_host=1,
+            x_port=1,
+            x_prefix=1,
+        )
+
     from reservas.i18n import init_i18n
 
     init_i18n(app)
@@ -79,6 +91,10 @@ def create_app():
     app.register_blueprint(admin_bp)
     app.register_blueprint(empleado_bp)
     app.register_blueprint(api_bp)
+
+    from reservas.legacy_host_redirect import register_legacy_host_redirect
+
+    register_legacy_host_redirect(app)
 
     from reservas.tablet_middleware import tablet_before_request
 

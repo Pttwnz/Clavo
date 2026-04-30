@@ -42,6 +42,11 @@ MERGED_HOST_ROOT = os.getenv("FLASK_MERGED_HOST_ROOT", "").lower() in ("1", "tru
 # reservas + sala en vivo + clientes + ajustes de empresa/tablet y permisos. Por defecto activo (1).
 RESERVAS_ONLY = os.getenv("RESERVAS_ONLY", "1").lower() in ("1", "true", "yes")
 
+# URL pública del panel Gastro (misma que NEXT_PUBLIC_GASTRO_BASE_URL en Docker). Sirve para redirigir IP→DNS.
+GASTRO_PUBLIC_BASE_URL = (
+    (os.getenv("GASTRO_PUBLIC_BASE_URL") or os.getenv("NEXT_PUBLIC_GASTRO_BASE_URL") or "").strip().rstrip("/")
+)
+
 # Web Next (Prisma): estadísticas de visitas, carta editable. Mismo valor que CLAVO_INTERNAL_API_SECRET en Next.
 # Puedes definir solo CLAVO_INTERNAL_API_SECRET en restaurante/.env (un solo secreto para ambos).
 # NEXT_SITE_BASE_URL por defecto coincide con el dev de Next en el puerto del proyecto restaurante.
