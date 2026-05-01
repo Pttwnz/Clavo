@@ -107,11 +107,12 @@
           {% if bydays and bydays|length %}
           <div class="d-flex align-items-end gap-1" style="height: 132px;">
             {% for row in bydays %}
-            {% set raw = ((row.count / mx) * 118) | int %}
-            {% set bar_h = 0 if not row.count else (raw if raw >= 2 else 2) %}
+            {% set cnt = row.count|default(0)|int %}
+            {% set raw = ((cnt / mx) * 118) | int %}
+            {% set bar_h = 0 if not cnt else (raw if raw >= 2 else 2) %}
             {% set dlabel = (row.date|string)[5:] if row.date else '' %}
             <div class="flex-grow-1 text-center d-flex flex-column justify-content-end" style="min-width: 0;">
-              <div class="rounded-top mx-auto bg-primary bg-opacity-75" style="height: {{ bar_h }}px; width: 100%; max-width: 26px;" title="{{ row.date }}: {{ row.count }}"></div>
+              <div class="rounded-top mx-auto bg-primary bg-opacity-75" style="height: {{ bar_h }}px; width: 100%; max-width: 26px;" title="{{ row.date }}: {{ cnt }}"></div>
               <div class="small text-muted text-truncate mt-1" style="font-size: 0.65rem;">{{ dlabel }}</div>
             </div>
             {% endfor %}

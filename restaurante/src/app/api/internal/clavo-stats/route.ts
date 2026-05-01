@@ -11,6 +11,11 @@ function daysAgo(n: number): Date {
   return d;
 }
 
+function asCount(n: unknown): number {
+  const x = typeof n === "bigint" ? Number(n) : Number(n);
+  return Number.isFinite(x) ? x : 0;
+}
+
 export async function GET(req: Request) {
   if (!(await verifyInternalClavoRequest(req))) {
     return internalApiUnauthorized();
@@ -60,13 +65,16 @@ export async function GET(req: Request) {
     }
     const byDay = [...byDayMap.entries()]
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, count]) => ({ date, count }));
+      .map(([date, count]) => ({ date, count: asCount(count) }));
     pageViews = {
       days,
-      totalPeriod,
-      total7d: total7,
+      totalPeriod: asCount(totalPeriod),
+      total7d: asCount(total7),
       byDay,
-      topPaths: topPaths.map((row) => ({ path: row.path, count: row._count._all })),
+      topPaths: topPaths.map((row) => ({
+        path: String(row.path ?? ""),
+        count: asCount(row._count?._all),
+      })),
     };
   } catch {
     pageViews.dbError = true;
@@ -102,16 +110,16 @@ export async function GET(req: Request) {
     ]);
     const bySource7d: Record<string, number> = {};
     for (const row of g7) {
-      bySource7d[row.source] = row._count._all;
+      bySource7d[row.source] = asCount(row._count?._all);
     }
     const bySourcePeriod: Record<string, number> = {};
     for (const row of g30) {
-      bySourcePeriod[row.source] = row._count._all;
+      bySourcePeriod[row.source] = asCount(row._count?._all);
     }
     reservations = {
       days,
-      total7d: g7.reduce((s, r) => s + r._count._all, 0),
-      totalPeriod: g30.reduce((s, r) => s + r._count._all, 0),
+      total7d: asCount(g7.reduce((s, r) => s + asCount(r._count?._all), 0)),
+      totalPeriod: asCount(g30.reduce((s, r) => s + asCount(r._count?._all), 0)),
       bySource7d,
       bySourcePeriod,
     };
@@ -119,5 +127,30 @@ export async function GET(req: Request) {
     reservations.dbError = true;
   }
 
-  return NextResponse.json({ pageViews, reservations });
+  try {
+    return NextResponse.json({ pageViews, reservations });
+  } catch (e) {
+    console.error("[clavo-stats] JSON response", e);
+    return NextResponse.json(
+      {
+        pageViews: {
+          days,
+          totalPeriod: 0,
+          total7d: 0,
+          byDay: [],
+          topPaths: [],
+          dbError: true,
+        },
+        reservations: {
+          days,
+          total7d: 0,
+          totalPeriod: 0,
+          bySource7d: {},
+          bySourcePeriod: {},
+          dbError: true,
+        },
+      },
+      { status: 200 },
+    );
+  }
 }

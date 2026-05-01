@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from flask import flash, redirect, render_template, request, url_for
 
 from reservas.decorators import login_requerido, permiso_mod
@@ -33,6 +35,15 @@ SOURCE_LABELS = {
     "TABLET_WALKIN": "Walk-in (mostrador)",
 }
 
+_log = logging.getLogger(__name__)
+
+
+def _safe_int(value: object, default: int = 0) -> int:
+    try:
+        return int(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return default
+
 
 def _normalize_clavo_stats_payload(data: dict) -> dict:
     """Evita 500 en la plantilla si Next envía null o tipos inesperados."""
@@ -53,12 +64,32 @@ def _normalize_clavo_stats_payload(data: dict) -> dict:
     if not isinstance(by_day, list):
         by_day = []
     else:
-        by_day = [r for r in by_day if isinstance(r, dict)]
+        by_day_clean: list[dict] = []
+        for r in by_day:
+            if not isinstance(r, dict):
+                continue
+            by_day_clean.append(
+                {
+                    "date": str(r.get("date") or "")[:32],
+                    "count": _safe_int(r.get("count")),
+                }
+            )
+        by_day = by_day_clean
     top_paths = pv.get("topPaths")
     if not isinstance(top_paths, list):
         top_paths = []
     else:
-        top_paths = [r for r in top_paths if isinstance(r, dict)]
+        tp_clean: list[dict] = []
+        for r in top_paths:
+            if not isinstance(r, dict):
+                continue
+            tp_clean.append(
+                {
+                    "path": str(r.get("path") if r.get("path") is not None else "")[:512],
+                    "count": _safe_int(r.get("count")),
+                }
+            )
+        top_paths = tp_clean
     out = {**data, "pageViews": {**pv, "byDay": by_day, "topPaths": top_paths}, "reservations": rv}
     return out
 
@@ -86,30 +117,42 @@ def panel_web_estadisticas():
             http_detail=None,
         )
 
-    code, data, err = next_site_request("GET", f"/api/internal/clavo-stats?days={days}")
-    if code != 200 or not isinstance(data, dict):
-        base = next_site_base_url()
-        detail = f"URL probada: {base}/api/internal/clavo-stats\nHTTP {code}\n{err or 'sin detalle'}"
-        flash(f"No se pudo leer la web Next (HTTP {code}): {err or 'error'}", "danger")
+    try:
+        code, data, err = next_site_request("GET", f"/api/internal/clavo-stats?days={days}")
+        if code != 200 or not isinstance(data, dict):
+            base = next_site_base_url()
+            detail = f"URL probada: {base}/api/internal/clavo-stats\nHTTP {code}\n{err or 'sin detalle'}"
+            flash(f"No se pudo leer la web Next (HTTP {code}): {err or 'error'}", "danger")
+            return render_template(
+                "panel_web_estadisticas.html",
+                stats=None,
+                days=days,
+                config_error=False,
+                http_error=True,
+                http_detail=detail[:1500],
+            )
+
+        stats = _normalize_clavo_stats_payload(data)
+        return render_template(
+            "panel_web_estadisticas.html",
+            stats=stats,
+            days=days,
+            config_error=False,
+            http_error=False,
+            http_detail=None,
+            source_labels=SOURCE_LABELS,
+        )
+    except Exception as ex:  # noqa: BLE001
+        _log.exception("panel_web_estadisticas")
+        flash("Error interno al mostrar estadísticas. Revisa logs de Gastro.", "danger")
         return render_template(
             "panel_web_estadisticas.html",
             stats=None,
             days=days,
             config_error=False,
             http_error=True,
-            http_detail=detail[:1500],
+            http_detail=str(ex)[:1500],
         )
-
-    stats = _normalize_clavo_stats_payload(data)
-    return render_template(
-        "panel_web_estadisticas.html",
-        stats=stats,
-        days=days,
-        config_error=False,
-        http_error=False,
-        http_detail=None,
-        source_labels=SOURCE_LABELS,
-    )
 
 
 @bp.route("/panel/web/carta", methods=["GET", "POST"])
