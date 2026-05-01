@@ -2,7 +2,7 @@
 
 **Primera subida paso a paso:** [`SUBIR-VPS.md`](./SUBIR-VPS.md) · script: `./vps-up.sh` (tras crear `.env`).  
 **Dominios `clavo` = web / `app` = Gastro:** [`DOMINIOS-GASTROMANAGER.md`](./DOMINIOS-GASTROMANAGER.md) · ejemplo Nginx: `nginx-snippet.example.conf`.  
-**Mismo host (p. ej. elclavo…): web en `/` y Gastro en `/panel`:** `nginx-sites/elclavo.gastromanager.es` + `FLASK_MERGED_HOST_ROOT=1` en `.env`.  
+**Mismo host (p. ej. elclavo…): web en `/` y Gastro en `/panel`:** `nginx-sites/elclavo.gastromanager.es` + `FLASK_MERGED_HOST_ROOT=1` en `.env`. Instalación en el VPS: `sudo bash deploy/setup-elclavo-nginx.sh` (y opción `--patch-env`).  
 **App legacy puerto 8000 en subdominio:** `nginx-sites/app.gastromanager.es-reservas-8000` → `https://app.gastromanager.es` (en el VPS ya está + certificado Let’s Encrypt). Los `.conf` de Nginx deben ser **LF** (sin CRLF de Windows) o `nginx` puede ignorar `server_name` y capturar mal el tráfico.
 
 Stack listo para **migrar Taberna El Clavo** a un servidor Linux sin pisar servicios habituales: la web Next.js y la app Flask (Gastro) publican en **puertos altos fijos por defecto**:
