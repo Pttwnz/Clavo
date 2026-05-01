@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { internalApiUnauthorized, verifyInternalClavoRequest } from "@/lib/internal-api-auth";
+import { Prisma } from "@/generated/prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -54,18 +55,21 @@ export async function GET(req: Request) {
         take: 20,
       }),
     ]);
-    const pageViewRows = await prisma.pageView.findMany({
-      where: { createdAt: { gte: since } },
-      select: { createdAt: true },
-    });
-    const byDayMap = new Map<string, number>();
-    for (const r of pageViewRows) {
-      const d = r.createdAt.toISOString().slice(0, 10);
-      byDayMap.set(d, (byDayMap.get(d) ?? 0) + 1);
-    }
-    const byDay = [...byDayMap.entries()]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, count]) => ({ date, count: asCount(count) }));
+    // Agregación en SQL (no findMany de cada fila): con 30–90 días y mucho tráfico el findMany
+    // agotaba memoria / tiempo y la página «Web · estadísticas» fallaba mientras el dash (7 días) iba bien.
+    const dailyRows = await prisma.$queryRaw<Array<{ d: string; c: bigint }>>(
+      Prisma.sql`
+        SELECT date("createdAt") AS d, COUNT(*) AS c
+        FROM "PageView"
+        WHERE "createdAt" >= ${since}
+        GROUP BY date("createdAt")
+        ORDER BY d ASC
+      `,
+    );
+    const byDay = dailyRows.map((row) => ({
+      date: row.d,
+      count: asCount(row.c),
+    }));
     pageViews = {
       days,
       totalPeriod: asCount(totalPeriod),

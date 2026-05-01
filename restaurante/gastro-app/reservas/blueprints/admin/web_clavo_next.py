@@ -118,7 +118,11 @@ def panel_web_estadisticas():
         )
 
     try:
-        code, data, err = next_site_request("GET", f"/api/internal/clavo-stats?days={days}")
+        code, data, err = next_site_request(
+            "GET",
+            f"/api/internal/clavo-stats?days={days}",
+            timeout=90,
+        )
         if code != 200 or not isinstance(data, dict):
             base = next_site_base_url()
             detail = f"URL probada: {base}/api/internal/clavo-stats\nHTTP {code}\n{err or 'sin detalle'}"
