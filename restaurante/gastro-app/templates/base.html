@@ -594,12 +594,8 @@ body {
         <li class="nav-item">
           <a class="nav-link" href="{{ url_for('admin.panel') }}"><i class="bi bi-speedometer2 me-1"></i>{{ tr('nav.panel') }}</a>
         </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-globe2 me-1"></i>Web</a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="{{ url_for('admin.panel_web_estadisticas') }}"><i class="bi bi-graph-up-arrow me-2 text-primary"></i>Estadísticas (visitas y reservas)</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('admin.panel_web_carta') }}"><i class="bi bi-journal-text me-2 text-primary"></i>Carta pública</a></li>
-          </ul>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('admin.panel_web_estadisticas') }}"><i class="bi bi-graph-up-arrow me-1"></i>{{ tr('nav.web_stats') }}</a>
         </li>
         {% endif %}
         {% if (not reservas_only) and (puede('mod.calendario') or puede('mod.horarios')) %}
