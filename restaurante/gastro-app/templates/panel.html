@@ -620,59 +620,30 @@ a.shift-card:hover {
 </div>
 
 <div class="dash-mini-chart-wrap px-1">
-  <div class="row g-3 align-items-stretch">
-    <div class="col-lg-7">
-      <div class="mb-2">
-        <div class="small fw-bold text-uppercase text-secondary" style="font-size:0.72rem;letter-spacing:0.06em;">
-          <i class="bi bi-bar-chart-line text-primary me-1"></i>{{ tr('page.panel.chart_res_title') }}
-        </div>
-        <div class="small text-muted" style="font-size:0.78rem;">{{ tr('page.panel.chart_res_sub') }}</div>
-      </div>
-      {% set s7 = reservas_7d_series or [] %}
-      {% if s7 and s7|length %}
-        {% set mx = (s7 | map(attribute='n') | max) %}
-        {% set mx = mx if mx > 0 else 1 %}
-        <div class="dash-mini-bars d-flex align-items-end gap-1" style="min-height:96px;">
-          {% for row in s7 %}
-            {% set cnt = row.n|default(0)|int %}
-            {% set raw = ((cnt / mx) * 82) | int %}
-            {% set bar_h = 0 if not cnt else (raw if raw >= 2 else 2) %}
-            <div class="dash-mini-bar-col text-center d-flex flex-column justify-content-end" style="min-width:0;">
-              <div class="rounded-top mx-auto bg-primary bg-opacity-75" style="height:{{ bar_h }}px;width:100%;max-width:28px;" title="{{ row.date }} — {{ cnt }}"></div>
-              <div class="small text-muted text-truncate mt-1" style="font-size:0.65rem;">{{ row.label }}</div>
-            </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <p class="text-muted small mb-0">{{ tr('page.panel.chart_empty') }}</p>
-      {% endif %}
+  <div class="mb-2">
+    <div class="small fw-bold text-uppercase text-secondary" style="font-size:0.72rem;letter-spacing:0.06em;">
+      <i class="bi bi-bar-chart-line text-primary me-1"></i>{{ tr('page.panel.chart_res_title') }}
     </div>
-    {% if dash_web_stats %}
-    <div class="col-lg-5">
-      <div class="small fw-bold text-uppercase text-secondary mb-2" style="font-size:0.72rem;letter-spacing:0.06em;">
-        <i class="bi bi-globe2 text-info me-1"></i>{{ tr('page.panel.chart_web_title') }}
-      </div>
-      <div class="row g-2">
-        <div class="col-6">
-          <div class="rounded-3 p-2 h-100" style="background:#eff6ff;border:1px solid #bfdbfe;">
-            <div class="small text-muted text-uppercase" style="font-size:0.65rem;">{{ tr('page.panel.kpi_web_visits') }}</div>
-            <div class="fs-4 fw-bold text-primary">{{ dash_web_stats.visits_7d }}</div>
-          </div>
-        </div>
-        <div class="col-6">
-          <div class="rounded-3 p-2 h-100" style="background:#ecfdf5;border:1px solid #a7f3d0;">
-            <div class="small text-muted text-uppercase" style="font-size:0.65rem;">{{ tr('page.panel.kpi_web_res') }}</div>
-            <div class="fs-4 fw-bold text-success">{{ dash_web_stats.reservas_7d }}</div>
-          </div>
-        </div>
-      </div>
-      {% if dash_web_stats.pv_err or dash_web_stats.rv_err %}
-      <p class="small text-warning mb-0 mt-1" style="font-size:0.7rem;">{{ tr('page.panel.chart_web_warn') }}</p>
-      {% endif %}
-      <p class="small text-muted mt-2 mb-0" style="font-size:0.72rem;">{{ tr('page.panel.chart_web_hint') }}</p>
-    </div>
-    {% endif %}
+    <div class="small text-muted" style="font-size:0.78rem;">{{ tr('page.panel.chart_res_sub') }}</div>
   </div>
+  {% set s7 = reservas_7d_series or [] %}
+  {% if s7 and s7|length %}
+    {% set mx = (s7 | map(attribute='n') | max) %}
+    {% set mx = mx if mx > 0 else 1 %}
+    <div class="dash-mini-bars d-flex align-items-end gap-1" style="min-height:96px;">
+      {% for row in s7 %}
+        {% set cnt = row.n|default(0)|int %}
+        {% set raw = ((cnt / mx) * 82) | int %}
+        {% set bar_h = 0 if not cnt else (raw if raw >= 2 else 2) %}
+        <div class="dash-mini-bar-col text-center d-flex flex-column justify-content-end" style="min-width:0;">
+          <div class="rounded-top mx-auto bg-primary bg-opacity-75" style="height:{{ bar_h }}px;width:100%;max-width:28px;" title="{{ row.date }} — {{ cnt }}"></div>
+          <div class="small text-muted text-truncate mt-1" style="font-size:0.65rem;">{{ row.label }}</div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-muted small mb-0">{{ tr('page.panel.chart_empty') }}</p>
+  {% endif %}
 </div>
 
 <div class="quick-strip">
@@ -744,6 +715,45 @@ a.shift-card:hover {
 </div>
 {% endif %}
 
+</div>
+{% endif %}
+
+{% if dash_web_stats %}
+<!-- RESUMEN WEB (mismo escalón visual que actividad reciente) -->
+<div class="section section-activity">
+  <div class="activity-head d-flex flex-wrap justify-content-between align-items-start gap-2">
+    <div class="min-w-0">
+      <div class="section-title mb-0">
+        <i class="bi bi-globe2"></i>
+        {{ tr('page.panel.web_section_title') }}
+      </div>
+      <p class="small text-muted mb-0 mt-1" style="font-size:0.82rem;">{{ tr('page.panel.web_section_sub') }}</p>
+    </div>
+    <a href="{{ url_for('admin.panel_web_estadisticas') }}" class="btn btn-sm btn-outline-primary flex-shrink-0">
+      <i class="bi bi-graph-up-arrow me-1"></i>{{ tr('page.panel.web_section_cta') }}
+    </a>
+  </div>
+  <div class="px-3 pb-3 pt-2">
+    <div class="row g-2">
+      <div class="col-6 col-md-4 col-lg-3">
+        <div class="rounded-3 p-3 h-100" style="background:#eff6ff;border:1px solid #bfdbfe;">
+          <div class="small text-muted text-uppercase fw-semibold" style="font-size:0.65rem;letter-spacing:0.04em;">{{ tr('page.panel.kpi_web_visits') }}</div>
+          <div class="fs-3 fw-bold text-primary mt-1">{{ dash_web_stats.visits_7d }}</div>
+          <div class="small text-muted mt-1" style="font-size:0.72rem;">{{ tr('page.panel.chart_web_title') }}</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-3">
+        <div class="rounded-3 p-3 h-100" style="background:#ecfdf5;border:1px solid #a7f3d0;">
+          <div class="small text-muted text-uppercase fw-semibold" style="font-size:0.65rem;letter-spacing:0.04em;">{{ tr('page.panel.kpi_web_res') }}</div>
+          <div class="fs-3 fw-bold text-success mt-1">{{ dash_web_stats.reservas_7d }}</div>
+          <div class="small text-muted mt-1" style="font-size:0.72rem;">{{ tr('page.panel.chart_web_title') }}</div>
+        </div>
+      </div>
+    </div>
+    {% if dash_web_stats.pv_err or dash_web_stats.rv_err %}
+    <p class="small text-warning mb-0 mt-2" style="font-size:0.78rem;"><i class="bi bi-exclamation-triangle me-1"></i>{{ tr('page.panel.chart_web_warn') }}</p>
+    {% endif %}
+  </div>
 </div>
 {% endif %}
 
