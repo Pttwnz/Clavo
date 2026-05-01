@@ -1,11 +1,30 @@
 #!/usr/bin/env python3
-"""Un uso: borra salones/esquemas/objetos y crea el plano pedido (pax = 'px' del usuario)."""
+"""Reset del plano de salón (SQLite Gastro): borra salones/esquemas/objetos y crea mesas de prueba.
+
+Capacidades: el sufijo «px» del usuario = comensales (pax), no píxeles.
+
+Mesas creadas (orden visual en grilla ~5 columnas):
+  m1–m6 (sin m4), b1–b2, m7–m10, alma, cen, p1–p2, cafe, t1–t7 (todas t* a 4 pax).
+
+Pruebas manuales sugeridas (web + panel + tablet):
+  1) Web: reserva 2 pax → mesa 2p; 4 pax → solo mesas ≥4; 6 pax → alma/cen.
+  2) Web: franja llena → mensaje claro / siguiente franja.
+  3) Panel: crear reserva manual misma mesa/hora → conflicto o aviso según reglas.
+  4) Panel: editar reserva (personas, mesa, hora) y guardar; refrescar sala en vivo.
+  5) Cancelar en web y comprobar que libera en Gastro el mismo día.
+  6) Walk-in / tablet: ocupar mesa sin reserva previa si aplica.
+  7) Unión de mesas (si activáis uniones): capacidad sumada vs sugerencias.
+
+Ejecución (desde máquina con la BD Gastro, p. ej. contenedor o repo local):
+  python3 scripts/reset_salones_layout.py
+
+En Docker (VPS): ``docker compose exec gastro python3 /app/scripts/reset_salones_layout.py``
+"""
 from __future__ import annotations
 
 import os
 import sys
 
-# Raíz del proyecto
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, ROOT)
 
@@ -57,12 +76,12 @@ def main() -> None:
     db.execute("DELETE FROM salones")
     db.execute("DELETE FROM mesas")
 
-    db.execute("INSERT INTO salones (nombre) VALUES ('Local')")
+    db.execute("INSERT INTO salones (nombre) VALUES ('Local prueba')")
     sid = db.execute("SELECT last_insert_rowid()").fetchone()[0]
     db.execute(
         """
         INSERT INTO esquemas (salon_id, nombre, activo)
-        VALUES (?, 'Salón + terraza', 1)
+        VALUES (?, 'Plano prueba reservas', 1)
         """,
         (sid,),
     )
@@ -71,38 +90,40 @@ def main() -> None:
     gx, gy = 130.0, 118.0
     ox, oy = 48.0, 56.0
 
-    # --- Salón (zona izquierda) ---
-    salon: list[tuple[str, int, int, int]] = [
+    # (nombre, capacidad_pax, col, row) — grilla 5 columnas
+    plano: list[tuple[str, int, int, int]] = [
+        # Fila 0 — sala m
         ("m1", 2, 0, 0),
         ("m2", 2, 1, 0),
         ("m3", 4, 2, 0),
         ("m5", 4, 3, 0),
-        ("m6", 2, 0, 1),
-        ("m7", 2, 1, 1),
-        ("m8", 4, 2, 1),
-        ("m9", 2, 3, 1),
-        ("m10", 4, 4, 1),
-        ("m11", 2, 0, 2),
-        ("almna", 6, 1, 2),
-        ("cen", 6, 3, 2),
+        ("m6", 2, 4, 0),
+        # Fila 1 — bar + m
+        ("b1", 2, 0, 1),
+        ("b2", 2, 1, 1),
+        ("m7", 2, 2, 1),
+        ("m8", 4, 3, 1),
+        ("m9", 2, 4, 1),
+        # Fila 2
+        ("m10", 4, 0, 2),
+        ("alma", 6, 1, 2),
+        ("cen", 6, 2, 2),
+        ("p1", 3, 3, 2),
+        ("p2", 3, 4, 2),
+        # Fila 3 — cafetería + terraza t1–t4
+        ("cafe", 4, 0, 3),
+        ("t1", 4, 1, 3),
+        ("t2", 4, 2, 3),
+        ("t3", 4, 3, 3),
+        ("t4", 4, 4, 3),
+        # Fila 4 — t5–t7
+        ("t5", 4, 0, 4),
+        ("t6", 4, 1, 4),
+        ("t7", 4, 2, 4),
     ]
-    for nombre, cap, col, row in salon:
+
+    for nombre, cap, col, row in plano:
         ins(db, eid, nombre, cap, ox + float(col) * gx, oy + float(row) * gy)
-
-    # --- Terraza (zona derecha, desplazada en X) ---
-    tx0 = ox + 6.5 * gx
-    terraza: list[tuple[str, int, int, int]] = [
-        ("x1", 3, 0, 0),
-        ("p1", 3, 1, 0),
-        ("p3", 3, 2, 0),
-    ]
-    for nombre, cap, col, row in terraza:
-        ins(db, eid, nombre, cap, tx0 + float(col) * gx, oy + float(row) * gy)
-
-    for i in range(7):
-        col = i % 4
-        row = 1 + (i // 4)
-        ins(db, eid, f"t{i + 1}", 4, tx0 + float(col) * gx, oy + float(row) * gy)
 
     db.commit()
     db.close()
@@ -113,7 +134,7 @@ def main() -> None:
     sync_tabla_mesas_desde_objetos(db2)
     db2.commit()
     db2.close()
-    print("OK: 1 salón, 1 esquema activo, mesas sincronizadas a tabla mesas.")
+    print(f"OK: plano de prueba con {len(plano)} mesas, tabla mesas sincronizada.")
 
 
 if __name__ == "__main__":
