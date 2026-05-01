@@ -4,7 +4,7 @@
 Capacidades: el sufijo «px» del usuario = comensales (pax), no píxeles.
 
 Mesas creadas (orden visual en grilla ~5 columnas):
-  m1–m6 (sin m4), b1–b2, m7–m10, alma, cen, p1–p2, cafe, t1–t7 (todas t* a 4 pax).
+  m1–m6 (sin m4), b1–b2, m7–m10, alma, cen, p1–p2, cafe; t1 a t7 — todas 4 pax (4 «px»).
 
 Pruebas manuales sugeridas (web + panel + tablet):
   1) Web: reserva 2 pax → mesa 2p; 4 pax → solo mesas ≥4; 6 pax → alma/cen.
@@ -110,13 +110,12 @@ def main() -> None:
         ("cen", 6, 2, 2),
         ("p1", 3, 3, 2),
         ("p2", 3, 4, 2),
-        # Fila 3 — cafetería + terraza t1–t4
+        # Fila 3–4 — t1..t7 terraza, todas 4 pax
         ("cafe", 4, 0, 3),
         ("t1", 4, 1, 3),
         ("t2", 4, 2, 3),
         ("t3", 4, 3, 3),
         ("t4", 4, 4, 3),
-        # Fila 4 — t5–t7
         ("t5", 4, 0, 4),
         ("t6", 4, 1, 4),
         ("t7", 4, 2, 4),
