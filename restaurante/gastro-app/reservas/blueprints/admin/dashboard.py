@@ -78,6 +78,46 @@ def _columnas_tabla(db, tabla):
     return {r[1] for r in db.execute(f"PRAGMA table_info({tabla})").fetchall()}
 
 
+def _reservas_por_dia_ultimos_7(db) -> list[dict]:
+    """Serie diaria (más antigua → hoy) para mini gráfico del panel."""
+    rows: list[dict] = []
+    for i in range(6, -1, -1):
+        d = date.today() - timedelta(days=i)
+        ds = d.isoformat()
+        n = db.execute(
+            """
+            SELECT COUNT(*) FROM reservas
+            WHERE fecha = ?
+              AND COALESCE(estado, '') NOT IN ('Cancelada', 'Cancelado', 'Anulada', 'Anulado')
+            """,
+            (ds,),
+        ).fetchone()[0]
+        rows.append({"date": ds, "label": str(d.day), "n": int(n or 0)})
+    return rows
+
+
+def _dash_web_stats_resumen() -> dict | None:
+    """KPIs web 7d vía Next (opcional; si falla no rompe el panel)."""
+    try:
+        from reservas.next_site_http import next_site_internal_secret, next_site_request
+
+        if not next_site_internal_secret():
+            return None
+        code, data, _ = next_site_request("GET", "/api/internal/clavo-stats?days=7", timeout=12)
+        if code != 200 or not isinstance(data, dict):
+            return None
+        pv = data.get("pageViews") if isinstance(data.get("pageViews"), dict) else {}
+        rv = data.get("reservations") if isinstance(data.get("reservations"), dict) else {}
+        return {
+            "visits_7d": int(pv.get("total7d") or 0),
+            "reservas_7d": int(rv.get("total7d") or 0),
+            "pv_err": bool(pv.get("dbError")),
+            "rv_err": bool(rv.get("dbError")),
+        }
+    except Exception:
+        return None
+
+
 @bp.route("/panel")
 @login_requerido
 @permiso_mod("mod.panel")
@@ -218,9 +258,12 @@ def panel():
         except Exception:
             pass
 
+    reservas_7d_series = _reservas_por_dia_ultimos_7(db)
+
     db.close()
 
     hoy_date = date.fromisoformat(hoy)
+    dash_web_stats = _dash_web_stats_resumen()
 
     return render_template(
         "panel.html",
@@ -238,6 +281,8 @@ def panel():
         reservas_recientes=reservas_recientes,
         fichajes_recientes=fichajes_recientes,
         equipo_turno_hoy=equipo_turno_hoy,
+        reservas_7d_series=reservas_7d_series,
+        dash_web_stats=dash_web_stats,
     )
 
 # =====================================================
