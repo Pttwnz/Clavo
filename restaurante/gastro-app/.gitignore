@@ -5,4 +5,5 @@ __pycache__/
 .env
 *.log
 database.db
+_sim_web_reservas.sqlite
 requirements.txt~
