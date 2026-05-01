@@ -62,18 +62,19 @@ def _env_strip_quotes(raw: str | None) -> str:
 
 _NEXT_SITE_SECRET = (os.getenv("NEXT_SITE_INTERNAL_SECRET") or "").strip()
 _NEXT_SITE_SECRET = _NEXT_SITE_SECRET or (os.getenv("CLAVO_INTERNAL_API_SECRET") or "").strip()
-# Misma contraseña que el admin de Next (Credentials en auth.ts).
-if not _NEXT_SITE_SECRET:
-    _NEXT_SITE_SECRET = _env_strip_quotes(os.getenv("ADMIN_PASSWORD"))
-# Último recurso: mismo AUTH_SECRET que Next (deploy/.env en Docker ya lo pasa a gastro).
-# Next acepta este Bearer en API interna solo si no definiste CLAVO_INTERNAL_API_SECRET (ver internal-api-auth.ts).
+# AUTH_SECRET antes que ADMIN_PASSWORD: en Docker Next suele tener solo ADMIN_PASSWORD_HASH (sin
+# ADMIN_PASSWORD en claro); si Gastro enviara el PIN aquí, Next rechazaría el Bearer (401) en
+# estadísticas / carta. CLAVO_INTERNAL_API_SECRET sigue teniendo prioridad si lo defines.
 if not _NEXT_SITE_SECRET:
     _NEXT_SITE_SECRET = _env_strip_quotes(os.getenv("AUTH_SECRET"))
+if not _NEXT_SITE_SECRET:
+    _NEXT_SITE_SECRET = _env_strip_quotes(os.getenv("ADMIN_PASSWORD"))
 NEXT_SITE_INTERNAL_SECRET = _NEXT_SITE_SECRET
 if FLASK_PRODUCTION and NEXT_SITE_INTERNAL_SECRET:
     _dedicated = (
         (os.getenv("CLAVO_INTERNAL_API_SECRET") or "").strip()
         or (os.getenv("NEXT_SITE_INTERNAL_SECRET") or "").strip()
+        or _env_strip_quotes(os.getenv("AUTH_SECRET"))
         or _env_strip_quotes(os.getenv("ADMIN_PASSWORD"))
     )
     if (
