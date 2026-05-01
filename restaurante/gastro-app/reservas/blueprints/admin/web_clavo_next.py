@@ -34,6 +34,35 @@ SOURCE_LABELS = {
 }
 
 
+def _normalize_clavo_stats_payload(data: dict) -> dict:
+    """Evita 500 en la plantilla si Next envía null o tipos inesperados."""
+    pv = data.get("pageViews")
+    if not isinstance(pv, dict):
+        pv = {}
+    rv = data.get("reservations")
+    if not isinstance(rv, dict):
+        rv = {}
+    b7 = rv.get("bySource7d")
+    if not isinstance(b7, dict):
+        b7 = {}
+    bperiod = rv.get("bySourcePeriod")
+    if not isinstance(bperiod, dict):
+        bperiod = {}
+    rv = {**rv, "bySource7d": b7, "bySourcePeriod": bperiod}
+    by_day = pv.get("byDay")
+    if not isinstance(by_day, list):
+        by_day = []
+    else:
+        by_day = [r for r in by_day if isinstance(r, dict)]
+    top_paths = pv.get("topPaths")
+    if not isinstance(top_paths, list):
+        top_paths = []
+    else:
+        top_paths = [r for r in top_paths if isinstance(r, dict)]
+    out = {**data, "pageViews": {**pv, "byDay": by_day, "topPaths": top_paths}, "reservations": rv}
+    return out
+
+
 @bp.route("/panel/web")
 @login_requerido
 @permiso_mod("mod.panel")
@@ -71,9 +100,10 @@ def panel_web_estadisticas():
             http_detail=detail[:1500],
         )
 
+    stats = _normalize_clavo_stats_payload(data)
     return render_template(
         "panel_web_estadisticas.html",
-        stats=data,
+        stats=stats,
         days=days,
         config_error=False,
         http_error=False,

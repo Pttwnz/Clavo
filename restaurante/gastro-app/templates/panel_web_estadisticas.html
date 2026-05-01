@@ -42,9 +42,10 @@
     {% endif %}
   </div>
   {% elif stats %}
-  {% set pv = stats.get('pageViews', {}) %}
-  {% set rv = stats.get('reservations', {}) %}
-  {% set bydays = pv.get('byDay', []) %}
+  {# Next puede enviar null explícito; .get('k', {}) devuelve None si la clave existe con valor null. #}
+  {% set pv = stats.get('pageViews') or {} %}
+  {% set rv = stats.get('reservations') or {} %}
+  {% set bydays = pv.get('byDay') or [] %}
   {% if bydays and bydays|length %}
     {% set mx = (bydays | map(attribute='count') | max) %}
     {% set mx = mx if mx > 0 else 1 %}
@@ -141,15 +142,15 @@
                 {% for key in ['WEB', 'TABLET_PHONE', 'TABLET_WALKIN'] %}
                 <tr>
                   <td class="ps-3">{{ source_labels.get(key, key) }}</td>
-                  <td class="text-end">{{ (rv.bySource7d or {}).get(key, 0) }}</td>
-                  <td class="text-end pe-3">{{ (rv.bySourcePeriod or {}).get(key, 0) }}</td>
+                  <td class="text-end">{{ (rv.get('bySource7d') or {}).get(key, 0) }}</td>
+                  <td class="text-end pe-3">{{ (rv.get('bySourcePeriod') or {}).get(key, 0) }}</td>
                 </tr>
                 {% endfor %}
-                {% for key, n in (rv.bySourcePeriod or {}).items() %}
+                {% for key, n in (rv.get('bySourcePeriod') or {}).items() %}
                 {% if key not in ['WEB', 'TABLET_PHONE', 'TABLET_WALKIN'] %}
                 <tr>
                   <td class="ps-3">{{ source_labels.get(key, key) }}</td>
-                  <td class="text-end">{{ (rv.bySource7d or {}).get(key, 0) }}</td>
+                  <td class="text-end">{{ (rv.get('bySource7d') or {}).get(key, 0) }}</td>
                   <td class="text-end pe-3">{{ n }}</td>
                 </tr>
                 {% endif %}

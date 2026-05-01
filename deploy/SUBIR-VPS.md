@@ -69,6 +69,21 @@ Prueba en el navegador:
 - `http://TU_IP:37891` — web  
 - `http://TU_IP:37892/login` — Gastro  
 
+### Pasar de IP a DNS (script en el VPS)
+
+No podemos editar tu servidor desde aquí; en el VPS, con DNS y proxy ya configurados:
+
+```bash
+cd ~/Clavo   # tu ruta al repo
+git pull
+bash deploy/apply-public-urls.sh 'https://app.gastromanager.es' \
+  --auth-url 'https://clavo.gastromanager.es' \
+  --legacy-host '178.104.143.67:37892' \
+  --rebuild
+```
+
+Sustituye dominios e IP por los tuyos. Si `deploy/.env` ya tenía `NEXT_PUBLIC_GASTRO_BASE_URL=http://IP:37892`, puedes **omitir** `--legacy-host` y el script inferirá `GASTRO_LEGACY_HOSTS`. Ayuda: `python3 deploy/apply_public_urls.py --help`.
+
 ## 5. Afinar después (checklist)
 
 - [ ] Panel Gastro: usuario admin, **Cierre de caja → SMTP** (o `CIERRE_CAJA_SMTP_PASSWORD` en `.env` + reinicio `docker compose up -d gastro`).  

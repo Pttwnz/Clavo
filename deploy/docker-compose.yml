@@ -47,6 +47,8 @@ services:
       args:
         # Se inyecta en el bundle del cliente en el BUILD; debe ser la URL pública del gastro (mismo host + puerto 37892).
         NEXT_PUBLIC_GASTRO_BASE_URL: ${NEXT_PUBLIC_GASTRO_BASE_URL:?Definir NEXT_PUBLIC_GASTRO_BASE_URL en .env (ej. http://TU_IP:37892)}
+        # 1 = enlaces del cliente a `/panel` y `/login` en el mismo origen (elclavo… vía Nginx); evita mostrar IP:37892.
+        NEXT_PUBLIC_MERGED_HOST_ROOT: ${FLASK_MERGED_HOST_ROOT:-0}
     ports:
       - "${CLAVO_WEB_PUBLISH:-37891}:3000"
     environment:
