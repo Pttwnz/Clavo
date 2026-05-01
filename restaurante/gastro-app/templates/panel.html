@@ -682,7 +682,6 @@ a.shift-card:hover {
   <a href="/visualizar" class="btn btn-sm btn-outline-dark"><i class="bi bi-grid-3x3-gap me-1"></i>{{ tr('page.panel.q_live') }}</a>
   <a href="/editar_salon" class="btn btn-sm btn-outline-dark"><i class="bi bi-pencil-square me-1"></i>{{ tr('page.panel.q_editor') }}</a>
   <a href="{{ url_for('admin.panel_web_estadisticas') }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-graph-up-arrow me-1"></i>Web · estadísticas</a>
-  <a href="{{ url_for('admin.panel_web_carta') }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-journal-text me-1"></i>Web · carta</a>
   {% if not reservas_only %}
   <a href="{{ url_for('admin.inventario_index') }}" class="btn btn-sm btn-outline-warning"><i class="bi bi-box-seam me-1"></i>{{ tr('page.panel.q_inv') }}</a>
   <a href="/horarios" class="btn btn-sm btn-outline-secondary"><i class="bi bi-calendar-week me-1"></i>{{ tr('page.panel.q_hor') }}</a>

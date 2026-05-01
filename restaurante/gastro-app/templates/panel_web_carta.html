@@ -11,8 +11,8 @@
       </p>
     </div>
     <div class="d-flex flex-wrap gap-2">
-      <a href="{{ url_for('admin.panel_web_estadisticas') }}" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-graph-up-arrow me-1"></i>Estadísticas web
+      <a href="{{ url_for('admin.panel') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-speedometer2 me-1"></i>{{ tr('back.panel') }}
       </a>
       {% if items is not none and not config_error and not load_error %}
       <button type="button" class="btn btn-primary btn-sm" id="btn-guardar-carta">
