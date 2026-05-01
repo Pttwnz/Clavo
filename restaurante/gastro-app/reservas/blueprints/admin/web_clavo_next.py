@@ -122,7 +122,15 @@ def panel_web_estadisticas():
         if code != 200 or not isinstance(data, dict):
             base = next_site_base_url()
             detail = f"URL probada: {base}/api/internal/clavo-stats\nHTTP {code}\n{err or 'sin detalle'}"
-            flash(f"No se pudo leer la web Next (HTTP {code}): {err or 'error'}", "danger")
+            if code == 401:
+                flash(
+                    "Next devolvió 401 en la API interna: el Bearer no coincide con "
+                    "CLAVO_INTERNAL_API_SECRET / ADMIN_PASSWORD / AUTH_SECRET del servicio web "
+                    "(revisa deploy/.env y reinicia web y gastro).",
+                    "danger",
+                )
+            else:
+                flash(f"No se pudo leer la web Next (HTTP {code}): {err or 'error'}", "danger")
             return render_template(
                 "panel_web_estadisticas.html",
                 stats=None,

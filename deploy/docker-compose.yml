@@ -20,8 +20,9 @@ services:
       SECRET_KEY: ${GASTRO_SECRET_KEY:?Definir GASTRO_SECRET_KEY en .env}
       DATABASE: /data/gastro.db
       PORT: "37892"
-      # Panel Gastro → API interna Next (carta, estadísticas): misma red Docker.
-      NEXT_SITE_BASE_URL: ${NEXT_SITE_BASE_URL:-http://web:3000}
+      # Gastro → Next por DNS del servicio `web`. No uses 127.0.0.1/localhost aquí: dentro del
+      # contenedor apuntan al propio Gastro, no a Next (estadísticas/carta fallan).
+      NEXT_SITE_BASE_URL: http://web:3000
       CLAVO_INTERNAL_API_SECRET: ${CLAVO_INTERNAL_API_SECRET:-}
       AUTH_SECRET: ${AUTH_SECRET:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
