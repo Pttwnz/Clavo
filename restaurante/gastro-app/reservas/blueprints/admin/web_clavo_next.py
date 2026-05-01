@@ -98,7 +98,7 @@ def _normalize_clavo_stats_payload(data: dict) -> dict:
 @login_requerido
 @permiso_mod("mod.panel")
 def panel_web_estadisticas():
-    days = request.args.get("days", "30", type=int) or 30
+    days = request.args.get("days", default=30, type=int) or 30
     days = max(7, min(90, days))
 
     if not next_site_internal_secret():
