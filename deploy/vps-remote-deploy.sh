@@ -26,6 +26,6 @@ set -euo pipefail
 cd "$REMOTE_BASE"
 git fetch origin --prune
 git checkout "$BRANCH"
-git pull --ff-only "origin/$BRANCH" || git pull --ff-only
+git pull --ff-only origin "$BRANCH" || git pull --ff-only
 exec bash deploy/vps-pull-rebuild.sh
 REMOTE

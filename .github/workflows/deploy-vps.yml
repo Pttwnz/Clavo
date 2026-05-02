@@ -70,5 +70,5 @@ jobs:
             cd "$RP"
             git fetch origin --prune
             git checkout "$GIT_BRANCH"
-            git pull --ff-only "origin/$GIT_BRANCH" || git pull --ff-only
+            git pull --ff-only origin "$GIT_BRANCH" || git pull --ff-only
             exec bash deploy/vps-pull-rebuild.sh
