@@ -720,7 +720,8 @@ server {
         proxy_read_timeout 120s;
     }
 
-    location ~ ^/api/(web/|sala_vivo|salones|salon/|esquema|esquemas|busqueda|reserva/|empleado/|ocupacion_mesas|sugerencias_union_mesa|sala_mesas_opciones|reserva_estado|walkin|asignar_mesa_reserva|union_mesas|clientes/|calendario_eventos) {
+    # Incluye reserva_rapida (alta desde sala / panel); sin esto Next devuelve 404 en el mismo host.
+    location ~ ^/api/(web/|sala_vivo|salones|salon/|esquema|esquemas|busqueda|reserva/|reserva_rapida|empleado/|ocupacion_mesas|sugerencias_union_mesa|sala_mesas_opciones|reserva_estado|walkin|asignar_mesa_reserva|union_mesas|clientes/|calendario_eventos) {
         proxy_pass http://clavo_gastro_elclavo;
         proxy_http_version 1.1;
         proxy_set_header Host $host;

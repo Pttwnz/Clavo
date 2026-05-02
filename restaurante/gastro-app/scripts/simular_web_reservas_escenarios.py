@@ -115,12 +115,23 @@ def main() -> None:
     noon = noon_at.isoformat()
     fecha = tomorrow.isoformat()
 
+    ro_m = c.get(f"/api/web/reservas/opciones-mesa?fecha={fecha}&hora=21:00&personas=2")
+    jom = ro_m.get_json(silent=True) or {}
+    opc_m = jom.get("opciones") if isinstance(jom, dict) else None
+    mesa_demo = ""
+    if isinstance(opc_m, list) and opc_m:
+        mesa_demo = str(opc_m[0].get("mesa") or "").strip()
+    if not mesa_demo:
+        _log("ERROR", f"Sin opciones de mesa para simulación (21:00): {jom!r}")
+        sys.exit(1)
+
     def post_reserva(nombre: str, tel: str, party: int, email: str | None = None) -> tuple[int, dict]:
         body = {
             "customerName": nombre,
             "phone": tel,
             "partySize": party,
             "startsAt": starts_iso,
+            "mesa": mesa_demo,
         }
         if email:
             body["customerEmail"] = email
@@ -219,6 +230,7 @@ def main() -> None:
             "phone": "+34600000001",
             "partySize": 2,
             "startsAt": noon,
+            "mesa": mesa_demo,
         },
         content_type="application/json",
     )

@@ -12,11 +12,14 @@ from reservas.cierre_caja_mail import enviar_correo_externo, smtp_config_valida
 from reservas.cierre_caja_schema import get_config_cierre_caja
 from reservas.salon_helpers import ensure_salon_tables, seed_salon_if_empty
 from reservas.web_reservas_logic import (
+    alternativas_horario_cercanas_reserva_web,
     confirmar_por_token,
     evaluar_reserva_web,
     generar_token_confirmacion,
     insertar_reserva_web,
+    mesa_opcion_valida_para_web,
     normalizar_telefono,
+    opciones_mesa_reserva_web,
     slots_disponibles_payload,
     suma_capacidad_aforo,
     token_expires_iso,
@@ -138,6 +141,77 @@ def register_web_reservas_routes(bp: Blueprint) -> None:
         db.close()
         return jsonify(out), 200
 
+    @bp.route("/api/web/reservas/opciones-mesa")
+    def api_web_reservas_opciones_mesa():
+        """Mesas / uniones / pares adyacentes libres para una fecha, hora y comensales (reserva web)."""
+        starts_raw = (request.args.get("startsAt") or "").strip()
+        fecha = (request.args.get("fecha") or "").strip()[:10]
+        hora = (request.args.get("hora") or "").strip()[:12]
+        if starts_raw:
+            inst = _instante_madrid_fecha_hora(starts_raw)
+            if not inst:
+                return jsonify({"ok": False, "error": "Fecha no válida."}), 400
+            fecha, hora = inst
+        try:
+            personas = int(request.args.get("personas") or request.args.get("partySize") or "2")
+        except (TypeError, ValueError):
+            personas = 2
+        personas = max(1, personas)
+        if not re.match(r"^\d{4}-\d{2}-\d{2}$", fecha or ""):
+            return jsonify({"ok": False, "error": "Parámetro fecha inválido."}), 400
+        if not hora:
+            return jsonify({"ok": False, "error": "Hora obligatoria."}), 400
+
+        db = get_db()
+        ensure_web_reservas_tables(db)
+        ensure_salon_tables(db)
+        seed_salon_if_empty(db)
+        cfg = get_web_reserva_config(db)
+        ev = evaluar_reserva_web(db, fecha_iso=fecha, hora_str=hora, personas=personas, cfg=cfg)
+        if not ev.get("ok"):
+            alt = alternativas_horario_cercanas_reserva_web(
+                db,
+                fecha_iso=fecha,
+                hora_pedida=hora,
+                personas=personas,
+                cfg=cfg,
+                max_items=10,
+            )
+            db.close()
+            return jsonify(
+                {
+                    "ok": False,
+                    "error": ev.get("error", "No disponible."),
+                    "opciones": [],
+                    "alternativas": alt,
+                    "fecha": fecha,
+                    "hora": hora,
+                    "personas": personas,
+                }
+            ), 200
+        opciones = opciones_mesa_reserva_web(db, fecha_iso=fecha, hora_str=hora, personas=personas)
+        alternativas: list = []
+        if not opciones:
+            alternativas = alternativas_horario_cercanas_reserva_web(
+                db,
+                fecha_iso=fecha,
+                hora_pedida=hora,
+                personas=personas,
+                cfg=cfg,
+                max_items=10,
+            )
+        db.close()
+        return jsonify(
+            {
+                "ok": True,
+                "fecha": fecha,
+                "hora": hora,
+                "personas": personas,
+                "opciones": opciones,
+                "alternativas": alternativas,
+            }
+        ), 200
+
     @bp.route("/api/web/reservas", methods=["POST"])
     def api_web_reservas_create():
         data = request.get_json(force=True, silent=True) or {}
@@ -172,6 +246,12 @@ def register_web_reservas_routes(bp: Blueprint) -> None:
         if not fecha or not hora:
             return jsonify({"ok": False, "error": "Fecha y hora obligatorias."}), 400
 
+        mesa_sel = (data.get("mesa") or data.get("table") or data.get("mesaAsignada") or "").strip()
+        if not mesa_sel:
+            return jsonify(
+                {"ok": False, "error": "Debes elegir una mesa (o combinación) entre las opciones ofrecidas."}
+            ), 400
+
         db = get_db()
         ensure_web_reservas_tables(db)
         ensure_salon_tables(db)
@@ -202,6 +282,18 @@ def register_web_reservas_routes(bp: Blueprint) -> None:
                 {"ok": False, "error": "Ya existe una reserva activa con ese teléfono para la misma fecha y hora."}
             ), 409
 
+        opciones = opciones_mesa_reserva_web(db, fecha_iso=fecha, hora_str=hora, personas=personas)
+        match = mesa_opcion_valida_para_web(mesa_sel, opciones)
+        if not match:
+            db.close()
+            return jsonify(
+                {
+                    "ok": False,
+                    "error": "La mesa elegida no está disponible o no coincide con las opciones. Actualiza y elige de nuevo.",
+                    "opciones": opciones[:24],
+                }
+            ), 409
+
         token = generar_token_confirmacion()
         expires = token_expires_iso(cfg)
         try:
@@ -216,6 +308,7 @@ def register_web_reservas_routes(bp: Blueprint) -> None:
                 notas=notas or None,
                 token=token,
                 expires_iso=expires,
+                mesa=str(match.get("mesa") or "").strip(),
             )
         except Exception as ex:
             db.close()

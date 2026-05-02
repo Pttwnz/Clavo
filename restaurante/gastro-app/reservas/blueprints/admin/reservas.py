@@ -29,6 +29,7 @@ from reservas.utils import (
     ocupacion_mesas_por_fecha,
     turno_de_hora,
 )
+from reservas.web_reservas_logic import normalizar_telefono
 
 from . import bp
 
@@ -823,6 +824,8 @@ def api_reserva_rapida():
     notas = (data.get("notas") or "").strip()
     if not fecha or not telefono:
         return jsonify({"ok": False, "error": "bad_request"}), 400
+    if not mesa:
+        return jsonify({"ok": False, "error": "mesa_obligatoria"}), 400
     if not hora:
         hora = ahora_madrid().strftime("%H:%M")
     try:
@@ -830,25 +833,51 @@ def api_reserva_rapida():
     except (TypeError, ValueError):
         return jsonify({"ok": False, "error": "hora_invalida"}), 400
 
+    phone = normalizar_telefono(telefono)
+    if len(phone) < 7:
+        return jsonify({"ok": False, "error": "telefono_invalido"}), 400
+
     db = get_db()
     ensure_salon_tables(db)
     ensure_clientes_schema(db)
-    if mesa and mesa_tiene_conflicto_horario(db, fecha, mesa, hora):
+    fecha_key = fecha.strip()[:10]
+    hora_key = hora.strip()[:12]
+
+    dup = db.execute(
+        """
+        SELECT id FROM reservas
+        WHERE telefono = ? AND fecha = ? AND hora = ?
+          AND COALESCE(estado, 'Pendiente') NOT IN ('Cancelada', 'Finalizada')
+        LIMIT 1
+        """,
+        (phone, fecha_key, hora_key),
+    ).fetchone()
+    if dup:
+        db.close()
+        return jsonify(
+            {
+                "ok": False,
+                "error": "Ya existe una reserva activa con ese teléfono para la misma fecha y hora.",
+            }
+        ), 409
+
+    if mesa_tiene_conflicto_horario(db, fecha_key, mesa, hora_key):
         db.close()
         return jsonify({"ok": False, "error": "mesa_ocupada"}), 409
+
     cur = db.execute(
         """
         INSERT INTO reservas (nombre, telefono, personas, fecha, hora, notas, mesa)
         VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
-        (nombre, telefono, personas, fecha, hora, notas, mesa or ""),
+        (nombre, phone, personas, fecha_key, hora_key, notas, mesa),
     )
     new_id = cur.lastrowid
     cid = upsert_cliente_desde_reserva(
         db,
         nombre=nombre,
-        telefono=telefono,
-        fecha_reserva=(fecha or "")[:10] or None,
+        telefono=phone,
+        fecha_reserva=fecha_key or None,
         commit=False,
     )
     vincular_reserva_a_cliente(db, int(new_id), cid, commit=False)

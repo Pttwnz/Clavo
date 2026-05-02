@@ -38,6 +38,19 @@ export function HomeReservationSection() {
   const [loading, setLoading] = useState(false);
   const [quotaHint, setQuotaHint] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
+  type MesaOpt = { kind?: string; mesa: string; capacidad?: number; label?: string };
+  type MesaAlt = {
+    fecha: string;
+    hora: string;
+    slot_label?: string | null;
+    remaining?: number;
+    minutos_desde_pedida?: number;
+  };
+  const [mesaOptions, setMesaOptions] = useState<MesaOpt[] | null>(null);
+  const [mesaLoading, setMesaLoading] = useState(false);
+  const [mesaHint, setMesaHint] = useState<string | null>(null);
+  const [alternativas, setAlternativas] = useState<MesaAlt[]>([]);
+  const [selectedMesa, setSelectedMesa] = useState("");
 
   useEffect(() => {
     const openFromHash = () => {
@@ -97,6 +110,71 @@ export function HomeReservationSection() {
     };
   }, [datetime, partySize]);
 
+  useEffect(() => {
+    const ac = new AbortController();
+    setSelectedMesa("");
+    setMesaOptions(null);
+    setMesaHint(null);
+    setAlternativas([]);
+
+    if (!datetime.trim() || Number.isNaN(parseDatetimeLocalAsMadrid(datetime).getTime())) {
+      return () => ac.abort();
+    }
+
+    const startsAt = parseDatetimeLocalAsMadrid(datetime);
+    setMesaLoading(true);
+    const params = new URLSearchParams({
+      startsAt: startsAt.toISOString(),
+      partySize: String(partySize),
+    });
+    void fetch(`/api/reservations/mesa-options?${params}`, { signal: ac.signal })
+      .then((res) => res.json())
+      .then(
+        (j: {
+          ok?: boolean;
+          error?: string;
+          opciones?: MesaOpt[];
+          alternativas?: MesaAlt[];
+        }) => {
+          const alts = Array.isArray(j.alternativas)
+            ? j.alternativas.filter((a) => a && typeof a.fecha === "string" && typeof a.hora === "string")
+            : [];
+          setAlternativas(alts);
+          if (!j.ok) {
+            setMesaOptions([]);
+            const err = typeof j.error === "string" ? j.error : "No hay mesas disponibles para ese momento.";
+            setMesaHint(
+              alts.length > 0 ? `${err} Puedes elegir una hora cercana con mesa y cupo (botones abajo).` : err,
+            );
+            return;
+          }
+          const opts = Array.isArray(j.opciones) ? j.opciones.filter((o) => o && typeof o.mesa === "string") : [];
+          setMesaOptions(opts);
+          if (opts.length === 0) {
+            setMesaHint(
+              alts.length > 0
+                ? "No hay mesa libre a la hora elegida. Puedes probar una de las horas cercanas con disponibilidad (botones abajo) o llamar al restaurante."
+                : "No hay ninguna mesa o combinación libre para esa hora y grupo, ni huecos cercanos con mesa. Prueba otra fecha u hora o llama al restaurante.",
+            );
+          } else {
+            setMesaHint(null);
+          }
+        },
+      )
+      .catch(() => {
+        if (!ac.signal.aborted) {
+          setMesaOptions([]);
+          setAlternativas([]);
+          setMesaHint("No se pudieron cargar las mesas. Revisa la conexión o inténtalo más tarde.");
+        }
+      })
+      .finally(() => {
+        if (!ac.signal.aborted) setMesaLoading(false);
+      });
+
+    return () => ac.abort();
+  }, [datetime, partySize]);
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -105,6 +183,11 @@ export function HomeReservationSection() {
     const startsAt = parseDatetimeLocalAsMadrid(datetime);
     if (Number.isNaN(startsAt.getTime())) {
       setFeedback("Elige fecha y hora válidas.");
+      setLoading(false);
+      return;
+    }
+    if (!selectedMesa.trim()) {
+      setFeedback("Elige una de las mesas o combinaciones ofrecidas para tu grupo.");
       setLoading(false);
       return;
     }
@@ -118,6 +201,7 @@ export function HomeReservationSection() {
         partySize,
         startsAt: startsAt.toISOString(),
         notes: notes || undefined,
+        mesa: selectedMesa.trim(),
       }),
     });
     const raw = await res.json().catch(() => null);
@@ -161,6 +245,7 @@ export function HomeReservationSection() {
     setPhone("");
     setEmail("");
     setNotes("");
+    setSelectedMesa("");
   }
 
   const partyOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
@@ -268,7 +353,7 @@ export function HomeReservationSection() {
             </fieldset>
 
             <fieldset className="space-y-4 border-b border-[#2d2420]/8 py-8">
-              <legend className="font-display text-lg font-semibold text-[#2d2420]">2. Cuándo y mesa</legend>
+              <legend className="font-display text-lg font-semibold text-[#2d2420]">2. Cuándo y mesa asignada</legend>
               <div>
                 <span className={labelClass}>Comensales</span>
                 <p className="mt-2 text-xs text-[#6b5a4e]">
@@ -330,6 +415,82 @@ export function HomeReservationSection() {
                   {quotaHint}
                 </p>
               )}
+              <div className="space-y-3">
+                <span className={labelClass}>Mesa para tu grupo</span>
+                <p className="text-xs text-[#6b5a4e]">
+                  Elegimos opciones según comensales: mesa suelta, unión configurada en el salón o dos mesas
+                  contiguas en el plano.
+                </p>
+                {mesaLoading && (
+                  <p className="text-sm text-[#6b5a4e]" role="status">
+                    Cargando mesas disponibles…
+                  </p>
+                )}
+                {!mesaLoading && mesaHint && (
+                  <p className="rounded-xl border border-amber-800/20 bg-amber-50/90 px-4 py-3 text-sm text-[#713f12]">
+                    {mesaHint}
+                  </p>
+                )}
+                {!mesaLoading && alternativas.length > 0 && (
+                  <div className="space-y-2 rounded-xl border border-[#2d2420]/10 bg-[#faf8f5] p-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6b5a4e]">
+                      Horarios cercanos con mesa y cupo web
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {alternativas.map((a) => (
+                        <button
+                          key={`${a.fecha}-${a.hora}`}
+                          type="button"
+                          className="min-w-[7.5rem] max-w-[11rem] rounded-xl border border-[#8f1d1d]/20 bg-white px-3 py-2.5 text-left text-sm text-[#2d2420] shadow-sm transition hover:border-[#8f1d1d]/40 hover:bg-[#fff9f5]"
+                          onClick={() => {
+                            const hhmm = (a.hora || "").trim();
+                            if (!/^\d{1,2}:\d{2}$/.test(hhmm)) return;
+                            const [hh, mm] = hhmm.split(":");
+                            const pad = (n: string) => n.padStart(2, "0");
+                            setDatetime(`${a.fecha}T${pad(hh)}:${pad(mm)}`);
+                          }}
+                        >
+                          <span className="block font-semibold tabular-nums text-[#8f1d1d]">{a.hora}</span>
+                          {a.slot_label ? (
+                            <span className="mt-0.5 block text-[11px] leading-snug text-[#6b5a4e]">{a.slot_label}</span>
+                          ) : null}
+                          {typeof a.remaining === "number" ? (
+                            <span className="mt-0.5 block text-[11px] text-[#5c4f47]">Cupo: {a.remaining} pax</span>
+                          ) : null}
+                          {typeof a.minutos_desde_pedida === "number" && a.minutos_desde_pedida > 0 ? (
+                            <span className="mt-0.5 block text-[10px] text-[#8a7a72]">
+                              ±{a.minutos_desde_pedida} min respecto a tu hora
+                            </span>
+                          ) : null}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {!mesaLoading && mesaOptions && mesaOptions.length > 0 && (
+                  <ul className="max-h-64 space-y-2 overflow-y-auto rounded-xl border border-[#2d2420]/10 bg-white p-3">
+                    {mesaOptions.map((opt) => (
+                      <li key={opt.mesa}>
+                        <label className="flex cursor-pointer gap-3 rounded-lg px-2 py-2 hover:bg-[#faf8f5]">
+                          <input
+                            type="radio"
+                            name="mesa-web"
+                            className="mt-1 shrink-0"
+                            checked={selectedMesa === opt.mesa}
+                            onChange={() => setSelectedMesa(opt.mesa)}
+                          />
+                          <span className="text-sm leading-snug text-[#2d2420]">
+                            {opt.label || opt.mesa}
+                            {typeof opt.capacidad === "number" ? (
+                              <span className="block text-xs text-[#6b5a4e]">Referencia: hasta {opt.capacidad} pax</span>
+                            ) : null}
+                          </span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </fieldset>
 
             <fieldset className="space-y-4 pt-8">

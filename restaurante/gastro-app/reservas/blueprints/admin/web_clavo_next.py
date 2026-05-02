@@ -6,6 +6,8 @@ import logging
 
 from flask import flash, redirect, render_template, request, url_for
 
+from models import get_db
+from reservas.clavo_stats_reservas_gastro import reservas_stats_para_clavo_panel
 from reservas.decorators import login_requerido, permiso_mod
 from reservas.next_site_http import next_site_base_url, next_site_internal_secret, next_site_request
 
@@ -145,6 +147,11 @@ def panel_web_estadisticas():
             )
 
         stats = _normalize_clavo_stats_payload(data)
+        db = get_db()
+        try:
+            stats["reservations"] = reservas_stats_para_clavo_panel(db, days)
+        finally:
+            db.close()
         return render_template(
             "panel_web_estadisticas.html",
             stats=stats,

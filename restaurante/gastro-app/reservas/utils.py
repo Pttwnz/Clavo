@@ -1,5 +1,6 @@
 """Utilidades compartidas (presentación y cálculos sin rutas HTTP)."""
 import json
+import re
 from datetime import date, datetime
 
 from models import get_db
@@ -54,6 +55,18 @@ def normalizar_nombre_mesa(s: str | None) -> str:
         return ""
     t = str(s).replace("\ufeff", "").replace("\u200b", "")
     return " ".join(t.split()).casefold()
+
+
+def partes_mesa_ocupacion(mesa_valor: str | None) -> list[str]:
+    """Partes físicas que comparten el mismo hueco horario (mesa suelta o varias unidas con «+»)."""
+    s = (mesa_valor or "").strip()
+    if not s:
+        return []
+    if "+" in s:
+        parts = [p.strip() for p in re.split(r"\s*\+\s*", s) if p.strip()]
+        if len(parts) > 1:
+            return parts
+    return [s]
 
 
 def horas_ocupadas_para_mesa(occ: dict[str, list[str]], mesa: str) -> list[str]:
@@ -166,16 +179,17 @@ def ocupacion_mesas_por_fecha(
             continue
         if not estado_bloquea_ocupacion_mesa(r["estado"]):
             continue
-        mesa = (r["mesa"] or "").strip()
+        mesa_raw = (r["mesa"] or "").strip()
         hora = r["hora"]
-        if not mesa or not hora:
+        if not mesa_raw or not hora:
             continue
-        nk = normalizar_nombre_mesa(mesa)
-        if not nk:
-            continue
-        out.setdefault(nk, []).append(hora)
-        for alias in rel.get(nk, set()):
-            out.setdefault(alias, []).append(hora)
+        for mesa in partes_mesa_ocupacion(mesa_raw):
+            nk = normalizar_nombre_mesa(mesa)
+            if not nk:
+                continue
+            out.setdefault(nk, []).append(hora)
+            for alias in rel.get(nk, set()):
+                out.setdefault(alias, []).append(hora)
     return out
 
 
@@ -187,13 +201,16 @@ def mesa_tiene_conflicto_horario(
     excluir_reserva_id: int | None = None,
     margin_seg: int | None = None,
 ) -> bool:
-    """True si no se puede reservar esa mesa a esa hora por solapamiento."""
-    mesa = (mesa or "").strip()
-    if not mesa or not hora:
+    """True si no se puede reservar esa mesa (o grupo «M1 + M2») a esa hora por solapamiento."""
+    mesa_raw = (mesa or "").strip()
+    if not mesa_raw or not hora:
         return False
     occ = ocupacion_mesas_por_fecha(db, fecha, excluir_reserva_id=excluir_reserva_id)
-    horas = horas_ocupadas_para_mesa(occ, mesa)
-    return hay_solapamiento_mesa_hora(hora, horas, margin_seg=margin_seg)
+    for part in partes_mesa_ocupacion(mesa_raw):
+        horas = horas_ocupadas_para_mesa(occ, part)
+        if hay_solapamiento_mesa_hora(hora, horas, margin_seg=margin_seg):
+            return True
+    return False
 
 
 def ahora_madrid():
