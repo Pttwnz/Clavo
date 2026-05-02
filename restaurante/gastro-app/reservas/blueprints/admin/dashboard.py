@@ -97,8 +97,9 @@ def _reservas_por_dia_ultimos_7(db) -> list[dict]:
 
 
 def _dash_web_stats_resumen() -> dict | None:
-    """KPIs web 7d vía Next (opcional; si falla no rompe el panel)."""
+    """KPIs web 7d vía Next (visitas) + reservas desde SQLite Gastro."""
     try:
+        from reservas.clavo_stats_reservas_gastro import reservas_stats_para_clavo_panel
         from reservas.next_site_http import next_site_internal_secret, next_site_request
 
         if not next_site_internal_secret():
@@ -107,12 +108,16 @@ def _dash_web_stats_resumen() -> dict | None:
         if code != 200 or not isinstance(data, dict):
             return None
         pv = data.get("pageViews") if isinstance(data.get("pageViews"), dict) else {}
-        rv = data.get("reservations") if isinstance(data.get("reservations"), dict) else {}
+        db = get_db()
+        try:
+            rv = reservas_stats_para_clavo_panel(db, 7)
+        finally:
+            db.close()
         return {
             "visits_7d": int(pv.get("total7d") or 0),
             "reservas_7d": int(rv.get("total7d") or 0),
             "pv_err": bool(pv.get("dbError")),
-            "rv_err": bool(rv.get("dbError")),
+            "rv_err": False,
         }
     except Exception:
         return None
@@ -471,7 +476,13 @@ def perfil_empleado(id):
 @login_requerido
 @permiso_mod("mod.empresa")
 def configuracion_empresa():
-    """Datos fiscales y de contacto del establecimiento (PDFs, libro de firmas)."""
+    """Datos del establecimiento, rangos y SMTP (reservas + cierre de caja)."""
+    from reservas.cierre_caja_mail import smtp_config_valida
+    from reservas.cierre_caja_schema import (
+        ensure_cierre_caja_tables,
+        get_config_cierre_caja,
+        save_config_cierre_caja,
+    )
     from reservas.empresa_config import (
         ensure_config_empresa_table,
         get_config_empresa,
@@ -482,9 +493,19 @@ def configuracion_empresa():
 
     db = get_db()
     ensure_config_empresa_table(db)
+    ensure_cierre_caja_tables(db)
 
     if request.method == "POST":
-        save_config_empresa_form(db, request.form)
+        save_config_empresa_form(
+            db,
+            request.form,
+            only_update_present_keys=bool(RESERVAS_ONLY),
+        )
+        if any(
+            k in request.form
+            for k in ("email_destino", "smtp_host", "smtp_port", "smtp_usuario", "smtp_password", "smtp_tls")
+        ):
+            save_config_cierre_caja(db, request.form)
         logo = request.files.get("logo")
         if logo and getattr(logo, "filename", None):
             rel = save_logo_empresa(current_app.static_folder, logo)
@@ -492,14 +513,19 @@ def configuracion_empresa():
                 update_logo_path(db, rel)
             else:
                 flash("El logo no se pudo guardar (usa PNG, JPG o WebP, máximo 2 MB).", "warning")
-        flash("Datos de la empresa guardados correctamente.", "success")
+        flash("Configuración guardada correctamente.", "success")
         db.close()
         return redirect(url_for("admin.configuracion_empresa"))
 
     cfg = get_config_empresa(db)
+    cfg_cierre = get_config_cierre_caja(db)
+    smtp_ok = smtp_config_valida(cfg_cierre)
     db.close()
     return render_template(
         "configuracion_empresa.html",
         mostrar_nav=True,
         config=cfg,
+        cfg_cierre=cfg_cierre,
+        smtp_ok=smtp_ok,
+        reservas_only=RESERVAS_ONLY,
     )

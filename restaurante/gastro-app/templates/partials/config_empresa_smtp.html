@@ -1,0 +1,43 @@
+{# Campos SMTP compartidos con config_cierre_caja (mismo POST que empresa). Requiere: cfg_cierre, smtp_ok #}
+<h2 class="mt-4 text-uppercase text-secondary" style="font-size:0.75rem;letter-spacing:0.06em;font-weight:700;">Correo (SMTP)</h2>
+<p class="small text-muted mb-3">
+  Sirve para las <strong>confirmaciones de reserva por email</strong>, informes de cierre de caja y pruebas desde
+  <a href="{{ url_for('admin.configuracion_reservas_web') }}">Reservas web</a>. Es la misma tabla que «Cierre de caja → Correo».
+</p>
+{% if smtp_ok %}
+<div class="alert alert-success py-2 small mb-3"><i class="bi bi-check-circle me-1"></i> Datos mínimos completos (dueño, servidor, usuario y contraseña o variable de entorno).</div>
+{% else %}
+<div class="alert alert-warning py-2 small mb-3">Falta correo del dueño, usuario SMTP o contraseña (o define <code>CIERRE_CAJA_SMTP_PASSWORD</code> en el servidor).</div>
+{% endif %}
+<div class="row g-3 mb-2">
+  <div class="col-md-6">
+    <label class="form-label">Correo del dueño <span class="text-muted fw-normal">(recibe informes de caja)</span></label>
+    <input type="email" name="email_destino" class="form-control" value="{{ cfg_cierre.email_destino or '' }}" placeholder="dueño@gmail.com" autocomplete="off">
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Servidor SMTP</label>
+    <input type="text" name="smtp_host" class="form-control" value="{{ cfg_cierre.smtp_host or 'smtp.gmail.com' }}">
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Puerto</label>
+    <input type="number" name="smtp_port" class="form-control" value="{{ cfg_cierre.smtp_port or 587 }}">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Usuario SMTP</label>
+    <input type="text" name="smtp_usuario" class="form-control" value="{{ cfg_cierre.smtp_usuario or '' }}" placeholder="mismo que el correo Gmail" autocomplete="off">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Contraseña o app password</label>
+    <input type="password" name="smtp_password" class="form-control" placeholder="Vacío = no cambiar la guardada" autocomplete="new-password">
+  </div>
+  <div class="col-12">
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" name="smtp_tls" id="ce_smtp_tls" value="1" {% if cfg_cierre.smtp_tls %}checked{% endif %}>
+      <label class="form-check-label" for="ce_smtp_tls">Usar STARTTLS (recomendado en puerto 587)</label>
+    </div>
+  </div>
+</div>
+<p class="small text-muted mb-0">
+  Gmail: <a href="https://support.google.com/accounts/answer/185833" target="_blank" rel="noopener">contraseña de aplicación</a>.
+  También puedes enviar una prueba desde <a href="{{ url_for('admin.cierre_caja_index') }}#cc-email">Cierre de caja</a> (pestaña Correo).
+</p>

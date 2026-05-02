@@ -5,9 +5,6 @@
 {% block estilos %}
 <style>
   .ce-wrap { max-width: 720px; margin: 0 auto; }
-  .ce-hero {
-    margin-bottom: 1.25rem;
-  }
   .ce-hero h1 { font-size: 1.5rem; font-weight: 700; color: #0f172a; margin-bottom: 0.35rem; }
   .ce-hero p { color: #64748b; margin: 0; font-size: 0.95rem; }
   .ce-card {
@@ -16,6 +13,7 @@
     border-radius: 16px;
     padding: 1.5rem;
     box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.06);
+    margin-bottom: 1.25rem;
   }
   .ce-card h2 {
     font-size: 0.75rem;
@@ -39,12 +37,135 @@
 
 {% block contenido %}
 <div class="ce-wrap">
-  <div class="ce-hero">
+  <div class="ce-hero mb-3">
     <h1><i class="bi bi-building-gear me-2 text-primary"></i>Datos de la empresa</h1>
-    <p>Estos datos aparecen en los PDF del libro de firmas y en documentación oficial (CIF, dirección, logo). El horario del establecimiento sirve de referencia al generar cuadrantes y en la pantalla de horarios.</p>
+    {% if reservas_only %}
+    <p>Contacto del local, <strong>correo SMTP</strong> (confirmaciones de reserva e informes), rangos del día para horarios y plantilla «desde empresa» en <a href="{{ url_for('admin.configuracion_reservas_web') }}">Reservas web</a>, y marca visual (colores y logo).</p>
+    {% else %}
+    <p>Identificación fiscal, contacto, <strong>correo SMTP</strong>, horarios, rangos para la vista de Horarios, vacaciones de referencia, colores y logo.</p>
+    {% endif %}
   </div>
 
   <form method="post" enctype="multipart/form-data" class="ce-card">
+    {% if reservas_only %}
+    <h2>Local y contacto</h2>
+    <div class="row g-3 mb-3">
+      <div class="col-12">
+        <label class="form-label">Nombre comercial</label>
+        <input type="text" name="nombre_comercial" class="form-control" value="{{ config.nombre_comercial or '' }}" placeholder="Nombre del local">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Teléfono</label>
+        <input type="text" name="telefono" class="form-control" value="{{ config.telefono or '' }}">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Email de contacto</label>
+        <input type="email" name="email" class="form-control" value="{{ config.email or '' }}">
+      </div>
+      <div class="col-12">
+        <label class="form-label">Nombre del dueño o responsable <span class="text-muted fw-normal">(opcional)</span></label>
+        <input type="text" name="nombre_dueno" class="form-control" value="{{ config.nombre_dueno or '' }}" placeholder="Para textos de correo e informes">
+      </div>
+    </div>
+    <details class="border rounded-3 mb-4 px-3 py-2 bg-light">
+      <summary class="fw-semibold small py-1" style="cursor:pointer;">Identificación y dirección (opcional)</summary>
+      <div class="row g-3 mt-2">
+        <div class="col-md-8">
+          <label class="form-label small">Razón social</label>
+          <input type="text" name="razon_social" class="form-control form-control-sm" value="{{ config.razon_social or '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small">CIF / NIF</label>
+          <input type="text" name="cif" class="form-control form-control-sm" value="{{ config.cif or '' }}">
+        </div>
+        <div class="col-12">
+          <label class="form-label small">Dirección</label>
+          <input type="text" name="direccion" class="form-control form-control-sm" value="{{ config.direccion or '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small">C.P.</label>
+          <input type="text" name="codigo_postal" class="form-control form-control-sm" value="{{ config.codigo_postal or '' }}">
+        </div>
+        <div class="col-md-5">
+          <label class="form-label small">Ciudad</label>
+          <input type="text" name="ciudad" class="form-control form-control-sm" value="{{ config.ciudad or '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small">Provincia</label>
+          <input type="text" name="provincia" class="form-control form-control-sm" value="{{ config.provincia or '' }}">
+        </div>
+      </div>
+    </details>
+
+    {% include "partials/config_empresa_smtp.html" %}
+
+    <h2 id="rangos-turnos">Rangos del día</h2>
+    <p class="small text-muted mb-2">
+      Cortes por hora de inicio (Horarios en el panel completo; aquí solo afectan a la plantilla
+      <strong>Desde rangos de empresa</strong> en <a href="{{ url_for('admin.configuracion_reservas_web') }}">Reservas web</a>).
+    </p>
+    <div class="mb-3">
+      <label class="form-label">Modo de franjas</label>
+      <select name="franja_modo" id="franja_modo" class="form-select" style="max-width:28rem;">
+        <option value="tres" {% if (config.franja_modo or 'tres') != 'dos' %}selected{% endif %}>Tres: mañana / tarde / noche</option>
+        <option value="dos" {% if (config.franja_modo or '') == 'dos' %}selected{% endif %}>Dos turnos (un corte)</option>
+      </select>
+    </div>
+    <div id="panel-franja-tres" class="row g-3 mb-2">
+      <div class="col-md-4">
+        <label class="form-label small">Fin de «mañana» (no incluido)</label>
+        <input type="time" name="franja_hasta_manana" class="form-control" value="{{ config.franja_hasta_manana or '14:00' }}">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small">Fin de «tarde» (no incluido)</label>
+        <input type="time" name="franja_hasta_tarde" class="form-control" value="{{ config.franja_hasta_tarde or '20:00' }}">
+      </div>
+    </div>
+    <div id="panel-franja-dos" class="mb-2" style="display:none;">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label small">Hora de corte (inicio del 2.º turno)</label>
+          <input type="time" name="franja_corte_dos" class="form-control" value="{{ config.franja_corte_dos or '16:00' }}">
+        </div>
+      </div>
+    </div>
+    <p class="small text-muted mb-2">Nombres opcionales en listados:</p>
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <label class="form-label small">Franja 1 / mañana</label>
+        <input type="text" name="franja_nombre_manana" class="form-control" value="{{ config.franja_nombre_manana or '' }}" placeholder="Mañana">
+      </div>
+      <div class="col-md-4 franja-nombre-tarde-wrap">
+        <label class="form-label small">Franja 2 / tarde</label>
+        <input type="text" name="franja_nombre_tarde" class="form-control" value="{{ config.franja_nombre_tarde or '' }}" placeholder="Tarde">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small">Franja 3 / noche</label>
+        <input type="text" name="franja_nombre_noche" class="form-control" value="{{ config.franja_nombre_noche or '' }}" placeholder="Noche">
+      </div>
+    </div>
+
+    <h2>Marca (colores y logo)</h2>
+    <p class="small text-muted mb-3">Se aplican al menú y cabeceras. El logo es opcional.</p>
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <label class="form-label">Color principal</label>
+        <input type="color" name="color_primario" class="form-control form-control-color w-100" value="{{ (config.color_primario or '#2563eb')|e }}">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Color de acento <span class="text-muted fw-normal">(opcional)</span></label>
+        <input type="color" name="color_acento" class="form-control form-control-color w-100" value="{{ (config.color_acento or '#1d4ed8')|e }}">
+      </div>
+    </div>
+    {% if config.logo_relativo %}
+    <div class="mb-2">
+      <img src="{{ url_for('static', filename=config.logo_relativo) }}" alt="Logo" class="ce-logo-preview">
+    </div>
+    {% endif %}
+    <input type="file" name="logo" class="form-control mb-4" accept="image/png,image/jpeg,image/webp">
+
+    {% else %}
+
     <h2>Identificación fiscal</h2>
     <div class="row g-3 mb-4">
       <div class="col-md-8">
@@ -94,23 +215,22 @@
       <div class="col-12">
         <label class="form-label">Nombre del dueño o responsable <span class="text-muted fw-normal">(opcional)</span></label>
         <input type="text" name="nombre_dueno" class="form-control" value="{{ config.nombre_dueno or '' }}" placeholder="Ej. María López">
-        <p class="form-text mb-0">Aparece en el cierre de caja desde tablet (botón «Registrar y enviar a …»). Si lo dejas vacío se mostrará «al dueño».</p>
       </div>
     </div>
 
+    {% include "partials/config_empresa_smtp.html" %}
+
     <h2>Horario del establecimiento</h2>
-    <p class="small text-muted mb-3">
-      Apertura al público, cocina, turnos generales o días de cierre. La pantalla de horarios y la generación por reglas usan este texto como referencia.
-    </p>
+    <p class="small text-muted mb-3">Referencia para horarios y cuadrantes.</p>
     <div class="mb-4">
       <label class="form-label">Horario de empresa <span class="text-muted fw-normal">(opcional)</span></label>
-      <textarea name="horario_empresa" class="form-control" rows="4" placeholder="Ej. Lunes a jueves cocina 10:00–23:30, sala 12:00–01:00. Viernes y sábado hasta las 2:00. Domingo cerrado.">{{ config.horario_empresa or '' }}</textarea>
+      <textarea name="horario_empresa" class="form-control" rows="4" placeholder="Ej. Lunes a jueves 12:00–00:00.">{{ config.horario_empresa or '' }}</textarea>
     </div>
 
     <h2 id="rangos-turnos">Rangos del día (vista Horarios)</h2>
-    <p class="small text-muted mb-3">
-      Define cómo se clasifican los turnos por <strong>hora de inicio</strong> en la pantalla de Horarios (bloques, badges y filtros).
-      Si tu local solo usa <strong>dos turnos</strong> (por ejemplo mediodía y noche), elige «Dos turnos» y fija la hora de corte.
+    <p class="small text-muted mb-2">
+      Clasificación por hora de inicio en la pantalla de Horarios.
+      <a href="{{ url_for('admin.configuracion_reservas_web') }}">Reservas web</a> puede generar franjas desde estos rangos.
     </p>
     <div class="mb-3">
       <label class="form-label">Modo de franjas</label>
@@ -122,96 +242,86 @@
     <div id="panel-franja-tres" class="row g-3 mb-2">
       <div class="col-md-4">
         <label class="form-label small">Fin de «mañana» (no incluido)</label>
-        <input type="time" name="franja_hasta_manana" class="form-control"
-          value="{{ config.franja_hasta_manana or '14:00' }}" title="Inicios antes de esta hora = primera franja">
+        <input type="time" name="franja_hasta_manana" class="form-control" value="{{ config.franja_hasta_manana or '14:00' }}" title="Inicios antes de esta hora = primera franja">
       </div>
       <div class="col-md-4">
         <label class="form-label small">Fin de «tarde» (no incluido)</label>
-        <input type="time" name="franja_hasta_tarde" class="form-control"
-          value="{{ config.franja_hasta_tarde or '20:00' }}" title="Entre el límite anterior y este = tarde; desde aquí = noche">
+        <input type="time" name="franja_hasta_tarde" class="form-control" value="{{ config.franja_hasta_tarde or '20:00' }}">
       </div>
     </div>
     <div id="panel-franja-dos" class="mb-2" style="display:none;">
       <div class="row g-3">
         <div class="col-md-4">
           <label class="form-label small">Hora de corte (inicio del segundo turno)</label>
-          <input type="time" name="franja_corte_dos" class="form-control"
-            value="{{ config.franja_corte_dos or '16:00' }}">
+          <input type="time" name="franja_corte_dos" class="form-control" value="{{ config.franja_corte_dos or '16:00' }}">
         </div>
       </div>
-      <p class="form-text small mb-0">Todo turno con inicio <strong>antes</strong> del corte va al primer bloque; desde el corte en adelante, al segundo.</p>
+      <p class="form-text small mb-0">Inicios <strong>antes</strong> del corte → primer bloque; desde el corte → segundo.</p>
     </div>
-    <p class="small text-muted mb-2">Nombres opcionales (se muestran en listas y filtros; si los dejas vacíos se usan Mañana / Tarde / Noche).</p>
+    <p class="small text-muted mb-2">Nombres opcionales:</p>
     <div class="row g-3 mb-4">
       <div class="col-md-4">
         <label class="form-label small">Nombre franja 1 / mañana</label>
-        <input type="text" name="franja_nombre_manana" class="form-control" value="{{ config.franja_nombre_manana or '' }}" placeholder="Ej. Mañana, Mediodía, Primer servicio">
+        <input type="text" name="franja_nombre_manana" class="form-control" value="{{ config.franja_nombre_manana or '' }}" placeholder="Mañana">
       </div>
       <div class="col-md-4 franja-nombre-tarde-wrap">
         <label class="form-label small">Nombre franja 2 / tarde</label>
-        <input type="text" name="franja_nombre_tarde" class="form-control" value="{{ config.franja_nombre_tarde or '' }}" placeholder="Ej. Tarde">
+        <input type="text" name="franja_nombre_tarde" class="form-control" value="{{ config.franja_nombre_tarde or '' }}" placeholder="Tarde">
       </div>
       <div class="col-md-4">
         <label class="form-label small">Nombre franja 3 / noche</label>
-        <input type="text" name="franja_nombre_noche" class="form-control" value="{{ config.franja_nombre_noche or '' }}" placeholder="Ej. Noche, Cierre">
+        <input type="text" name="franja_nombre_noche" class="form-control" value="{{ config.franja_nombre_noche or '' }}" placeholder="Noche">
       </div>
     </div>
 
     <h2>Vacaciones (referencia desde fichaje)</h2>
-    <p class="small text-muted mb-2">
-      Criterio habitual: <strong>1 semana de vacaciones por trimestre</strong> (referencia). En la ficha de cada empleado, las <strong>horas de contrato</strong> definen su jornada semanal (p. ej. 40, 30, 20 h). Esa cifra multiplica por ~13 semanas para el «trimestre» de referencia y es la que vale como <strong>semana vacacional</strong> proporcional.
-      Con jornada 40 h/semana: trimestre ref. ≈ 520 h y 1 semana vac. = 40 h → ratio <strong>13</strong> (13 h trabajadas por 1 h vacación). Con 20 h/semana: trimestre ≈ 260 h, semana vac. 20 h → la misma ratio 13.
-    </p>
-    <p class="small text-muted mb-3">
-      Puedes cambiar el número si tu política interna es distinta. Los resúmenes usan el contrato del empleado + esta ratio. Todo es orientativo; no sustituye al Estatuto, convenio ni RRHH.
-    </p>
+    <p class="small text-muted mb-3">Ratio horas trabajadas por hora de vacaciones (orientativo).</p>
     <div class="row g-3 mb-4">
       <div class="col-md-4">
-        <label class="form-label">Horas trabajadas por 1 h vacación (referencia)</label>
+        <label class="form-label">Horas trabajadas por 1 h vacación</label>
         <input type="number" name="vacaciones_horas_trabajo_por_hora_vacacion" class="form-control" min="1" max="500" step="0.5"
           value="{{ (config.vacaciones_horas_trabajo_por_hora_vacacion if config.vacaciones_horas_trabajo_por_hora_vacacion is not none else 13) }}">
       </div>
     </div>
 
-    <h2>Apariencia de la aplicación</h2>
-    <p class="small text-muted mb-3">
-      Los colores se aplican a botones, menú lateral y detalles de la interfaz. Elige tonos que combinen con tu logo.
-    </p>
+    <h2>Apariencia</h2>
+    <p class="small text-muted mb-3">Colores de la interfaz y logo (PDF y menú).</p>
     <div class="row g-3 mb-2">
       <div class="col-md-4">
         <label class="form-label">Color principal</label>
-        <input type="color" name="color_primario" class="form-control form-control-color w-100"
-          value="{{ (config.color_primario or '#2563eb')|e }}" title="Color principal">
+        <input type="color" name="color_primario" class="form-control form-control-color w-100" value="{{ (config.color_primario or '#2563eb')|e }}">
       </div>
       <div class="col-md-4">
         <label class="form-label">Color de acento <span class="text-muted fw-normal">(opcional)</span></label>
-        <input type="color" name="color_acento" class="form-control form-control-color w-100"
-          value="{{ (config.color_acento or '#1d4ed8')|e }}" title="Hover / secundario">
-        <p class="small text-muted mt-1 mb-0">Si lo dejas en el valor por defecto, se oscurece el principal automáticamente.</p>
+        <input type="color" name="color_acento" class="form-control form-control-color w-100" value="{{ (config.color_acento or '#1d4ed8')|e }}">
       </div>
       <div class="col-md-4 d-flex align-items-end">
         <div class="w-100 p-3 rounded-3 border" style="background:linear-gradient(135deg, {{ (config.color_primario or '#2563eb') }}22, #fff); border-color: {{ (config.color_primario or '#2563eb') }}44 !important;">
           <span class="small text-muted d-block mb-1">Vista previa</span>
-          <button type="button" class="btn btn-primary btn-sm" disabled>Ejemplo botón</button>
+          <button type="button" class="btn btn-primary btn-sm" disabled>Ejemplo</button>
         </div>
       </div>
     </div>
 
-    <h2 class="mt-4">Logo <span class="text-muted fw-normal">(opcional)</span></h2>
-    <p class="small text-muted">PNG, JPG o WebP. Máximo 2 MB. Se muestra en la cabecera de los PDF y en el menú lateral.</p>
+    <h2 class="mt-2">Logo <span class="text-muted fw-normal">(opcional)</span></h2>
+    <p class="small text-muted">PNG, JPG o WebP, máx. 2 MB.</p>
     {% if config.logo_relativo %}
     <div class="mb-2">
       <img src="{{ url_for('static', filename=config.logo_relativo) }}" alt="Logo actual" class="ce-logo-preview">
     </div>
     {% endif %}
-    <input type="file" name="logo" class="form-control" accept="image/png,image/jpeg,image/webp">
+    <input type="file" name="logo" class="form-control mb-4" accept="image/png,image/jpeg,image/webp">
 
-    <div class="mt-4 d-flex gap-2 flex-wrap">
+    {% endif %}
+
+    <div class="d-flex gap-2 flex-wrap pt-2 border-top">
       <button type="submit" class="btn btn-primary px-4"><i class="bi bi-check2-circle me-1"></i>Guardar</button>
       <a href="{{ url_for('admin.panel') }}" class="btn btn-outline-secondary">Volver al panel</a>
+      {% if reservas_only %}
+      <a href="{{ url_for('admin.configuracion_reservas_web') }}" class="btn btn-outline-primary">Reservas web</a>
+      {% endif %}
     </div>
   </form>
-
 </div>
 <script>
 (function() {

@@ -136,13 +136,19 @@ def _keys():
     )
 
 
-def save_config_empresa_form(db, form) -> None:
-    """Actualiza campos de texto desde request.form."""
+def save_config_empresa_form(db, form, *, only_update_present_keys: bool = False) -> None:
+    """Actualiza campos de texto desde request.form.
+
+    Si ``only_update_present_keys`` es True, solo se tocan columnas cuya clave
+    aparece en el formulario (útil en formularios reducidos sin borrar el resto).
+    """
     ensure_config_empresa_table(db)
     sets = []
     params = []
     for k in _keys():
         if k == "logo_relativo":
+            continue
+        if only_update_present_keys and k not in form:
             continue
         val = (form.get(k) or "").strip()
         if k == "vacaciones_horas_trabajo_por_hora_vacacion":
@@ -171,6 +177,8 @@ def save_config_empresa_form(db, form) -> None:
                 continue
         sets.append(f"{k} = ?")
         params.append(val)
+    if not sets:
+        return
     params.append(1)
     db.execute(
         f"UPDATE config_empresa SET {', '.join(sets)} WHERE id = ?",
