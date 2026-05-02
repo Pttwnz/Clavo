@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from reservas.db_helpers import columnas_tabla, tabla_existe
+from reservas.utils import hora_texto_a_minutos
 
 
 TABLE_CFG = "web_reserva_config"
@@ -205,6 +206,111 @@ def list_all_franjas_admin(db) -> list[dict]:
         f"SELECT * FROM {TABLE_FRANJA} ORDER BY orden ASC, dia_semana ASC, min_inicio ASC"
     ).fetchall()
     return [dict(r) for r in rows]
+
+
+def franjas_plantilla_comida_cena_semana(*, pct_web: int | None = None) -> list[dict]:
+    """Misma lógica que la semilla por defecto: comida y cena, los 7 días ISO (1=lun … 7=dom)."""
+    pct = pct_web
+    if pct is not None:
+        pct = max(1, min(100, int(pct)))
+    rows: list[dict] = []
+    for dia in range(1, 8):
+        for etiqueta, mi, mf in (
+            ("Comida", 13 * 60, 16 * 60),
+            ("Cena", 20 * 60, 23 * 60 + 30),
+        ):
+            rows.append(
+                {
+                    "dia_semana": dia,
+                    "min_inicio": mi,
+                    "min_fin": mf,
+                    "etiqueta": etiqueta,
+                    "pct_web": pct,
+                    "activo": True,
+                }
+            )
+    return rows
+
+
+def franjas_plantilla_solo_cena_semana(*, pct_web: int | None = None) -> list[dict]:
+    """Una sola franja «Cena» por día (útil si solo abrís noche online)."""
+    pct = pct_web
+    if pct is not None:
+        pct = max(1, min(100, int(pct)))
+    rows: list[dict] = []
+    for dia in range(1, 8):
+        rows.append(
+            {
+                "dia_semana": dia,
+                "min_inicio": 20 * 60,
+                "min_fin": 23 * 60 + 30,
+                "etiqueta": "Cena",
+                "pct_web": pct,
+                "activo": True,
+            }
+        )
+    return rows
+
+
+def franjas_plantilla_desde_rangos_empresa(db) -> list[dict]:
+    """
+    Propone franjas web alineadas con los cortes de **Empresa → Rangos mañana/tarde/noche**
+    (config_empresa). Heurística: comida ~13:00 hasta antes de la noche; cena desde el inicio
+    de «noche» (límite tarde/noche) hasta 23:30.
+    """
+    from reservas.empresa_config import ensure_config_empresa_table, get_config_empresa
+
+    ensure_config_empresa_table(db)
+    ce = get_config_empresa(db)
+
+    def m(h: str, default: str) -> int:
+        v = hora_texto_a_minutos((h or default).strip()[:8])
+        return v if v is not None else hora_texto_a_minutos(default) or 0
+
+    m_tar = m(str(ce.get("franja_hasta_tarde") or ""), "20:00")
+    modo = (str(ce.get("franja_modo") or "tres")).strip().lower()
+    if modo == "dos":
+        m_corte = m(str(ce.get("franja_corte_dos") or ""), "16:00")
+        m_noche_ini = max(m_tar, m_corte)
+    else:
+        m_noche_ini = m_tar
+
+    comida_ini = 13 * 60
+    comida_fin = min(16 * 60 + 30, max(15 * 60, m_noche_ini - 45))
+    if comida_fin <= comida_ini + 30:
+        comida_fin = 16 * 60
+
+    cena_ini = max(20 * 60, m_noche_ini)
+    cena_fin = 23 * 60 + 30
+    if cena_ini >= cena_fin - 30:
+        cena_ini = 20 * 60
+
+    lab_c = (ce.get("franja_nombre_tarde") or "").strip() or "Comida"
+    lab_n = (ce.get("franja_nombre_noche") or "").strip() or "Cena"
+
+    rows: list[dict] = []
+    for dia in range(1, 8):
+        rows.append(
+            {
+                "dia_semana": dia,
+                "min_inicio": comida_ini,
+                "min_fin": comida_fin,
+                "etiqueta": lab_c[:80],
+                "pct_web": None,
+                "activo": True,
+            }
+        )
+        rows.append(
+            {
+                "dia_semana": dia,
+                "min_inicio": cena_ini,
+                "min_fin": cena_fin,
+                "etiqueta": lab_n[:80],
+                "pct_web": None,
+                "activo": True,
+            }
+        )
+    return rows
 
 
 def replace_franjas_from_form(db, rows: list[dict]) -> None:
