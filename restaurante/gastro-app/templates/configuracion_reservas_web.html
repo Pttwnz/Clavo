@@ -4,13 +4,136 @@
 
 <div class="mx-auto" style="max-width: 960px;">
   <h1 class="h4 mb-2"><i class="bi bi-globe2 text-primary me-2"></i>Reservas desde la web pública</h1>
-  <p class="text-muted small mb-3">
-    Las peticiones del formulario de tu web se guardan en <strong>las mismas reservas</strong> que ves en el panel.
-    El cliente recibe un correo con enlace para pasar la reserva a <strong>Confirmada</strong> (usa el mismo SMTP que en Cierre de caja).
+  <p class="text-muted small mb-2">
+    Las peticiones del formulario de tu web se guardan en <strong>las mismas reservas</strong> que el panel.
+    El cliente puede recibir un correo con enlace para pasar la reserva a <strong>Confirmada</strong> (mismo SMTP que en Cierre de caja).
     Aforo total del salón activo: <strong>{{ aforo }}</strong> comensales (suma de capacidades de mesas).
   </p>
+  {% if not cfg.activo %}
+  <div class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <span><strong>Reservas online desactivadas.</strong> La web no aceptará reservas hasta que actives el interruptor abajo (tras guardar).</span>
+  </div>
+  {% endif %}
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    <a class="btn btn-sm btn-outline-primary" href="{{ url_reserva_publica }}" target="_blank" rel="noopener">
+      <i class="bi bi-box-arrow-up-right me-1"></i>Abrir web pública (#reserva)
+    </a>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.panel_web_estadisticas') }}">
+      <i class="bi bi-graph-up-arrow me-1"></i>Web · estadísticas
+    </a>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.reservas') }}">
+      <i class="bi bi-calendar-check me-1"></i>Reservas del panel
+    </a>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.cierre_caja_index') }}">
+      <i class="bi bi-envelope-at me-1"></i>SMTP (Cierre de caja)
+    </a>
+  </div>
+  <div class="alert alert-light border small mb-4 py-2">
+    <strong class="text-dark">Dos conceptos distintos:</strong>
+    <ul class="mb-0 mt-1 ps-3">
+      <li><strong>Franjas web</strong> (esta página): definen <em>en qué horas</em> se puede reservar online y el <em>% del aforo</em> reservable en cada tramo (solo cuentan reservas con origen «web» en pendiente / confirmada / llegó).</li>
+      <li><strong>Rangos mañana / tarde / noche</strong> en
+        <a href="{{ url_for('admin.configuracion_empresa') }}#rangos-turnos">Configuración empresa</a>:
+        sirven sobre todo para <em>horarios de personal</em> y vistas del módulo de horarios; no sustituyen las franjas web.</li>
+      <li><strong>Reservas manuales</strong> desde el panel no están bloqueadas por estas franjas (sí por mesa y solapes); conviene que los horarios coincidan con lo que ofrecéis en la web.</li>
+    </ul>
+  </div>
 
-  <form method="post" class="card border-0 shadow-sm rounded-3 mb-4">
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-4">
+      <h2 class="h6 text-uppercase text-muted mb-2">Plantillas rápidas de franjas</h2>
+      <p class="small text-muted mb-3">
+        Cada botón <strong>sustituye todas las filas</strong> de la tabla de franjas web por una plantilla.
+        Después puedes editar día a día en el formulario de abajo y pulsar <strong>Guardar todo</strong>.
+      </p>
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <form method="post" class="d-inline" onsubmit="return confirm('¿Sustituir todas las franjas web por comida (13:00–16:00) y cena (20:00–23:30), los siete días?');">
+          <input type="hidden" name="accion" value="plantilla_comida_cena">
+          <button type="submit" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-calendar-week me-1"></i>Comida + cena (toda la semana)
+          </button>
+        </form>
+        <form method="post" class="d-inline" onsubmit="return confirm('¿Sustituir todas las franjas web por solo cena 20:00–23:30 cada día?');">
+          <input type="hidden" name="accion" value="plantilla_solo_cena">
+          <button type="submit" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-moon-stars me-1"></i>Solo cena (toda la semana)
+          </button>
+        </form>
+        <form method="post" class="d-inline" onsubmit="return confirm('¿Generar franjas web a partir de los límites mañana/tarde/noche de Configuración empresa? Revisa el resultado antes de publicar.');">
+          <input type="hidden" name="accion" value="plantilla_desde_empresa">
+          <button type="submit" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-building me-1"></i>Desde rangos de empresa
+          </button>
+        </form>
+        <a href="{{ url_for('admin.configuracion_empresa') }}#rangos-turnos" class="btn btn-link btn-sm px-1">Editar rangos en empresa</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-4">
+      <h2 class="h6 text-uppercase text-muted mb-2">Vista previa de huecos</h2>
+      <p class="small text-muted mb-3">
+        Misma lógica que la API pública (cupo web, mesas, antelación). Útil aunque las reservas online estén desactivadas.
+        Base web usada para el enlace: <code class="small">{{ url_reserva_publica }}</code>
+        {% if cfg.public_base_url %}<span class="text-muted">(también tienes URL base en el formulario para correos)</span>{% endif %}
+      </p>
+      <form method="get" class="row row-cols-auto g-2 align-items-end mb-3">
+        <div class="col">
+          <label class="form-label small mb-0" for="preview_fecha">Fecha</label>
+          <input class="form-control form-control-sm" id="preview_fecha" type="date" name="preview_fecha" value="{{ preview_fecha }}">
+        </div>
+        <div class="col">
+          <label class="form-label small mb-0" for="preview_personas">Comensales</label>
+          <input class="form-control form-control-sm" id="preview_personas" type="number" name="preview_personas" min="1" max="99" value="{{ preview_personas }}">
+        </div>
+        <div class="col">
+          <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-arrow-repeat me-1"></i>Actualizar</button>
+        </div>
+      </form>
+      {% if preview_payload.get('ok') %}
+      <p class="small mb-2">
+        <strong>{{ preview_payload.slots|length }}</strong> huecos en el día; filas en verde admiten ahora <strong>{{ preview_personas }}</strong> pax (cupo + mesa).
+      </p>
+      <div class="table-responsive border rounded" style="max-height: 220px;">
+        <table class="table table-sm table-striped mb-0">
+          <thead class="table-light sticky-top"><tr><th>Hora</th><th>Franja</th><th>Cupo</th><th>¿Libre?</th></tr></thead>
+          <tbody>
+            {% for s in preview_payload.slots %}
+            <tr class="{% if s.disponible %}table-success{% endif %}">
+              <td>{{ s.hora }}</td>
+              <td>{{ s.slot_label or '—' }}</td>
+              <td class="small">{{ s.remaining }} / {{ s.quota }} pax web</td>
+              <td>{% if s.disponible %}<span class="text-success">Sí</span>{% else %}<span class="text-muted">No</span>{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="alert alert-warning mb-0 small">{{ preview_payload.get('error', 'Sin datos.') }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-4">
+      <h2 class="h6 text-uppercase text-muted mb-2">Probar correo de confirmación</h2>
+      <p class="small text-muted mb-3">Misma cuenta SMTP que <a href="{{ url_for('admin.cierre_caja_index') }}">Cierre de caja</a>. El enlace del mensaje es solo de ejemplo y no confirma reservas.</p>
+      <form method="post" class="row g-2 align-items-end flex-wrap">
+        <input type="hidden" name="accion" value="prueba_correo_confirmacion">
+        <div class="col-md-6">
+          <label class="form-label small mb-0" for="prueba_email">Correo destino</label>
+          <input class="form-control form-control-sm" id="prueba_email" type="email" name="prueba_email" placeholder="tu@correo.com" required autocomplete="email">
+        </div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-send me-1"></i>Enviar prueba</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <form method="post" class="card border-0 shadow-sm rounded-3 mb-4" id="form-reservas-web-completo">
     <div class="card-body p-4">
       <h2 class="h6 text-uppercase text-muted mb-3">Activación y límites</h2>
       <div class="form-check form-switch mb-3">
@@ -29,6 +152,7 @@
         <div class="col-md-3">
           <label class="form-label">Antelación mín. (min)</label>
           <input type="number" class="form-control" name="anticipacion_minutos" min="0" value="{{ cfg.anticipacion_minutos }}">
+          <span class="text-muted small">Ej. 120 = no permitir reservas con menos de 2 h de margen.</span>
         </div>
         <div class="col-md-3">
           <label class="form-label">Máx. días de antelación</label>
@@ -39,13 +163,15 @@
         <div class="col-md-4">
           <label class="form-label">Intervalo entre huecos (min)</label>
           <input type="number" class="form-control" name="intervalo_minutos" min="5" max="120" value="{{ cfg.intervalo_minutos }}">
+          <span class="text-muted small">En la web se ofrecen slots cada X minutos dentro de cada franja.</span>
         </div>
         <div class="col-md-4">
-          <label class="form-label">% web por defecto <span class="text-muted small">(si la franja no lleva el suyo)</span></label>
+          <label class="form-label">% web por defecto</label>
           <input type="number" class="form-control" name="pct_web_defecto" min="1" max="100" value="{{ cfg.pct_web_defecto }}">
+          <span class="text-muted small">Si una fila de franja deja «% web» vacío, se usa este valor sobre el aforo total.</span>
         </div>
         <div class="col-md-4">
-          <label class="form-label">Validez enlace confirmación (horas)</label>
+          <label class="form-label">Validez enlace confirmación (h)</label>
           <input type="number" class="form-control" name="confirmacion_horas" min="1" value="{{ cfg.confirmacion_horas }}">
         </div>
       </div>
@@ -54,55 +180,150 @@
         <label class="form-check-label" for="wmail">Exigir correo electrónico en el formulario</label>
       </div>
       <div class="mb-3">
-        <label class="form-label">URL pública base <span class="text-muted small">(para enlaces del correo; si vacío, se usa la URL del servidor Flask)</span></label>
+        <label class="form-label">URL pública base <span class="text-muted small">(enlaces del correo; si vacío, URL del servidor)</span></label>
         <input type="url" class="form-control" name="public_base_url" placeholder="https://tudominio.com" value="{{ cfg.public_base_url or '' }}">
       </div>
       <div class="mb-0">
-        <label class="form-label">Texto informativo <span class="text-muted small">(opcional; se puede exponer por API a la web)</span></label>
+        <label class="form-label">Texto informativo <span class="text-muted small">(opcional; API pública puede exponerlo)</span></label>
         <textarea class="form-control" name="texto_info" rows="2" maxlength="2000">{{ cfg.texto_info or '' }}</textarea>
       </div>
     </div>
 
     <div class="card-body border-top p-4">
-      <h2 class="h6 text-uppercase text-muted mb-3">Franjas horarias (día ISO 1=lunes … 7=domingo)</h2>
-      <p class="small text-muted mb-2">Horas en formato <strong>HH:MM</strong> (24 h). El cupo web por franja es el % del aforo total; solo cuentan reservas con origen «web» en estados pendiente / confirmada / en sala.</p>
+      <h2 class="h6 text-uppercase text-muted mb-2">Franjas horarias para la web</h2>
+      <p class="small text-muted mb-2">
+        <strong>Día</strong>: 1 = lunes … 7 = domingo (ISO). Dentro de cada franja, la web solo ofrece huecos según el <strong>intervalo</strong> de arriba.
+        <strong>% web</strong> en una fila: cupo online para ese tramo (vacío = «% web por defecto»). Desactiva una fila con «No» en Activa.
+      </p>
       <div class="table-responsive">
-        <table class="table table-sm align-middle">
-          <thead><tr><th>Día</th><th>Inicio</th><th>Fin</th><th>Etiqueta</th><th>% web <span class="text-muted fw-normal">(vacío = defecto)</span></th><th>Activa</th></tr></thead>
+        <table class="table table-sm align-middle" id="tabla-franjas-web">
+          <thead>
+            <tr>
+              <th style="min-width:7rem;">Día</th>
+              <th style="min-width:6.5rem;">Inicio</th>
+              <th style="min-width:6.5rem;">Fin</th>
+              <th>Etiqueta</th>
+              <th style="min-width:5rem;">% web</th>
+              <th style="min-width:6.5rem;">Cupo web (~)</th>
+              <th style="min-width:5rem;">Activa</th>
+              <th></th>
+            </tr>
+          </thead>
           <tbody>
-            {% set nrows = [franjas|length + 4, 6]|max %}
+            {% set nrows = [franjas|length + 6, 10]|max %}
             {% for i in range(nrows) %}
             {% set f = franjas[i] if i < franjas|length else none %}
-            <tr>
-              <td style="min-width:8rem;">
+            <tr class="js-franja-row">
+              <td>
                 <select class="form-select form-select-sm" name="franja_dia">
+                  <option value="">—</option>
                   {% for d, lbl in dias_nombre %}
                   <option value="{{ d }}" {% if f and f.dia_semana|int == d %}selected{% endif %}>{{ lbl }}</option>
                   {% endfor %}
                 </select>
               </td>
-              <td><input class="form-control form-control-sm" name="franja_m_ini" type="text" placeholder="13:00" value="{% if f %}{{ '%02d:%02d' % (f.min_inicio|int // 60, f.min_inicio|int % 60) }}{% endif %}"></td>
-              <td><input class="form-control form-control-sm" name="franja_m_fin" type="text" placeholder="16:00" value="{% if f %}{{ '%02d:%02d' % (f.min_fin|int // 60, f.min_fin|int % 60) }}{% endif %}"></td>
+              <td>
+                <input class="form-control form-control-sm js-franja-time" name="franja_m_ini" type="time" step="60"
+                  value="{% if f %}{{ '%02d:%02d' % (f.min_inicio|int // 60, f.min_inicio|int % 60) }}{% endif %}">
+              </td>
+              <td>
+                <input class="form-control form-control-sm js-franja-time" name="franja_m_fin" type="time" step="60"
+                  value="{% if f %}{{ '%02d:%02d' % (f.min_fin|int // 60, f.min_fin|int % 60) }}{% endif %}">
+              </td>
               <td><input class="form-control form-control-sm" name="franja_etiqueta" placeholder="Comida" value="{{ f.etiqueta if f else '' }}"></td>
-              <td><input class="form-control form-control-sm" name="franja_pct" type="number" min="1" max="100" placeholder="70" value="{{ f.pct_web if f and f.pct_web is not none else '' }}"></td>
+              <td><input class="form-control form-control-sm" name="franja_pct" type="number" min="1" max="100" placeholder="vacío=defecto" value="{{ f.pct_web if f and f.pct_web is not none else '' }}"></td>
+              <td class="small text-muted">
+                {% if f %}
+                  {% set _pc = f.pct_web if f.pct_web is not none else cfg.pct_web_defecto %}
+                  ~{{ (aforo * (_pc|int)) // 100 if aforo else 0 }} pax
+                {% else %}—{% endif %}
+              </td>
               <td>
                 <select class="form-select form-select-sm" name="franja_activo">
                   <option value="1" {% if not f or f.activo %}selected{% endif %}>Sí</option>
                   <option value="0" {% if f and not f.activo %}selected{% endif %}>No</option>
                 </select>
               </td>
+              <td class="text-nowrap">
+                <button type="button" class="btn btn-link btn-sm p-0 js-clonar-semana" title="Copiar inicio, fin, etiqueta y % de esta fila a lunes–domingo (crea o sobrescribe 7 filas; revisa después)">A toda la semana</button>
+              </td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
+      <p class="small text-muted mb-0">
+        Las filas con día «—» o sin hora se ignoran al guardar. <strong>A toda la semana</strong> copia la fila actual a lunes–domingo; si hace falta, se añaden filas vacías al final de la tabla automáticamente.
+      </p>
     </div>
 
-    <div class="card-footer bg-light border-0 py-3 px-4 d-flex gap-2">
-      <button type="submit" class="btn btn-primary"><i class="bi bi-check2 me-1"></i>Guardar</button>
+    <div class="card-footer bg-light border-0 py-3 px-4 d-flex flex-wrap gap-2">
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check2 me-1"></i>Guardar todo</button>
       <a href="{{ url_for('admin.panel') }}" class="btn btn-outline-secondary">Volver al panel</a>
+      <a href="{{ url_for('admin.reservas') }}" class="btn btn-outline-secondary">Ir a reservas</a>
     </div>
   </form>
 </div>
+
+<script>
+(function () {
+  var dias = [
+    { v: '1', t: 'Lunes' },
+    { v: '2', t: 'Martes' },
+    { v: '3', t: 'Miércoles' },
+    { v: '4', t: 'Jueves' },
+    { v: '5', t: 'Viernes' },
+    { v: '6', t: 'Sábado' },
+    { v: '7', t: 'Domingo' }
+  ];
+  document.getElementById('tabla-franjas-web').addEventListener('click', function (ev) {
+    var btn = ev.target.closest('.js-clonar-semana');
+    if (!btn) return;
+    var tr = btn.closest('tr');
+    if (!tr) return;
+    var ini = tr.querySelector('input[name="franja_m_ini"]').value;
+    var fin = tr.querySelector('input[name="franja_m_fin"]').value;
+    var lab = tr.querySelector('input[name="franja_etiqueta"]').value.trim();
+    var pct = tr.querySelector('input[name="franja_pct"]').value.trim();
+    if (!ini || !fin) {
+      alert('Rellena inicio y fin en esta fila antes de copiar a toda la semana.');
+      return;
+    }
+    var tbody = tr.parentElement;
+    var rows = tbody.querySelectorAll('tr.js-franja-row');
+    var need = 7;
+    var startIdx = Array.prototype.indexOf.call(rows, tr);
+    if (startIdx < 0) return;
+    while (startIdx + need > rows.length) {
+      var all = tbody.querySelectorAll('tr.js-franja-row');
+      var last = all[all.length - 1];
+      var clone = last.cloneNode(true);
+      clone.querySelectorAll('input').forEach(function (inp) {
+        if (inp.type === 'time') inp.value = '';
+        else if (inp.name === 'franja_etiqueta' || inp.name === 'franja_pct') inp.value = '';
+      });
+      var sd = clone.querySelector('select[name="franja_dia"]');
+      if (sd) sd.value = '';
+      var ac = clone.querySelector('select[name="franja_activo"]');
+      if (ac) ac.value = '1';
+      tbody.appendChild(clone);
+      rows = tbody.querySelectorAll('tr.js-franja-row');
+    }
+    for (var i = 0; i < need; i++) {
+      var r = rows[startIdx + i];
+      if (!r) break;
+      var sel = r.querySelector('select[name="franja_dia"]');
+      var opt = sel.querySelector('option[value="' + dias[i].v + '"]');
+      if (opt) sel.value = dias[i].v;
+      r.querySelector('input[name="franja_m_ini"]').value = ini;
+      r.querySelector('input[name="franja_m_fin"]').value = fin;
+      r.querySelector('input[name="franja_etiqueta"]').value = lab;
+      r.querySelector('input[name="franja_pct"]').value = pct;
+      var act = r.querySelector('select[name="franja_activo"]');
+      if (act) act.value = '1';
+    }
+  });
+})();
+</script>
 
 {% endblock %}

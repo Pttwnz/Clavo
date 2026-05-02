@@ -6,8 +6,14 @@ import secrets
 from datetime import date, datetime, timedelta
 from typing import Any
 
-from reservas.salon_helpers import ensure_salon_tables, list_objetos_mesas_esquema_activo, seed_salon_if_empty
-from reservas.utils import ahora_madrid, hora_texto_a_minutos
+from reservas.salon_helpers import (
+    capacidad_union_mesas,
+    ensure_salon_tables,
+    list_objetos_mesas_esquema_activo,
+    list_uniones_esquema_activo,
+    seed_salon_if_empty,
+)
+from reservas.utils import ahora_madrid, hora_texto_a_minutos, mesa_tiene_conflicto_horario, normalizar_nombre_mesa
 from reservas.utils import _variantes_fecha_reserva
 from reservas.web_reservas_schema import get_web_reserva_config, list_franjas
 
@@ -118,9 +124,10 @@ def evaluar_reserva_web(
     personas: int,
     cfg: dict | None = None,
     excluir_reserva_id: int | None = None,
+    for_preview: bool = False,
 ) -> dict[str, Any]:
     cfg = cfg or get_web_reserva_config(db)
-    if not cfg.get("activo"):
+    if not for_preview and not cfg.get("activo"):
         return {"ok": False, "error": "Las reservas online están desactivadas."}
     p = int(personas)
     if p < int(cfg["min_personas"]) or p > int(cfg["max_personas"]):
@@ -210,15 +217,249 @@ def iter_slots_del_dia(db, fecha_iso: str, cfg: dict) -> list[int]:
     return sorted(set(out))
 
 
+def _float_mesa(d: dict, key: str, default: float = 0.0) -> float:
+    try:
+        return float(d.get(key) or default)
+    except (TypeError, ValueError):
+        return default
+
+
+def _mesas_plano_cercanas(a: dict, b: dict, gap_max: float = 80.0) -> bool:
+    """True si en el plano están una al lado de la otra (separación pequeña y solape en el otro eje)."""
+    ax1, ay1 = _float_mesa(a, "x"), _float_mesa(a, "y")
+    aw, ah = _float_mesa(a, "width", 72.0), _float_mesa(a, "height", 72.0)
+    bx1, by1 = _float_mesa(b, "x"), _float_mesa(b, "y")
+    bw, bh = _float_mesa(b, "width", 72.0), _float_mesa(b, "height", 72.0)
+    ax2, ay2 = ax1 + aw, ay1 + ah
+    bx2, by2 = bx1 + bw, by1 + bh
+    h_gap = max(0.0, max(ax1, bx1) - min(ax2, bx2))
+    v_gap = max(0.0, max(ay1, by1) - min(ay2, by2))
+    y_overlap = min(ay2, by2) - max(ay1, by1)
+    x_overlap = min(ax2, bx2) - max(ax1, bx1)
+    if y_overlap > min(ah, bh) * 0.22 and h_gap <= gap_max:
+        return True
+    if x_overlap > min(aw, bw) * 0.22 and v_gap <= gap_max:
+        return True
+    return False
+
+
+def opciones_mesa_reserva_web(
+    db,
+    *,
+    fecha_iso: str,
+    hora_str: str,
+    personas: int,
+    excluir_reserva_id: int | None = None,
+) -> list[dict[str, Any]]:
+    """
+    Mesas sueltas que admiten pax, uniones configuradas, o dos mesas adyacentes en el plano.
+    Orden: mejor ajuste de capacidad, luego tipo (mesa < unión < par).
+    """
+    p = max(1, int(personas))
+    fecha_key = fecha_iso.strip()[:10]
+    hora_key = hora_str.strip()[:12]
+    opts: list[dict[str, Any]] = []
+    seen_mesa: set[str] = set()
+
+    def push(kind: str, mesa: str, capacidad: int, label: str) -> None:
+        k = normalizar_nombre_mesa(mesa)
+        if not k or k in seen_mesa:
+            return
+        seen_mesa.add(k)
+        opts.append({"kind": kind, "mesa": mesa.strip(), "capacidad": int(capacidad), "label": label})
+
+    for m in list_objetos_mesas_esquema_activo(db):
+        md = dict(m)
+        nom = (md.get("nombre") or "").strip()
+        if not nom:
+            continue
+        try:
+            cap = int(md.get("capacidad") or 0)
+        except (TypeError, ValueError):
+            cap = 4
+        if cap < p:
+            continue
+        if mesa_tiene_conflicto_horario(db, fecha_key, nom, hora_key, excluir_reserva_id=excluir_reserva_id):
+            continue
+        push("single", nom, cap, f"Mesa {nom} (hasta {cap} comensales)")
+
+    for u in list_uniones_esquema_activo(db):
+        nom = (u.get("nombre") or "").strip()
+        if not nom:
+            continue
+        try:
+            cap_u = int(u.get("capacidad_total") or 0)
+        except (TypeError, ValueError):
+            cap_u = 0
+        if cap_u < p:
+            continue
+        if mesa_tiene_conflicto_horario(db, fecha_key, nom, hora_key, excluir_reserva_id=excluir_reserva_id):
+            continue
+        push("union", nom, cap_u, f"Unión {nom} (hasta {cap_u} comensales)")
+
+    mesas_rows = [dict(m) for m in list_objetos_mesas_esquema_activo(db)]
+    n = len(mesas_rows)
+    for i in range(n):
+        for j in range(i + 1, n):
+            a, b = mesas_rows[i], mesas_rows[j]
+            n1 = (a.get("nombre") or "").strip()
+            n2 = (b.get("nombre") or "").strip()
+            if not n1 or not n2:
+                continue
+            try:
+                c1 = int(a.get("capacidad") or 0)
+                c2 = int(b.get("capacidad") or 0)
+            except (TypeError, ValueError):
+                c1, c2 = 4, 4
+            if not _mesas_plano_cercanas(a, b):
+                continue
+            cap_pair = capacidad_union_mesas([c1, c2])
+            if cap_pair < p:
+                continue
+            if mesa_tiene_conflicto_horario(db, fecha_key, n1, hora_key, excluir_reserva_id=excluir_reserva_id):
+                continue
+            if mesa_tiene_conflicto_horario(db, fecha_key, n2, hora_key, excluir_reserva_id=excluir_reserva_id):
+                continue
+            n_lo, n_hi = sorted((n1, n2), key=lambda x: normalizar_nombre_mesa(x))
+            mesa_pair = f"{n_lo} + {n_hi}"
+            push(
+                "pair",
+                mesa_pair,
+                cap_pair,
+                f"Mesas juntas {n_lo} y {n_hi} (aprox. {cap_pair} comensales)",
+            )
+
+    kind_rank = {"single": 0, "union": 1, "pair": 2}
+    opts.sort(
+        key=lambda o: (
+            abs(int(o["capacidad"]) - p),
+            kind_rank.get(str(o.get("kind")), 9),
+            str(o.get("mesa") or "").lower(),
+        )
+    )
+    return opts
+
+
+def mesa_opcion_valida_para_web(
+    elegida: str,
+    opciones: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    """Devuelve la opción coincidente o None."""
+
+    def norm_pair_key(s: str) -> tuple[str, ...]:
+        parts = [normalizar_nombre_mesa(x) for x in re.split(r"\s*\+\s*", s.strip()) if x.strip()]
+        if len(parts) > 1:
+            return tuple(sorted(parts))
+        return (normalizar_nombre_mesa(s),)
+
+    e = (elegida or "").strip()
+    if not e:
+        return None
+    key_e = norm_pair_key(e)
+    for o in opciones:
+        m = str(o.get("mesa") or "").strip()
+        if not m:
+            continue
+        if normalizar_nombre_mesa(m) == normalizar_nombre_mesa(e):
+            return o
+        if norm_pair_key(m) == key_e and len(key_e) > 1:
+            return o
+    return None
+
+
+def alternativas_horario_cercanas_reserva_web(
+    db,
+    *,
+    fecha_iso: str,
+    hora_pedida: str,
+    personas: int,
+    cfg: dict | None = None,
+    max_items: int = 8,
+) -> list[dict[str, Any]]:
+    """
+    Otras horas del mismo día con cupo web y al menos una mesa libre,
+    ordenadas por cercanía a ``hora_pedida`` (minutos desde medianoche).
+    """
+    cfg = cfg or get_web_reserva_config(db)
+    if not cfg.get("activo"):
+        return []
+    try:
+        d = date.fromisoformat(fecha_iso[:10])
+    except ValueError:
+        return []
+    hoy = ahora_madrid().date()
+    max_day = hoy + timedelta(days=max(1, int(cfg["max_dias_antelacion"])))
+    if d < hoy or d > max_day:
+        return []
+
+    p = max(1, int(personas))
+    hm0 = hora_texto_a_minutos(hora_pedida.strip()[:12])
+    if hm0 is None:
+        hm0 = 12 * 60
+
+    now = ahora_madrid()
+    ant = max(0, int(cfg["anticipacion_minutos"]))
+    tz = now.tzinfo
+
+    candidatos: list[tuple[int, int, str, str | None, int]] = []
+
+    for minute in iter_slots_del_dia(db, fecha_iso, cfg):
+        hhmm = minutos_a_hhmm(minute)
+        hm = hora_texto_a_minutos(hhmm)
+        if hm is None:
+            continue
+        try:
+            start_naive = datetime(d.year, d.month, d.day, minute // 60, minute % 60)
+        except ValueError:
+            continue
+        start_dt = start_naive.replace(tzinfo=tz) if tz else start_naive
+        if start_dt < now + timedelta(minutes=ant):
+            continue
+
+        ev = evaluar_reserva_web(db, fecha_iso=fecha_iso, hora_str=hhmm, personas=p, cfg=cfg)
+        if not ev.get("ok"):
+            continue
+        remaining = int(ev.get("remaining") or 0)
+        if remaining < p:
+            continue
+        if not opciones_mesa_reserva_web(db, fecha_iso=fecha_iso, hora_str=hhmm, personas=p):
+            continue
+        fr = ev.get("franja") or {}
+        slot_label = (fr.get("etiqueta") or "").strip() or None
+        dist = abs(hm - hm0)
+        candidatos.append((dist, hm, hhmm, slot_label, remaining))
+
+    candidatos.sort(key=lambda x: (x[0], x[1]))
+    out: list[dict[str, Any]] = []
+    seen_h: set[int] = set()
+    for dist, hm, hhmm, slot_label, remaining in candidatos:
+        if hm in seen_h:
+            continue
+        seen_h.add(hm)
+        out.append(
+            {
+                "fecha": fecha_iso[:10],
+                "hora": hhmm,
+                "slot_label": slot_label,
+                "remaining": remaining,
+                "minutos_desde_pedida": dist,
+            }
+        )
+        if len(out) >= max_items:
+            break
+    return out
+
+
 def slots_disponibles_payload(
     db,
     *,
     fecha_iso: str,
     personas: int,
     cfg: dict | None = None,
+    for_preview: bool = False,
 ) -> dict[str, Any]:
     cfg = cfg or get_web_reserva_config(db)
-    if not cfg.get("activo"):
+    if not for_preview and not cfg.get("activo"):
         return {"ok": False, "error": "Las reservas online están desactivadas.", "slots": []}
     try:
         d = date.fromisoformat(fecha_iso[:10])
@@ -256,10 +497,13 @@ def slots_disponibles_payload(
         quota = _cuota_para_franja(total_seats, pct)
         used = suma_personas_web_en_franja(db, fecha_iso, franja)
         remaining = quota - used
+        mesa_ok = bool(
+            opciones_mesa_reserva_web(db, fecha_iso=fecha_iso, hora_str=hhmm, personas=p)
+        )
         slots_out.append(
             {
                 "hora": hhmm,
-                "disponible": remaining >= p,
+                "disponible": remaining >= p and mesa_ok,
                 "remaining": max(0, remaining),
                 "quota": quota,
                 "used": used,
@@ -300,12 +544,16 @@ def insertar_reserva_web(
     notas: str | None,
     token: str,
     expires_iso: str,
+    mesa: str,
 ) -> int:
+    mesa_v = (mesa or "").strip()[:200]
+    if not mesa_v:
+        raise ValueError("mesa_obligatoria")
     cur = db.execute(
         """
         INSERT INTO reservas (nombre, telefono, personas, fecha, hora, notas, mesa, estado,
             email, confirm_token, confirm_expires, origen)
-        VALUES (?, ?, ?, ?, ?, ?, '', 'Pendiente', ?, ?, ?, 'web')
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'Pendiente', ?, ?, ?, 'web')
         """,
         (
             nombre.strip()[:200],
@@ -314,6 +562,7 @@ def insertar_reserva_web(
             fecha_iso[:10],
             hora_str.strip()[:12],
             (notas or "").strip()[:2000] or None,
+            mesa_v,
             (email or "").strip()[:200] or None,
             token,
             expires_iso,
