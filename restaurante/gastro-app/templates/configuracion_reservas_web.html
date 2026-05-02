@@ -190,27 +190,49 @@
     </div>
 
     <div class="card-body border-top p-4">
-      <h2 class="h6 text-uppercase text-muted mb-2">Franjas horarias para la web</h2>
-      <p class="small text-muted mb-2">
-        <strong>Día</strong>: 1 = lunes … 7 = domingo (ISO). Dentro de cada franja, la web solo ofrece huecos según el <strong>intervalo</strong> de arriba.
-        <strong>% web</strong> en una fila: cupo online para ese tramo (vacío = «% web por defecto»). Desactiva una fila con «No» en Activa.
+      <h2 class="h6 text-uppercase text-muted mb-1">Franjas horarias para la web</h2>
+      <p class="small text-muted mb-3">
+        Aquí defines <strong>cuándo</strong> el cliente puede elegir hora en la web y <strong>cuántas personas</strong> como máximo pueden reservar online en ese tramo (sin contar reservas del panel ni walk-in).
       </p>
-      <div class="table-responsive">
+
+      <details class="border rounded-3 mb-3 bg-light px-3 py-2">
+        <summary class="fw-semibold small py-1" style="cursor:pointer;">Cómo funciona (léelo una vez)</summary>
+        <ol class="small text-muted mb-2 ps-3 mt-2">
+          <li><strong>Día</strong>: cada fila es un tramo de <strong>un día de la semana</strong> (lunes a domingo, norma ISO 1–7). El mismo servicio repetido cada día requiere siete filas o el botón «A toda la semana».</li>
+          <li><strong>Inicio / Fin</strong>: ventana horaria local. Dentro de ella, la web genera huecos cada <strong>intervalo</strong> de minutos (arriba). Ej.: 13:00–16:00 con intervalo 30 → 13:00, 13:30, 14:00…</li>
+          <li><strong>Etiqueta</strong>: texto opcional (ej. «Comida») que ve el cliente al elegir hora.</li>
+          <li><strong>% web</strong>: porcentaje del <strong>aforo total del salón</strong> ({{ aforo }} pax) reservable <em>online</em> en ese tramo. Vacío = se usa «% web por defecto» de arriba. El cupo se reparte entre reservas web en pendiente / confirmada / llegó.</li>
+          <li><strong>Cupo (~)</strong>: aproximación <code>aforo × % ÷ 100</code> (el motor puede reservar 1 plaza mínima si el % es bajo).</li>
+          <li><strong>Activa</strong>: «No» desactiva la fila sin borrarla (útil para guardar plantillas).</li>
+        </ol>
+        <p class="small text-muted mb-0"><strong>Al guardar</strong> se ignoran filas sin día o sin hora de inicio/fin. No puede haber dos franjas <em>activas</em> solapadas el mismo día. Tras guardar, revisa la <strong>vista previa de huecos</strong> más arriba.</p>
+      </details>
+
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+        <button type="button" class="btn btn-sm btn-outline-primary" id="js-franja-add-row">
+          <i class="bi bi-plus-lg me-1"></i>Añadir fila vacía
+        </button>
+        <span class="small text-muted">Puedes tener muchas filas; solo cuentan las que tengan día y horas válidas.</span>
+      </div>
+
+      <div class="table-responsive" id="tabla-franjas-web-wrap"
+           data-aforo="{{ aforo|int }}"
+           data-pct-defecto="{{ cfg.pct_web_defecto|int }}">
         <table class="table table-sm align-middle" id="tabla-franjas-web">
-          <thead>
+          <thead class="table-light">
             <tr>
-              <th style="min-width:7rem;">Día</th>
-              <th style="min-width:6.5rem;">Inicio</th>
-              <th style="min-width:6.5rem;">Fin</th>
-              <th>Etiqueta</th>
-              <th style="min-width:5rem;">% web</th>
-              <th style="min-width:6.5rem;">Cupo web (~)</th>
-              <th style="min-width:5rem;">Activa</th>
-              <th></th>
+              <th style="min-width:7.5rem;" title="Día de la semana (ISO 1=lunes … 7=domingo)">Día</th>
+              <th style="min-width:6.5rem;" title="Primera hora en la que se puede ofrecer reserva">Inicio</th>
+              <th style="min-width:6.5rem;" title="Última hora incluida en la franja">Fin</th>
+              <th title="Texto opcional en la web">Etiqueta</th>
+              <th style="min-width:5.5rem;" title="Porcentaje del aforo del salón reservable por la web en este tramo">% web</th>
+              <th style="min-width:6.5rem;" title="Aproximación de plazas web">Cupo (~)</th>
+              <th style="min-width:5rem;" title="Si está en No, esta franja no se usa">Activa</th>
+              <th style="min-width:7rem;"></th>
             </tr>
           </thead>
           <tbody>
-            {% set nrows = [franjas|length + 6, 10]|max %}
+            {% set nrows = [franjas|length + 8, 14]|max %}
             {% for i in range(nrows) %}
             {% set f = franjas[i] if i < franjas|length else none %}
             <tr class="js-franja-row">
@@ -218,7 +240,7 @@
                 <select class="form-select form-select-sm" name="franja_dia">
                   <option value="">—</option>
                   {% for d, lbl in dias_nombre %}
-                  <option value="{{ d }}" {% if f and f.dia_semana|int == d %}selected{% endif %}>{{ lbl }}</option>
+                  <option value="{{ d }}" {% if f and f.dia_semana|int == d %}selected{% endif %}>{{ d }} · {{ lbl }}</option>
                   {% endfor %}
                 </select>
               </td>
@@ -230,13 +252,10 @@
                 <input class="form-control form-control-sm js-franja-time" name="franja_m_fin" type="time" step="60"
                   value="{% if f %}{{ '%02d:%02d' % (f.min_fin|int // 60, f.min_fin|int % 60) }}{% endif %}">
               </td>
-              <td><input class="form-control form-control-sm" name="franja_etiqueta" placeholder="Comida" value="{{ f.etiqueta if f else '' }}"></td>
-              <td><input class="form-control form-control-sm" name="franja_pct" type="number" min="1" max="100" placeholder="vacío=defecto" value="{{ f.pct_web if f and f.pct_web is not none else '' }}"></td>
+              <td><input class="form-control form-control-sm" name="franja_etiqueta" placeholder="Ej. Comida" value="{{ f.etiqueta if f else '' }}"></td>
+              <td><input class="form-control form-control-sm js-franja-pct" name="franja_pct" type="number" min="1" max="100" placeholder="Defecto" value="{{ f.pct_web if f and f.pct_web is not none else '' }}"></td>
               <td class="small text-muted">
-                {% if f %}
-                  {% set _pc = f.pct_web if f.pct_web is not none else cfg.pct_web_defecto %}
-                  ~{{ (aforo * (_pc|int)) // 100 if aforo else 0 }} pax
-                {% else %}—{% endif %}
+                <span class="js-cupo-preview">{% if f %}{% set _pc = f.pct_web if f.pct_web is not none else cfg.pct_web_defecto %}~{{ (aforo * (_pc|int)) // 100 if aforo else 0 }} pax{% else %}—{% endif %}</span>
               </td>
               <td>
                 <select class="form-select form-select-sm" name="franja_activo">
@@ -244,8 +263,9 @@
                   <option value="0" {% if f and not f.activo %}selected{% endif %}>No</option>
                 </select>
               </td>
-              <td class="text-nowrap">
-                <button type="button" class="btn btn-link btn-sm p-0 js-clonar-semana" title="Copiar inicio, fin, etiqueta y % de esta fila a lunes–domingo (crea o sobrescribe 7 filas; revisa después)">A toda la semana</button>
+              <td class="text-nowrap small">
+                <button type="button" class="btn btn-link btn-sm p-0 js-clonar-semana" title="Rellena 7 filas seguidas (lun–dom) con la misma hora, etiqueta y %">A toda la semana</button>
+                <button type="button" class="btn btn-link btn-sm p-0 text-danger js-franja-clear" title="Vaciar esta fila">Limpiar</button>
               </td>
             </tr>
             {% endfor %}
@@ -253,7 +273,7 @@
         </table>
       </div>
       <p class="small text-muted mb-0">
-        Las filas con día «—» o sin hora se ignoran al guardar. <strong>A toda la semana</strong> copia la fila actual a lunes–domingo; si hace falta, se añaden filas vacías al final de la tabla automáticamente.
+        <strong>Guardar todo</strong> (abajo) aplica activación, límites y esta tabla. Las filas con día «—» o sin inicio/fin se descartan. «A toda la semana» rellena 7 filas desde la actual; si no caben, se añaden filas al final.
       </p>
     </div>
 
@@ -267,16 +287,75 @@
 
 <script>
 (function () {
+  var wrap = document.getElementById('tabla-franjas-web-wrap');
+  var table = document.getElementById('tabla-franjas-web');
+  if (!wrap || !table) return;
+
+  function aforoDef() {
+    var a = parseInt(wrap.getAttribute('data-aforo') || '0', 10);
+    var d = parseInt(wrap.getAttribute('data-pct-defecto') || '70', 10);
+    return { aforo: Number.isFinite(a) ? a : 0, defPct: Number.isFinite(d) ? Math.max(1, Math.min(100, d)) : 70 };
+  }
+
+  function updateCupoRow(tr) {
+    var span = tr.querySelector('.js-cupo-preview');
+    if (!span) return;
+    var dia = (tr.querySelector('select[name="franja_dia"]') || {}).value;
+    if (!dia) {
+      span.textContent = '—';
+      return;
+    }
+    var pctInp = tr.querySelector('input[name="franja_pct"]');
+    var raw = (pctInp && pctInp.value.trim()) ? parseInt(pctInp.value, 10) : NaN;
+    var ad = aforoDef();
+    var pct = Number.isFinite(raw) ? Math.max(1, Math.min(100, raw)) : ad.defPct;
+    var n = ad.aforo ? Math.floor(ad.aforo * pct / 100) : 0;
+    span.textContent = '~' + n + ' pax';
+  }
+
+  function refreshAllCupos() {
+    table.querySelectorAll('tr.js-franja-row').forEach(updateCupoRow);
+  }
+
   var dias = [
-    { v: '1', t: 'Lunes' },
-    { v: '2', t: 'Martes' },
-    { v: '3', t: 'Miércoles' },
-    { v: '4', t: 'Jueves' },
-    { v: '5', t: 'Viernes' },
-    { v: '6', t: 'Sábado' },
-    { v: '7', t: 'Domingo' }
+    { v: '1' }, { v: '2' }, { v: '3' }, { v: '4' }, { v: '5' }, { v: '6' }, { v: '7' }
   ];
-  document.getElementById('tabla-franjas-web').addEventListener('click', function (ev) {
+
+  function clearRow(tr) {
+    var sd = tr.querySelector('select[name="franja_dia"]');
+    if (sd) sd.value = '';
+    tr.querySelectorAll('input[name="franja_m_ini"], input[name="franja_m_fin"]').forEach(function (inp) { inp.value = ''; });
+    var et = tr.querySelector('input[name="franja_etiqueta"]');
+    if (et) et.value = '';
+    var pc = tr.querySelector('input[name="franja_pct"]');
+    if (pc) pc.value = '';
+    var ac = tr.querySelector('select[name="franja_activo"]');
+    if (ac) ac.value = '1';
+    updateCupoRow(tr);
+  }
+
+  function appendEmptyRow() {
+    var tbody = table.querySelector('tbody');
+    var rows = tbody.querySelectorAll('tr.js-franja-row');
+    var last = rows[rows.length - 1];
+    var clone = last.cloneNode(true);
+    clearRow(clone);
+    tbody.appendChild(clone);
+  }
+
+  wrap.addEventListener('input', function (ev) {
+    if (ev.target && ev.target.name === 'franja_pct') updateCupoRow(ev.target.closest('tr'));
+  });
+  wrap.addEventListener('change', function (ev) {
+    if (ev.target && ev.target.name === 'franja_dia') updateCupoRow(ev.target.closest('tr'));
+  });
+
+  table.addEventListener('click', function (ev) {
+    var clr = ev.target.closest('.js-franja-clear');
+    if (clr) {
+      clearRow(clr.closest('tr'));
+      return;
+    }
     var btn = ev.target.closest('.js-clonar-semana');
     if (!btn) return;
     var tr = btn.closest('tr');
@@ -295,34 +374,32 @@
     var startIdx = Array.prototype.indexOf.call(rows, tr);
     if (startIdx < 0) return;
     while (startIdx + need > rows.length) {
-      var all = tbody.querySelectorAll('tr.js-franja-row');
-      var last = all[all.length - 1];
-      var clone = last.cloneNode(true);
-      clone.querySelectorAll('input').forEach(function (inp) {
-        if (inp.type === 'time') inp.value = '';
-        else if (inp.name === 'franja_etiqueta' || inp.name === 'franja_pct') inp.value = '';
-      });
-      var sd = clone.querySelector('select[name="franja_dia"]');
-      if (sd) sd.value = '';
-      var ac = clone.querySelector('select[name="franja_activo"]');
-      if (ac) ac.value = '1';
-      tbody.appendChild(clone);
+      appendEmptyRow();
       rows = tbody.querySelectorAll('tr.js-franja-row');
     }
     for (var i = 0; i < need; i++) {
       var r = rows[startIdx + i];
       if (!r) break;
       var sel = r.querySelector('select[name="franja_dia"]');
-      var opt = sel.querySelector('option[value="' + dias[i].v + '"]');
+      var opt = sel && sel.querySelector('option[value="' + dias[i].v + '"]');
       if (opt) sel.value = dias[i].v;
       r.querySelector('input[name="franja_m_ini"]').value = ini;
       r.querySelector('input[name="franja_m_fin"]').value = fin;
       r.querySelector('input[name="franja_etiqueta"]').value = lab;
-      r.querySelector('input[name="franja_pct"]').value = pct;
+      var pIn = r.querySelector('input[name="franja_pct"]');
+      if (pIn) pIn.value = pct;
       var act = r.querySelector('select[name="franja_activo"]');
       if (act) act.value = '1';
+      updateCupoRow(r);
     }
   });
+
+  var addBtn = document.getElementById('js-franja-add-row');
+  if (addBtn) addBtn.addEventListener('click', function () {
+    appendEmptyRow();
+  });
+
+  refreshAllCupos();
 })();
 </script>
 
