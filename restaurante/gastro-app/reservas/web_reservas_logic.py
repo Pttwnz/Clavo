@@ -20,6 +20,12 @@ from reservas.web_reservas_schema import get_web_reserva_config, list_franjas
 
 _ESTADOS_CUPO = frozenset({"Pendiente", "Confirmada", "Llegó"})
 
+# No generar parejas «mesa1 + mesa2» por cercanía en plano si una de ellas es barra/mostrador
+# (sí pueden reservarse en solitario si tienen capacidad; uniones definidas en el editor siguen igual).
+_MESAS_EXCLUIDAS_UNION_ADYACENTE: frozenset[str] = frozenset(
+    {normalizar_nombre_mesa(x) for x in ("cafe",)}
+)
+
 
 def suma_capacidad_aforo(db) -> int:
     ensure_salon_tables(db)
@@ -305,6 +311,11 @@ def opciones_mesa_reserva_web(
             n1 = (a.get("nombre") or "").strip()
             n2 = (b.get("nombre") or "").strip()
             if not n1 or not n2:
+                continue
+            if (
+                normalizar_nombre_mesa(n1) in _MESAS_EXCLUIDAS_UNION_ADYACENTE
+                or normalizar_nombre_mesa(n2) in _MESAS_EXCLUIDAS_UNION_ADYACENTE
+            ):
                 continue
             try:
                 c1 = int(a.get("capacidad") or 0)

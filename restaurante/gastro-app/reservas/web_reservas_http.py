@@ -241,10 +241,7 @@ def register_web_reservas_routes(bp: Blueprint) -> None:
             return jsonify({"ok": False, "error": "Fecha y hora obligatorias."}), 400
 
         mesa_sel = (data.get("mesa") or data.get("table") or data.get("mesaAsignada") or "").strip()
-        if not mesa_sel:
-            return jsonify(
-                {"ok": False, "error": "Debes elegir una mesa (o combinación) entre las opciones ofrecidas."}
-            ), 400
+        mesa_auto = (mesa_sel.lower() in ("", "auto", "__auto__", "*")) or bool(data.get("autoMesa") or data.get("auto_mesa"))
 
         db = get_db()
         ensure_web_reservas_tables(db)
@@ -277,13 +274,25 @@ def register_web_reservas_routes(bp: Blueprint) -> None:
             ), 409
 
         opciones = opciones_mesa_reserva_web(db, fecha_iso=fecha, hora_str=hora, personas=personas)
-        match = mesa_opcion_valida_para_web(mesa_sel, opciones)
+        if not opciones:
+            db.close()
+            return jsonify(
+                {
+                    "ok": False,
+                    "error": "No hay mesa o combinación libre para ese momento y número de comensales. Prueba otro horario o llama al restaurante.",
+                }
+            ), 409
+
+        if mesa_auto:
+            match = opciones[0]
+        else:
+            match = mesa_opcion_valida_para_web(mesa_sel, opciones)
         if not match:
             db.close()
             return jsonify(
                 {
                     "ok": False,
-                    "error": "La mesa elegida no está disponible o no coincide con las opciones. Actualiza y elige de nuevo.",
+                    "error": "La mesa indicada no está disponible o no es válida. Vuelve a cargar la página e inténtalo de nuevo.",
                     "opciones": opciones[:24],
                 }
             ), 409
@@ -353,6 +362,8 @@ def register_web_reservas_routes(bp: Blueprint) -> None:
                 "email_sent": email_sent,
                 "email_error": email_err or None,
                 "confirm_url": confirm_url if not email_sent else None,
+                "mesa_asignada": str(match.get("mesa") or "").strip(),
+                "mesa_label": (str(match.get("label") or "").strip() or None),
             }
         ), 201
 

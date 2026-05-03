@@ -50,7 +50,6 @@ export function HomeReservationSection() {
   const [mesaLoading, setMesaLoading] = useState(false);
   const [mesaHint, setMesaHint] = useState<string | null>(null);
   const [alternativas, setAlternativas] = useState<MesaAlt[]>([]);
-  const [selectedMesa, setSelectedMesa] = useState("");
 
   useEffect(() => {
     const openFromHash = () => {
@@ -112,7 +111,6 @@ export function HomeReservationSection() {
 
   useEffect(() => {
     const ac = new AbortController();
-    setSelectedMesa("");
     setMesaOptions(null);
     setMesaHint(null);
     setAlternativas([]);
@@ -186,8 +184,13 @@ export function HomeReservationSection() {
       setLoading(false);
       return;
     }
-    if (!selectedMesa.trim()) {
-      setFeedback("Elige una de las mesas o combinaciones ofrecidas para tu grupo.");
+    if (mesaLoading || mesaOptions === null) {
+      setFeedback("Espera un momento: estamos comprobando mesas libres para esa hora.");
+      setLoading(false);
+      return;
+    }
+    if (mesaOptions.length === 0) {
+      setFeedback("No hay mesa disponible para ese momento. Cambia fecha u hora o llama al restaurante.");
       setLoading(false);
       return;
     }
@@ -201,7 +204,7 @@ export function HomeReservationSection() {
         partySize,
         startsAt: startsAt.toISOString(),
         notes: notes || undefined,
-        mesa: selectedMesa.trim(),
+        mesa: "auto",
       }),
     });
     const raw = await res.json().catch(() => null);
@@ -221,10 +224,16 @@ export function HomeReservationSection() {
     const okBody = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
     const confirmUrl =
       typeof okBody.confirm_url === "string" && okBody.confirm_url.trim() ? okBody.confirm_url.trim() : null;
+    const mesaInfo =
+      typeof okBody.mesa_label === "string" && okBody.mesa_label.trim()
+        ? ` Mesa asignada: ${okBody.mesa_label.trim()}.`
+        : typeof okBody.mesa_asignada === "string" && okBody.mesa_asignada.trim()
+          ? ` Mesa asignada: ${okBody.mesa_asignada.trim()}.`
+          : "";
 
     if (okBody.email_sent === true) {
       setConfirmLinkUrl(null);
-      setFeedback("Reserva registrada. Te hemos enviado un correo: abre el enlace para confirmarla.");
+      setFeedback(`Reserva registrada.${mesaInfo} Te hemos enviado un correo: abre el enlace para confirmarla.`);
     } else if (confirmUrl) {
       setConfirmLinkUrl(confirmUrl);
       const extra =
@@ -232,20 +241,19 @@ export function HomeReservationSection() {
           ? ` (${okBody.email_error.trim()})`
           : "";
       setFeedback(
-        `Reserva registrada como pendiente.${extra} Usa el enlace de abajo para confirmarla ahora (útil si aún no hay SMTP).`,
+        `Reserva registrada como pendiente.${mesaInfo}${extra} Usa el enlace de abajo para confirmarla ahora (útil si aún no hay SMTP).`,
       );
     } else if (typeof okBody.email_error === "string" && okBody.email_error) {
       setConfirmLinkUrl(null);
-      setFeedback(`Reserva registrada. ${okBody.email_error}`);
+      setFeedback(`Reserva registrada.${mesaInfo} ${okBody.email_error}`);
     } else {
       setConfirmLinkUrl(null);
-      setFeedback("Reserva enviada. Te contactaremos para confirmar.");
+      setFeedback(`Reserva enviada.${mesaInfo} Te contactaremos para confirmar.`);
     }
     setName("");
     setPhone("");
     setEmail("");
     setNotes("");
-    setSelectedMesa("");
   }
 
   const partyOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
@@ -353,7 +361,7 @@ export function HomeReservationSection() {
             </fieldset>
 
             <fieldset className="space-y-4 border-b border-[#2d2420]/8 py-8">
-              <legend className="font-display text-lg font-semibold text-[#2d2420]">2. Cuándo y mesa asignada</legend>
+              <legend className="font-display text-lg font-semibold text-[#2d2420]">2. Cuándo</legend>
               <div>
                 <span className={labelClass}>Comensales</span>
                 <p className="mt-2 text-xs text-[#6b5a4e]">
@@ -416,14 +424,20 @@ export function HomeReservationSection() {
                 </p>
               )}
               <div className="space-y-3">
-                <span className={labelClass}>Mesa para tu grupo</span>
+                <span className={labelClass}>Mesa</span>
                 <p className="text-xs text-[#6b5a4e]">
-                  Elegimos opciones según comensales: mesa suelta, unión configurada en el salón o dos mesas
-                  contiguas en el plano.
+                  La asignación es <strong>automática</strong>: al enviar la solicitud te ocupamos la mejor mesa o
+                  combinación libre según comensales, uniones del salón y disponibilidad (no hace falta elegir mesa).
                 </p>
                 {mesaLoading && (
                   <p className="text-sm text-[#6b5a4e]" role="status">
-                    Cargando mesas disponibles…
+                    Comprobando mesas libres para esa hora…
+                  </p>
+                )}
+                {!mesaLoading && mesaOptions && mesaOptions.length > 0 && (
+                  <p className="rounded-xl border border-emerald-900/15 bg-emerald-50/80 px-4 py-3 text-sm text-[#14532d]">
+                    Hay disponibilidad para tu grupo en este horario. Al enviar, se guardará la opción que mejor encaje
+                    (mesa suelta, unión del plano o dos mesas contiguas válidas).
                   </p>
                 )}
                 {!mesaLoading && mesaHint && (
@@ -467,29 +481,6 @@ export function HomeReservationSection() {
                     </div>
                   </div>
                 )}
-                {!mesaLoading && mesaOptions && mesaOptions.length > 0 && (
-                  <ul className="max-h-64 space-y-2 overflow-y-auto rounded-xl border border-[#2d2420]/10 bg-white p-3">
-                    {mesaOptions.map((opt) => (
-                      <li key={opt.mesa}>
-                        <label className="flex cursor-pointer gap-3 rounded-lg px-2 py-2 hover:bg-[#faf8f5]">
-                          <input
-                            type="radio"
-                            name="mesa-web"
-                            className="mt-1 shrink-0"
-                            checked={selectedMesa === opt.mesa}
-                            onChange={() => setSelectedMesa(opt.mesa)}
-                          />
-                          <span className="text-sm leading-snug text-[#2d2420]">
-                            {opt.label || opt.mesa}
-                            {typeof opt.capacidad === "number" ? (
-                              <span className="block text-xs text-[#6b5a4e]">Referencia: hasta {opt.capacidad} pax</span>
-                            ) : null}
-                          </span>
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
-                )}
               </div>
             </fieldset>
 
@@ -501,7 +492,7 @@ export function HomeReservationSection() {
                   className={`${inputClass} min-h-[108px] resize-y`}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Cumpleaños, alergias, sillita infantil, preferencia de mesa…"
+                  placeholder="Cumpleaños, alergias, sillita infantil…"
                 />
               </label>
             </fieldset>
@@ -509,7 +500,14 @@ export function HomeReservationSection() {
             <div className="mt-8 flex flex-col items-stretch gap-4 sm:items-center">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={
+                  loading ||
+                  !datetime.trim() ||
+                  Number.isNaN(parseDatetimeLocalAsMadrid(datetime).getTime()) ||
+                  mesaLoading ||
+                  mesaOptions === null ||
+                  mesaOptions.length === 0
+                }
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-[#8f1d1d] px-10 py-4 text-sm font-semibold text-[#faf6ed] shadow-lg shadow-[#4a0f0f]/30 transition hover:bg-[#7a1919] disabled:opacity-55"
               >
                 {loading ? (
