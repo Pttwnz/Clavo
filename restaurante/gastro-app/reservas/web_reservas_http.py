@@ -3,10 +3,11 @@ from __future__ import annotations
 
 import re
 from datetime import datetime as dt
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 from flask import Blueprint, jsonify, render_template, request
 
+from config import GASTRO_PUBLIC_BASE_URL
 from models import get_db
 from reservas.cierre_caja_mail import enviar_correo_externo, smtp_config_valida
 from reservas.cierre_caja_schema import get_config_cierre_caja
@@ -25,6 +26,45 @@ from reservas.web_reservas_logic import (
     token_expires_iso,
 )
 from reservas.web_reservas_schema import ensure_web_reservas_tables, get_web_reserva_config, list_franjas
+
+
+def _host_es_interno_docker(hostname: str | None, netloc: str | None) -> bool:
+    """True si el host no es usable en un enlace enviado al navegador del cliente (Docker / dev)."""
+    h = (hostname or "").lower().strip(".")
+    n = (netloc or "").lower()
+    if not h and not n:
+        return True
+    if "gastro" in n or "web:" in n or ":gastro" in n:
+        return True
+    if h in ("gastro", "web", "localhost", "127.0.0.1", "::1"):
+        return True
+    if h.startswith("deploy-web") or h.startswith("deploy-gastro"):
+        return True
+    return False
+
+
+def _base_publica_para_confirmar(cfg: dict) -> str:
+    """
+    URL base del panel Gastro para enlaces de confirmación.
+    Las peticiones internas (Next → Flask) tienen request.url_root = http://gastro:37892/; hay que ignorarlo.
+    """
+    candidatos = [
+        (GASTRO_PUBLIC_BASE_URL or "").strip().rstrip("/"),
+        (cfg.get("public_base_url") or "").strip().rstrip("/"),
+        (request.url_root or "").rstrip("/"),
+    ]
+    for raw in candidatos:
+        if not raw:
+            continue
+        probe = raw if "://" in raw else f"https://{raw}"
+        try:
+            p = urlparse(probe)
+        except Exception:
+            continue
+        if _host_es_interno_docker(p.hostname, p.netloc):
+            continue
+        return raw.rstrip("/")
+    return ""
 
 
 def register_web_reservas_routes(bp: Blueprint) -> None:
@@ -319,27 +359,45 @@ def register_web_reservas_routes(bp: Blueprint) -> None:
 
         email_sent = False
         email_err = ""
-        base = (cfg.get("public_base_url") or "").strip().rstrip("/")
-        if not base:
-            base = request.url_root.rstrip("/")
-        confirm_url = f"{base}/confirmar-reserva?token={quote(token, safe='')}"
+        base = _base_publica_para_confirmar(cfg)
+        confirm_url = f"{base}/confirmar-reserva?token={quote(token, safe='')}" if base else ""
+        confirm_link_config_msg = ""
+        if not confirm_url:
+            confirm_link_config_msg = (
+                "Enlace de confirmación no disponible: define NEXT_PUBLIC_GASTRO_BASE_URL en deploy/.env "
+                "(URL pública del panel Gastro, ej. https://tu-dominio o http://TU_IP:37892) y reinicia los contenedores."
+            )
 
         smtp_cfg = get_config_cierre_caja(db)
         if email and smtp_config_valida(smtp_cfg):
             subj = "Confirma tu reserva"
-            txt = (
-                f"Hola {nombre},\n\n"
-                f"Has solicitado una reserva para el {fecha} a las {hora} ({personas} personas).\n\n"
-                f"Para confirmarla, abre este enlace antes de que caduque:\n{confirm_url}\n\n"
-                f"Si no has sido tú, ignora este mensaje.\n"
-            )
-            html = (
-                f"<p>Hola <strong>{nombre}</strong>,</p>"
-                f"<p>Has solicitado una reserva para el <strong>{fecha}</strong> a las <strong>{hora}</strong> "
-                f"({personas} personas).</p>"
-                f'<p><a href="{confirm_url}">Pulsa aquí para confirmar tu reserva</a></p>'
-                f"<p>Si el enlace no funciona, copia y pega en el navegador:<br><code>{confirm_url}</code></p>"
-            )
+            if confirm_url:
+                txt = (
+                    f"Hola {nombre},\n\n"
+                    f"Has solicitado una reserva para el {fecha} a las {hora} ({personas} personas).\n\n"
+                    f"Para confirmarla, abre este enlace antes de que caduque:\n{confirm_url}\n\n"
+                    f"Si no has sido tú, ignora este mensaje.\n"
+                )
+                html = (
+                    f"<p>Hola <strong>{nombre}</strong>,</p>"
+                    f"<p>Has solicitado una reserva para el <strong>{fecha}</strong> a las <strong>{hora}</strong> "
+                    f"({personas} personas).</p>"
+                    f'<p><a href="{confirm_url}">Pulsa aquí para confirmar tu reserva</a></p>'
+                    f"<p>Si el enlace no funciona, copia y pega en el navegador:<br><code>{confirm_url}</code></p>"
+                )
+            else:
+                txt = (
+                    f"Hola {nombre},\n\n"
+                    f"Has solicitado una reserva para el {fecha} a las {hora} ({personas} personas).\n\n"
+                    f"Tu reserva queda pendiente de confirmación en el restaurante (no se pudo generar el enlace web: "
+                    f"revisa la configuración del servidor).\n"
+                )
+                html = (
+                    f"<p>Hola <strong>{nombre}</strong>,</p>"
+                    f"<p>Has solicitado una reserva para el <strong>{fecha}</strong> a las <strong>{hora}</strong> "
+                    f"({personas} personas).</p>"
+                    f"<p>Tu reserva queda pendiente; el local debe confirmarla manualmente si hace falta.</p>"
+                )
             try:
                 ok_mail, email_err = enviar_correo_externo(
                     smtp_cfg,
@@ -355,13 +413,19 @@ def register_web_reservas_routes(bp: Blueprint) -> None:
             email_err = "El correo no se ha enviado: configura SMTP en Cierre de caja (misma cuenta que informes)."
         db.close()
 
+        out_email_err = (email_err or "").strip() or None
+        if not email_sent and confirm_link_config_msg:
+            out_email_err = (
+                f"{out_email_err} · {confirm_link_config_msg}" if out_email_err else confirm_link_config_msg
+            )
+
         return jsonify(
             {
                 "ok": True,
                 "id": rid,
                 "email_sent": email_sent,
-                "email_error": email_err or None,
-                "confirm_url": confirm_url if not email_sent else None,
+                "email_error": out_email_err,
+                "confirm_url": (confirm_url if (confirm_url and not email_sent) else None),
                 "mesa_asignada": str(match.get("mesa") or "").strip(),
                 "mesa_label": (str(match.get("label") or "").strip() or None),
             }
