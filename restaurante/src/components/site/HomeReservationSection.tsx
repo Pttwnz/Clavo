@@ -1,7 +1,10 @@
 "use client";
 
+import { Turnstile } from "@marsidev/react-turnstile";
 import { useEffect, useState } from "react";
 import { parseDatetimeLocalAsMadrid } from "@/lib/madrid-time";
+
+const TURNSTILE_SITE_KEY = (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "").trim();
 
 const inputClass =
   "w-full rounded-xl border border-[#2d2420]/10 bg-[#faf8f5] px-4 py-3 text-[#2d2420] shadow-inner shadow-[#2d1818]/[0.03] outline-none ring-[#8f1d1d]/20 transition placeholder:text-[#9a8a80] focus:border-[#8f1d1d]/35 focus:bg-white focus:ring-2";
@@ -61,6 +64,8 @@ export function HomeReservationSection() {
   const [feedback, setFeedback] = useState<string | null>(null);
   /** Enlace de confirmación si el correo no se envió (p. ej. sin SMTP); el API lo devuelve en `confirm_url`. */
   const [confirmLinkUrl, setConfirmLinkUrl] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileKey, setTurnstileKey] = useState(0);
   const [loading, setLoading] = useState(false);
   const [quotaHint, setQuotaHint] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
@@ -220,6 +225,11 @@ export function HomeReservationSection() {
       setLoading(false);
       return;
     }
+    if (TURNSTILE_SITE_KEY && !(turnstileToken || "").trim()) {
+      setFeedback("Completa la verificación anti-spam (debajo del formulario) antes de enviar.");
+      setLoading(false);
+      return;
+    }
     const res = await fetch("/api/reservations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -231,6 +241,7 @@ export function HomeReservationSection() {
         startsAt: startsAt.toISOString(),
         notes: notes || undefined,
         mesa: "auto",
+        ...(TURNSTILE_SITE_KEY && turnstileToken ? { turnstileToken: turnstileToken.trim() } : {}),
       }),
     });
     const raw = await res.json().catch(() => null);
@@ -245,6 +256,8 @@ export function HomeReservationSection() {
             ? "No hay cupo web para esa hora o el horario no está abierto online. Revisa la fecha y la hora, o llama al restaurante."
             : `No se pudo completar la reserva (${res.status}).`),
       );
+      setTurnstileToken(null);
+      setTurnstileKey((k) => k + 1);
       return;
     }
     const okBody = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
@@ -282,6 +295,8 @@ export function HomeReservationSection() {
     setPhone("");
     setEmail("");
     setNotes("");
+    setTurnstileToken(null);
+    setTurnstileKey((k) => k + 1);
   }
 
   const partyOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
@@ -514,6 +529,20 @@ export function HomeReservationSection() {
               </label>
             </fieldset>
 
+            {TURNSTILE_SITE_KEY ? (
+              <div className="mt-6 flex flex-col items-center gap-2 border-t border-[#2d2420]/10 pt-6">
+                <span className={labelClass}>Verificación anti-spam</span>
+                <Turnstile
+                  key={turnstileKey}
+                  siteKey={TURNSTILE_SITE_KEY}
+                  onSuccess={(t) => setTurnstileToken(t)}
+                  onExpire={() => setTurnstileToken(null)}
+                  onError={() => setTurnstileToken(null)}
+                  options={{ size: "normal", theme: "auto" }}
+                />
+              </div>
+            ) : null}
+
             <div className="mt-8 flex flex-col items-stretch gap-4 sm:items-center">
               <button
                 type="submit"
@@ -523,7 +552,8 @@ export function HomeReservationSection() {
                   Number.isNaN(parseDatetimeLocalAsMadrid(datetime).getTime()) ||
                   mesaLoading ||
                   mesaOptions === null ||
-                  mesaOptions.length === 0
+                  mesaOptions.length === 0 ||
+                  (!!TURNSTILE_SITE_KEY && !turnstileToken)
                 }
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-[#8f1d1d] px-10 py-4 text-sm font-semibold text-[#faf6ed] shadow-lg shadow-[#4a0f0f]/30 transition hover:bg-[#7a1919] disabled:opacity-55"
               >

@@ -13,8 +13,45 @@ import {
   validateWebLeadTime,
   validateStartsAtNotPast,
 } from "@/lib/reservation-create-guards";
+import {
+  clientIpFromRequest,
+  turnstileConfigured,
+  verifyTurnstileToken,
+} from "@/lib/turnstile-verify";
 
 export const dynamic = "force-dynamic";
+
+function stripTurnstileToken(data: Record<string, unknown>): void {
+  delete data.turnstileToken;
+}
+
+async function assertTurnstileOk(
+  req: Request,
+  data: Record<string, unknown>,
+): Promise<NextResponse | null> {
+  if (!turnstileConfigured()) {
+    return null;
+  }
+  const token = typeof data.turnstileToken === "string" ? data.turnstileToken.trim() : "";
+  if (!token) {
+    return NextResponse.json(
+      { error: "Completa la verificación anti-spam antes de enviar la reserva." },
+      { status: 400 },
+    );
+  }
+  const secret = (process.env.TURNSTILE_SECRET_KEY || "").trim();
+  const ok = await verifyTurnstileToken(secret, token, clientIpFromRequest(req));
+  if (!ok) {
+    return NextResponse.json(
+      {
+        error:
+          "La verificación anti-spam ha fallado o ha caducado. Recarga la página, vuelve a marcar el captcha e inténtalo de nuevo.",
+      },
+      { status: 400 },
+    );
+  }
+  return null;
+}
 
 export async function GET() {
   const session = await auth();
@@ -35,12 +72,24 @@ export async function POST(req: Request) {
     const base = gastroReservasBaseUrl();
     if (base) {
       const bodyText = await req.text();
+      let bodyData: Record<string, unknown>;
+      try {
+        bodyData = JSON.parse(bodyText) as Record<string, unknown>;
+      } catch {
+        return NextResponse.json({ error: "Solicitud no válida." }, { status: 400 });
+      }
+      const tsErr = await assertTurnstileOk(req, bodyData);
+      if (tsErr) {
+        return tsErr;
+      }
+      stripTurnstileToken(bodyData);
+      const forwarded = JSON.stringify(bodyData);
       let r: Response;
       try {
         r = await fetch(`${base}/api/web/reservas`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: bodyText,
+          body: forwarded,
           cache: "no-store",
           signal: AbortSignal.timeout(30_000),
         });
@@ -60,8 +109,17 @@ export async function POST(req: Request) {
       });
     }
 
-    const body = await req.json().catch(() => null);
-    if (!body || typeof body.customerName !== "string" || typeof body.phone !== "string") {
+    const bodyRaw = await req.json().catch(() => null);
+    if (!bodyRaw || typeof bodyRaw !== "object" || Array.isArray(bodyRaw)) {
+      return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
+    }
+    const body = bodyRaw as Record<string, unknown>;
+    const tsErr = await assertTurnstileOk(req, body);
+    if (tsErr) {
+      return tsErr;
+    }
+    stripTurnstileToken(body);
+    if (typeof body.customerName !== "string" || typeof body.phone !== "string") {
       return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
     }
     const phone = normalizePhone(body.phone.trim());
@@ -69,7 +127,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Teléfono no válido" }, { status: 400 });
     }
     const partySize = Number(body.partySize);
-    const startsAt = new Date(body.startsAt);
+    const startsRaw = body.startsAt;
+    const startsAt =
+      typeof startsRaw === "string" || typeof startsRaw === "number" ? new Date(startsRaw) : new Date(NaN);
     if (!Number.isFinite(partySize) || partySize < 1 || Number.isNaN(startsAt.getTime())) {
       return NextResponse.json({ error: "Fecha o comensales inválidos" }, { status: 400 });
     }

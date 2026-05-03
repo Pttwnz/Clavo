@@ -50,6 +50,8 @@ services:
         NEXT_PUBLIC_GASTRO_BASE_URL: ${NEXT_PUBLIC_GASTRO_BASE_URL:?Definir NEXT_PUBLIC_GASTRO_BASE_URL en .env (ej. http://TU_IP:37892)}
         # 1 = enlaces del cliente a `/panel` y `/login` en el mismo origen (elclavo… vía Nginx); evita mostrar IP:37892.
         NEXT_PUBLIC_MERGED_HOST_ROOT: ${FLASK_MERGED_HOST_ROOT:-0}
+        # Opcional: captcha Cloudflare Turnstile en el formulario de reserva (rebuild web al cambiar).
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
     ports:
       - "${CLAVO_WEB_PUBLISH:-37891}:3000"
     environment:
@@ -59,6 +61,9 @@ services:
       GASTRO_RESERVAS_BASE_URL: http://gastro:37892
       # Misma URL pública que en el build (enlaces en el navegador: pie, tablet…)
       NEXT_PUBLIC_GASTRO_BASE_URL: ${NEXT_PUBLIC_GASTRO_BASE_URL}
+      # Turnstile: misma site key que en build; secreto solo en servidor (siteverify).
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
       # URL pública de esta web Next (Auth / cookies), ej. https://clavo.gastromanager.es
       AUTH_URL: ${AUTH_URL:-}
       AUTH_SECRET: ${AUTH_SECRET:?Definir AUTH_SECRET en .env}
