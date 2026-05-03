@@ -221,16 +221,10 @@ def register_web_reservas_routes(bp: Blueprint) -> None:
         notas = (data.get("notas") or data.get("notes") or "").strip()
         fecha = (data.get("fecha") or "").strip()[:10]
         hora = (data.get("hora") or "").strip()[:12]
-        if not fecha and isinstance(data.get("startsAt"), str):
-            try:
-                from datetime import datetime as dt
-
-                raw = str(data["startsAt"]).replace("Z", "+00:00")
-                parsed = dt.fromisoformat(raw)
-                fecha = parsed.date().isoformat()
-                hora = f"{parsed.hour:02d}:{parsed.minute:02d}"
-            except Exception:
-                pass
+        if (not fecha or not hora) and isinstance(data.get("startsAt"), str):
+            inst = _instante_madrid_fecha_hora(str(data["startsAt"]))
+            if inst:
+                fecha, hora = inst
         try:
             personas = int(data.get("personas") or data.get("partySize") or 0)
         except (TypeError, ValueError):
