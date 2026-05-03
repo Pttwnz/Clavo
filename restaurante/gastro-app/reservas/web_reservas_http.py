@@ -34,9 +34,10 @@ def _host_es_interno_docker(hostname: str | None, netloc: str | None) -> bool:
     n = (netloc or "").lower()
     if not h and not n:
         return True
-    if "gastro" in n or "web:" in n or ":gastro" in n:
-        return True
+    # Nombres de servicio típicos en Compose (no usar "gastro" in netloc: false positive en *gastromanager*.es).
     if h in ("gastro", "web", "localhost", "127.0.0.1", "::1"):
+        return True
+    if n.startswith("gastro:") or n.startswith("web:"):
         return True
     if h.startswith("deploy-web") or h.startswith("deploy-gastro"):
         return True
