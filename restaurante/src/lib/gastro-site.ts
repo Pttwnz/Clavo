@@ -21,3 +21,9 @@ export function gastroPanelUrl(): string {
   const base = publicGastroBaseUrl();
   return base ? `${base}/panel` : "/panel";
 }
+
+/** Entrada modo tablet del local (Flask: PIN en `/tablet/acceso`). */
+export function gastroTabletAccesoUrl(): string {
+  const base = publicGastroBaseUrl();
+  return base ? `${base}/tablet/acceso` : "/tablet/acceso";
+}

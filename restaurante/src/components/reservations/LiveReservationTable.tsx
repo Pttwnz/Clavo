@@ -194,19 +194,39 @@ export function LiveReservationTable({ onTabletSessionLost }: Props) {
   }, [rows]);
 
   useEffect(() => {
-    const es = new EventSource(streamUrl, { withCredentials: true });
-    es.onopen = () => setConnected(true);
-    es.onerror = () => setConnected(false);
-    es.addEventListener("message", (ev) => {
+    let es: EventSource | null = null;
+    try {
+      es = new EventSource(streamUrl, { withCredentials: true });
+      es.onopen = () => setConnected(true);
+      es.onerror = () => setConnected(false);
+      es.addEventListener("message", (ev) => {
+        try {
+          const msg = JSON.parse(ev.data as string) as { type?: string };
+          if (msg.type === "reservations_updated") void load();
+        } catch {
+          /* ignore */
+        }
+      });
+    } catch {
+      setConnected(false);
+    }
+    return () => {
       try {
-        const msg = JSON.parse(ev.data as string) as { type?: string };
-        if (msg.type === "reservations_updated") void load();
+        es?.close();
       } catch {
         /* ignore */
       }
-    });
-    return () => es.close();
+    };
   }, [load, streamUrl]);
+
+  /** Sin esto, tras proxy o varias instancias el SSE no refresca el listado aunque el mapa sí (poll allí). */
+  useEffect(() => {
+    const ms = connected ? 28000 : 8000;
+    const id = window.setInterval(() => {
+      void load();
+    }, ms);
+    return () => window.clearInterval(id);
+  }, [load, connected]);
 
   async function patch(id: string, body: Record<string, unknown>) {
     const res = await fetch(patchUrl(id), {

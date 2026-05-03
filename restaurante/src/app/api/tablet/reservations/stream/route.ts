@@ -49,6 +49,8 @@ export async function GET(request: Request) {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
+      /** Evita que nginx (y similares) buffericen el SSE; sin esto el tablet parece “desconectado”. */
+      "X-Accel-Buffering": "no",
     },
   });
 }

@@ -1,0 +1,18 @@
+---
+description: Tras cambios en el repo Clavo, desplegar al VPS y reiniciar contenedores
+alwaysApply: true
+---
+
+# Despliegue tras cambios
+
+Cuando completes cambios de código o configuración que deban estar en producción:
+
+1. **Confirma** que el árbol compila o los tests relevantes pasan (`npm run build` en `restaurante/`, etc.).
+2. **Git**: `git add` de los archivos tocados, `git commit` con mensaje en español claro (una línea + detalle si hace falta), `git push` a la rama que use el VPS (normalmente `main`).
+3. **VPS**: desde la raíz del repo ejecuta el despliegue remoto estándar del proyecto:
+   - Define `VPS_SSH` (ej. `root@IP` o el usuario que uses; opcional `VPS_REPO_PATH` si el clon no está en `$HOME/Clavo`).
+   - Ejecuta: `bash deploy/vps-remote-deploy.sh` (o en PowerShell con Git Bash: `.\deploy\vps-remote-deploy.ps1`).
+   Eso hace `git pull` en el servidor y **`docker compose build web gastro` + `docker compose up -d web gastro`**, es decir **rebuild y reinicio** de la app.
+4. Si **`VPS_SSH` no está definido** en el entorno del agente, no inventes credenciales: indica al usuario que exporte `VPS_SSH` (o use GitHub Actions con los secrets del workflow `deploy-vps.yml`) y vuelva a pedir el despliegue.
+
+No cierres la tarea solo con “cambios en local” si el usuario pidió explícitamente desplegar o esta regla aplica a la sesión.

@@ -44,10 +44,23 @@ export async function getTabletEmployeeId(): Promise<string | null> {
   return verifyTabletToken(v)?.employeeId ?? null;
 }
 
+/** Cookies Secure en prod salvo HTTP explícito o TABLET_ALLOW_INSECURE_COOKIE=1 (tablet en LAN). */
+function tabletCookieSecure(): boolean {
+  if (process.env.TABLET_ALLOW_INSECURE_COOKIE === "1") return false;
+  if (process.env.NODE_ENV !== "production") return false;
+  const base =
+    process.env.AUTH_URL ??
+    process.env.NEXTAUTH_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    "";
+  if (base.startsWith("http://")) return false;
+  return true;
+}
+
 export function tabletCookieOptions() {
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: tabletCookieSecure(),
     sameSite: "lax" as const,
     path: "/",
     maxAge: MAX_AGE_SEC,
