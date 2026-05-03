@@ -8,6 +8,24 @@ const inputClass =
 
 const labelClass = "text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6b5a4e]";
 
+/** Enlace en el mismo sitio web: Next redirige a Gastro con URL pública (evita host interno tipo gastro:37892). */
+function confirmHrefForBrowser(apiUrl: string): string {
+  try {
+    const base =
+      typeof window !== "undefined" && window.location?.origin
+        ? window.location.origin
+        : "http://localhost";
+    const u = new URL(apiUrl.trim(), base);
+    const token = u.searchParams.get("token");
+    if (token) {
+      return `/confirmar-reserva?token=${encodeURIComponent(token)}`;
+    }
+  } catch {
+    /* URL inválida: se usa la que venga del API */
+  }
+  return apiUrl.trim();
+}
+
 function Chevron({ open }: { open: boolean }) {
   return (
     <svg
@@ -228,17 +246,15 @@ export function HomeReservationSection() {
       setConfirmLinkUrl(null);
       setFeedback("Reserva registrada. Te hemos enviado un correo: abre el enlace para confirmarla.");
     } else if (confirmUrl) {
-      setConfirmLinkUrl(confirmUrl);
-      const extra =
-        typeof okBody.email_error === "string" && okBody.email_error.trim()
-          ? ` (${okBody.email_error.trim()})`
-          : "";
+      setConfirmLinkUrl(confirmHrefForBrowser(confirmUrl));
       setFeedback(
-        `Reserva registrada como pendiente.${extra} Usa el enlace de abajo para confirmarla ahora (útil si aún no hay SMTP).`,
+        "Reserva recibida. Falta un último paso: pulsa el botón de abajo para confirmarla y que quede registrada.",
       );
     } else if (typeof okBody.email_error === "string" && okBody.email_error) {
       setConfirmLinkUrl(null);
-      setFeedback(`Reserva registrada. ${okBody.email_error}`);
+      setFeedback(
+        "Reserva recibida. Si indicaste correo, revisa la bandeja de entrada (y la carpeta de spam). Si no ves el mensaje, el restaurante puede confirmarte la reserva por teléfono.",
+      );
     } else {
       setConfirmLinkUrl(null);
       setFeedback("Reserva enviada. Te contactaremos para confirmar.");
@@ -254,6 +270,7 @@ export function HomeReservationSection() {
   const success =
     feedback &&
     (feedback.includes("registrada") ||
+      feedback.includes("recibida") ||
       feedback.includes("enviada") ||
       feedback.includes("contactaremos") ||
       feedback.includes("confirmar"));
@@ -511,7 +528,7 @@ export function HomeReservationSection() {
               )}
               {confirmLinkUrl && (
                 <div className="rounded-2xl border border-emerald-800/20 bg-emerald-50/90 px-4 py-4 text-center text-sm text-[#14532d] shadow-inner">
-                  <p className="mb-2 font-medium">Enlace de confirmación (ábrelo en esta ventana o en privado)</p>
+                  <p className="mb-2 font-medium">Confirma tu reserva con un clic</p>
                   <a
                     href={confirmLinkUrl}
                     className="inline-block max-w-full break-all rounded-lg bg-white px-3 py-2 text-xs font-semibold text-[#8f1d1d] underline decoration-[#8f1d1d]/40 underline-offset-2 hover:bg-[#faf8f5]"
