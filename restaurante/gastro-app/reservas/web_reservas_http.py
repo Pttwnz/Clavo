@@ -1,6 +1,7 @@
 """Rutas HTTP públicas para reservas web (consumidas por la web principal vía proxy)."""
 from __future__ import annotations
 
+import logging
 import re
 from datetime import datetime as dt
 from urllib.parse import quote, urlparse
@@ -11,6 +12,11 @@ from config import GASTRO_PUBLIC_BASE_URL
 from models import get_db
 from reservas.cierre_caja_mail import enviar_correo_externo, smtp_config_valida
 from reservas.cierre_caja_schema import get_config_cierre_caja
+from reservas.clientes_schema import (
+    ensure_clientes_schema,
+    upsert_cliente_desde_reserva,
+    vincular_reserva_a_cliente,
+)
 from reservas.salon_helpers import ensure_salon_tables, seed_salon_if_empty
 from reservas.web_reservas_logic import (
     alternativas_horario_cercanas_reserva_web,
@@ -357,6 +363,27 @@ def register_web_reservas_routes(bp: Blueprint) -> None:
         except Exception as ex:
             db.close()
             return jsonify({"ok": False, "error": str(ex)}), 500
+
+        # Misma lógica que el panel de reservas: ficha en «Clientes» y cliente_id en la reserva.
+        try:
+            ensure_clientes_schema(db)
+            cid = upsert_cliente_desde_reserva(
+                db,
+                nombre=nombre,
+                telefono=phone,
+                fecha_reserva=fecha[:10],
+                email=email or None,
+                commit=False,
+            )
+            if cid:
+                vincular_reserva_a_cliente(db, rid, cid, commit=False)
+            db.commit()
+        except Exception:
+            db.rollback()
+            logging.getLogger(__name__).exception(
+                "reservas web: no se pudo actualizar ficha de cliente (reserva id=%s)",
+                rid,
+            )
 
         email_sent = False
         email_err = ""
