@@ -425,7 +425,8 @@ def register_web_reservas_routes(bp: Blueprint) -> None:
                 "id": rid,
                 "email_sent": email_sent,
                 "email_error": out_email_err,
-                "confirm_url": (confirm_url if (confirm_url and not email_sent) else None),
+                # Siempre que haya URL pública: el cliente puede confirmar aquí sin depender solo del correo.
+                "confirm_url": confirm_url or None,
                 "mesa_asignada": str(match.get("mesa") or "").strip(),
                 "mesa_label": (str(match.get("label") or "").strip() or None),
             }

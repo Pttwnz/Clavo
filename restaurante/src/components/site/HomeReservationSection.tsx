@@ -250,13 +250,24 @@ export function HomeReservationSection() {
     const okBody = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
     const confirmUrl =
       typeof okBody.confirm_url === "string" && okBody.confirm_url.trim() ? okBody.confirm_url.trim() : null;
-    if (okBody.email_sent === true) {
+    const emailOk = okBody.email_sent === true;
+    const href = confirmUrl ? confirmHrefForBrowser(confirmUrl) : null;
+
+    if (href) {
+      setConfirmLinkUrl(href);
+      if (emailOk) {
+        setFeedback(
+          "Reserva registrada. Te hemos enviado un correo con un enlace para confirmar. Si prefieres, puedes hacerlo ahora con el botón de abajo (no hace falta abrir el correo).",
+        );
+      } else {
+        setFeedback(
+          "Reserva recibida. Falta un último paso: pulsa el botón de abajo para confirmarla y que quede registrada.",
+        );
+      }
+    } else if (emailOk) {
       setConfirmLinkUrl(null);
-      setFeedback("Reserva registrada. Te hemos enviado un correo: abre el enlace para confirmarla.");
-    } else if (confirmUrl) {
-      setConfirmLinkUrl(confirmHrefForBrowser(confirmUrl));
       setFeedback(
-        "Reserva recibida. Falta un último paso: pulsa el botón de abajo para confirmarla y que quede registrada.",
+        "Reserva registrada. Te hemos enviado un correo: abre el enlace del mensaje para confirmarla. Si no ves el correo, revisa spam o llama al restaurante.",
       );
     } else if (typeof okBody.email_error === "string" && okBody.email_error) {
       setConfirmLinkUrl(null);
@@ -298,7 +309,8 @@ export function HomeReservationSection() {
             Te guardamos sitio
           </h2>
           <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[#5c4f47]">
-            Elige día, hora y cuántos sois. Revisamos disponibilidad y te respondemos cuanto antes.
+            Elige día, hora y cuántos sois. Cuando envíes la solicitud podrás confirmarla con un clic en esta página o
+            desde el enlace del correo, si te lo enviamos.
           </p>
         </div>
 
