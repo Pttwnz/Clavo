@@ -140,9 +140,9 @@ export function HomeReservationSection() {
           setAlternativas(alts);
           if (!j.ok) {
             setMesaOptions([]);
-            const err = typeof j.error === "string" ? j.error : "No hay mesas disponibles para ese momento.";
+            const err = typeof j.error === "string" ? j.error : "No hay sitio disponible para reservar online en ese momento.";
             setMesaHint(
-              alts.length > 0 ? `${err} Puedes elegir una hora cercana con mesa y cupo (botones abajo).` : err,
+              alts.length > 0 ? `${err} Puedes probar una hora cercana con sitio libre (botones abajo).` : err,
             );
             return;
           }
@@ -151,8 +151,8 @@ export function HomeReservationSection() {
           if (opts.length === 0) {
             setMesaHint(
               alts.length > 0
-                ? "No hay mesa libre a la hora elegida. Puedes probar una de las horas cercanas con disponibilidad (botones abajo) o llamar al restaurante."
-                : "No hay ninguna mesa o combinación libre para esa hora y grupo, ni huecos cercanos con mesa. Prueba otra fecha u hora o llama al restaurante.",
+                ? "No hay sitio libre a la hora elegida. Prueba una hora cercana (botones abajo) o llama al restaurante."
+                : "No hay sitio libre para ese horario y grupo. Prueba otra fecha u hora o llama al restaurante.",
             );
           } else {
             setMesaHint(null);
@@ -163,7 +163,7 @@ export function HomeReservationSection() {
         if (!ac.signal.aborted) {
           setMesaOptions([]);
           setAlternativas([]);
-          setMesaHint("No se pudieron cargar las mesas. Revisa la conexión o inténtalo más tarde.");
+          setMesaHint("No se pudo comprobar la disponibilidad. Revisa la conexión o inténtalo más tarde.");
         }
       })
       .finally(() => {
@@ -185,12 +185,12 @@ export function HomeReservationSection() {
       return;
     }
     if (mesaLoading || mesaOptions === null) {
-      setFeedback("Espera un momento: estamos comprobando mesas libres para esa hora.");
+      setFeedback("Espera un momento: estamos comprobando si hay sitio para esa hora.");
       setLoading(false);
       return;
     }
     if (mesaOptions.length === 0) {
-      setFeedback("No hay mesa disponible para ese momento. Cambia fecha u hora o llama al restaurante.");
+      setFeedback("No hay sitio disponible para ese momento. Cambia fecha u hora o llama al restaurante.");
       setLoading(false);
       return;
     }
@@ -224,16 +224,9 @@ export function HomeReservationSection() {
     const okBody = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
     const confirmUrl =
       typeof okBody.confirm_url === "string" && okBody.confirm_url.trim() ? okBody.confirm_url.trim() : null;
-    const mesaInfo =
-      typeof okBody.mesa_label === "string" && okBody.mesa_label.trim()
-        ? ` Mesa asignada: ${okBody.mesa_label.trim()}.`
-        : typeof okBody.mesa_asignada === "string" && okBody.mesa_asignada.trim()
-          ? ` Mesa asignada: ${okBody.mesa_asignada.trim()}.`
-          : "";
-
     if (okBody.email_sent === true) {
       setConfirmLinkUrl(null);
-      setFeedback(`Reserva registrada.${mesaInfo} Te hemos enviado un correo: abre el enlace para confirmarla.`);
+      setFeedback("Reserva registrada. Te hemos enviado un correo: abre el enlace para confirmarla.");
     } else if (confirmUrl) {
       setConfirmLinkUrl(confirmUrl);
       const extra =
@@ -241,14 +234,14 @@ export function HomeReservationSection() {
           ? ` (${okBody.email_error.trim()})`
           : "";
       setFeedback(
-        `Reserva registrada como pendiente.${mesaInfo}${extra} Usa el enlace de abajo para confirmarla ahora (útil si aún no hay SMTP).`,
+        `Reserva registrada como pendiente.${extra} Usa el enlace de abajo para confirmarla ahora (útil si aún no hay SMTP).`,
       );
     } else if (typeof okBody.email_error === "string" && okBody.email_error) {
       setConfirmLinkUrl(null);
-      setFeedback(`Reserva registrada.${mesaInfo} ${okBody.email_error}`);
+      setFeedback(`Reserva registrada. ${okBody.email_error}`);
     } else {
       setConfirmLinkUrl(null);
-      setFeedback(`Reserva enviada.${mesaInfo} Te contactaremos para confirmar.`);
+      setFeedback("Reserva enviada. Te contactaremos para confirmar.");
     }
     setName("");
     setPhone("");
@@ -423,65 +416,52 @@ export function HomeReservationSection() {
                   {quotaHint}
                 </p>
               )}
-              <div className="space-y-3">
-                <span className={labelClass}>Mesa</span>
-                <p className="text-xs text-[#6b5a4e]">
-                  La asignación es <strong>automática</strong>: al enviar la solicitud te ocupamos la mejor mesa o
-                  combinación libre según comensales, uniones del salón y disponibilidad (no hace falta elegir mesa).
+              {mesaLoading && (
+                <p className="text-xs text-[#6b5a4e]" role="status">
+                  Comprobando disponibilidad…
                 </p>
-                {mesaLoading && (
-                  <p className="text-sm text-[#6b5a4e]" role="status">
-                    Comprobando mesas libres para esa hora…
+              )}
+              {!mesaLoading && mesaHint && (
+                <p className="rounded-xl border border-amber-800/20 bg-amber-50/90 px-4 py-3 text-sm text-[#713f12]">
+                  {mesaHint}
+                </p>
+              )}
+              {!mesaLoading && alternativas.length > 0 && (
+                <div className="space-y-2 rounded-xl border border-[#2d2420]/10 bg-[#faf8f5] p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6b5a4e]">
+                    Otras horas con sitio disponible
                   </p>
-                )}
-                {!mesaLoading && mesaOptions && mesaOptions.length > 0 && (
-                  <p className="rounded-xl border border-emerald-900/15 bg-emerald-50/80 px-4 py-3 text-sm text-[#14532d]">
-                    Hay disponibilidad para tu grupo en este horario. Al enviar, se guardará la opción que mejor encaje
-                    (mesa suelta, unión del plano o dos mesas contiguas válidas).
-                  </p>
-                )}
-                {!mesaLoading && mesaHint && (
-                  <p className="rounded-xl border border-amber-800/20 bg-amber-50/90 px-4 py-3 text-sm text-[#713f12]">
-                    {mesaHint}
-                  </p>
-                )}
-                {!mesaLoading && alternativas.length > 0 && (
-                  <div className="space-y-2 rounded-xl border border-[#2d2420]/10 bg-[#faf8f5] p-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6b5a4e]">
-                      Horarios cercanos con mesa y cupo web
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {alternativas.map((a) => (
-                        <button
-                          key={`${a.fecha}-${a.hora}`}
-                          type="button"
-                          className="min-w-[7.5rem] max-w-[11rem] rounded-xl border border-[#8f1d1d]/20 bg-white px-3 py-2.5 text-left text-sm text-[#2d2420] shadow-sm transition hover:border-[#8f1d1d]/40 hover:bg-[#fff9f5]"
-                          onClick={() => {
-                            const hhmm = (a.hora || "").trim();
-                            if (!/^\d{1,2}:\d{2}$/.test(hhmm)) return;
-                            const [hh, mm] = hhmm.split(":");
-                            const pad = (n: string) => n.padStart(2, "0");
-                            setDatetime(`${a.fecha}T${pad(hh)}:${pad(mm)}`);
-                          }}
-                        >
-                          <span className="block font-semibold tabular-nums text-[#8f1d1d]">{a.hora}</span>
-                          {a.slot_label ? (
-                            <span className="mt-0.5 block text-[11px] leading-snug text-[#6b5a4e]">{a.slot_label}</span>
-                          ) : null}
-                          {typeof a.remaining === "number" ? (
-                            <span className="mt-0.5 block text-[11px] text-[#5c4f47]">Cupo: {a.remaining} pax</span>
-                          ) : null}
-                          {typeof a.minutos_desde_pedida === "number" && a.minutos_desde_pedida > 0 ? (
-                            <span className="mt-0.5 block text-[10px] text-[#8a7a72]">
-                              ±{a.minutos_desde_pedida} min respecto a tu hora
-                            </span>
-                          ) : null}
-                        </button>
-                      ))}
-                    </div>
+                  <div className="flex flex-wrap gap-2">
+                    {alternativas.map((a) => (
+                      <button
+                        key={`${a.fecha}-${a.hora}`}
+                        type="button"
+                        className="min-w-[7.5rem] max-w-[11rem] rounded-xl border border-[#8f1d1d]/20 bg-white px-3 py-2.5 text-left text-sm text-[#2d2420] shadow-sm transition hover:border-[#8f1d1d]/40 hover:bg-[#fff9f5]"
+                        onClick={() => {
+                          const hhmm = (a.hora || "").trim();
+                          if (!/^\d{1,2}:\d{2}$/.test(hhmm)) return;
+                          const [hh, mm] = hhmm.split(":");
+                          const pad = (n: string) => n.padStart(2, "0");
+                          setDatetime(`${a.fecha}T${pad(hh)}:${pad(mm)}`);
+                        }}
+                      >
+                        <span className="block font-semibold tabular-nums text-[#8f1d1d]">{a.hora}</span>
+                        {a.slot_label ? (
+                          <span className="mt-0.5 block text-[11px] leading-snug text-[#6b5a4e]">{a.slot_label}</span>
+                        ) : null}
+                        {typeof a.remaining === "number" ? (
+                          <span className="mt-0.5 block text-[11px] text-[#5c4f47]">Plazas web: {a.remaining} pax</span>
+                        ) : null}
+                        {typeof a.minutos_desde_pedida === "number" && a.minutos_desde_pedida > 0 ? (
+                          <span className="mt-0.5 block text-[10px] text-[#8a7a72]">
+                            ±{a.minutos_desde_pedida} min respecto a tu hora
+                          </span>
+                        ) : null}
+                      </button>
+                    ))}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </fieldset>
 
             <fieldset className="space-y-4 pt-8">
