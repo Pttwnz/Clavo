@@ -44,6 +44,9 @@ def admin_path_allowed_reservas_only(path: str) -> bool:
         return True
     if path.startswith("/configuracion_reservas_web"):
         return True
+    # SMTP / informes compartidos con reservas web (enlace desde configuración reservas)
+    if path.startswith("/cierre_caja"):
+        return True
     if path.startswith("/configuracion_tablet"):
         return True
     if path.startswith("/configuracion_pin_tablet"):

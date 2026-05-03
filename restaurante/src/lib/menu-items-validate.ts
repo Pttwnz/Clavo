@@ -52,6 +52,7 @@ export function parseMenuItemsJson(json: string): MenuItem[] | null {
     if (allergens) m.allergens = allergens;
     const priceText = parseOptionalLocaleRecord(r.priceText);
     if (priceText) m.priceText = priceText;
+    if (r.hiddenFromPublic === true) m.hiddenFromPublic = true;
     out.push(m);
   }
   return out;

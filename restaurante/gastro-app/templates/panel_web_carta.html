@@ -8,6 +8,7 @@
       <h1 class="h4 mb-1"><i class="bi bi-journal-text text-primary me-2"></i>Carta pública</h1>
       <p class="text-muted small mb-0">
         Los cambios se guardan en la base de datos del sitio Next (menú y folletos). Las demás traducciones se mantienen; aquí editas sobre todo el texto en <strong>español</strong> y el precio.
+        Marca <strong>Oculto web</strong> para quitar un plato de la carta pública sin borrarlo (sigue en este listado hasta que lo desmarques).
       </p>
     </div>
     <div class="d-flex flex-wrap gap-2">
@@ -42,7 +43,7 @@
   {% endif %}
 
   <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
-    <span class="small text-muted">{{ items|length }} platos</span>
+    <span class="small text-muted" id="carta-count-line">{{ items|length }} platos</span>
     <form method="post" action="{{ url_for('admin.panel_web_carta_restablecer') }}" class="m-0"
           onsubmit="return confirm('¿Restablecer la carta a la versión por defecto del código Next? Se borrará la copia en base de datos.');">
       <button type="submit" class="btn btn-outline-danger btn-sm">
@@ -62,13 +63,14 @@
             <th style="width: 88px;">Precio</th>
             <th style="min-width: 120px;">Texto precio (ES)</th>
             <th style="min-width: 140px;">Alérgenos (ES)</th>
+            <th class="text-center text-nowrap small" title="No aparece en /menu ni /carta hasta desmarcar">Oculto web</th>
             <th style="width: 72px;" class="small text-muted">id</th>
           </tr>
         </thead>
         <tbody id="carta-tbody">
           {% for it in items %}
           {% set cat_es = it.category.es if it.category is mapping else '' %}
-          <tr data-id="{{ it.id }}">
+          <tr data-id="{{ it.id }}" class="carta-row{% if it.hiddenFromPublic %} table-secondary{% endif %}">
             <td>
               <select class="form-select form-select-sm inp-cat" aria-label="Categoría">
                 {% for c in categories %}
@@ -84,6 +86,9 @@
             <td><input type="text" class="form-control form-control-sm inp-price" inputmode="decimal" value="{{ it.price }}"></td>
             <td><input type="text" class="form-control form-control-sm inp-pricetext" value="{% if it.priceText %}{{ it.priceText.es | default('', true) }}{% endif %}"></td>
             <td><input type="text" class="form-control form-control-sm inp-allergens" value="{% if it.allergens %}{{ it.allergens.es | default('', true) }}{% endif %}"></td>
+            <td class="text-center align-middle">
+              <input type="checkbox" class="form-check-input inp-hidden-web m-0" title="Ocultar en web pública" {% if it.hiddenFromPublic %}checked{% endif %} aria-label="Oculto en web pública">
+            </td>
             <td class="small text-muted text-break">{{ it.id[:10] }}…</td>
           </tr>
           {% endfor %}
@@ -101,6 +106,20 @@
   const originals = {{ items | tojson }};
   const byId = Object.fromEntries(originals.map(function (x) { return [x.id, JSON.parse(JSON.stringify(x))]; }));
   const locales = ['es', 'en', 'fr', 'de', 'ca', 'it', 'pt'];
+
+  function refreshRowHiddenStyle(tr) {
+    var cb = tr.querySelector('.inp-hidden-web');
+    if (cb && cb.checked) tr.classList.add('table-secondary');
+    else tr.classList.remove('table-secondary');
+  }
+
+  function updateHiddenCountLine() {
+    var n = document.querySelectorAll('#carta-tbody .inp-hidden-web:checked').length;
+    var el = document.getElementById('carta-count-line');
+    if (!el) return;
+    var total = originals.length;
+    el.textContent = total + ' platos' + (n ? ' · ' + n + ' oculto' + (n > 1 ? 's' : '') + ' en web' : '');
+  }
 
   function mergePriceText(o, esVal) {
     var t = (esVal || '').trim();
@@ -144,9 +163,23 @@
       if (Number.isFinite(pNum)) o.price = pNum;
       mergePriceText(o, (tr.querySelector('.inp-pricetext') || {}).value || '');
       mergeAllergens(o, (tr.querySelector('.inp-allergens') || {}).value || '');
+      var hideCb = tr.querySelector('.inp-hidden-web');
+      if (hideCb && hideCb.checked) o.hiddenFromPublic = true;
+      else delete o.hiddenFromPublic;
     });
     return originals.map(function (x) { return byId[x.id]; });
   }
+
+  document.querySelectorAll('#carta-tbody tr').forEach(function (tr) {
+    var cb = tr.querySelector('.inp-hidden-web');
+    if (cb) {
+      cb.addEventListener('change', function () {
+        refreshRowHiddenStyle(tr);
+        updateHiddenCountLine();
+      });
+    }
+  });
+  updateHiddenCountLine();
 
   var btn = document.getElementById('btn-guardar-carta');
   var st = document.getElementById('carta-save-status');

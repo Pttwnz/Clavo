@@ -23,6 +23,8 @@ export type MenuItem = {
   allergens?: Record<Locale, string>;
   /** Sustituye el precio numérico (p. ej. vinos copa/botella, promos). */
   priceText?: Record<Locale, string>;
+  /** Si es true, el plato no se muestra en la carta web pública (/menu, /carta); en el panel sigue apareciendo para reactivarlo. */
+  hiddenFromPublic?: boolean;
 };
 
 /** Orden de secciones en español (clave de `category.es`). */

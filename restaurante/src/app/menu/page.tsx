@@ -1,9 +1,9 @@
 import { Suspense } from "react";
 import { MenuBody } from "./MenuBody";
-import { getMenuItemsResolved } from "@/lib/menu-items-resolved";
+import { getMenuItemsForPublicDisplay } from "@/lib/menu-items-resolved";
 
 export default async function MenuPage() {
-  const menuItems = await getMenuItemsResolved();
+  const menuItems = await getMenuItemsForPublicDisplay();
   return (
     <Suspense
       fallback={

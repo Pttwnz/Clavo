@@ -24,7 +24,7 @@
     <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.reservas') }}">
       <i class="bi bi-calendar-check me-1"></i>Reservas del panel
     </a>
-    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.cierre_caja_index') }}">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.cierre_caja_index', _anchor='cc-email') }}">
       <i class="bi bi-envelope-at me-1"></i>SMTP (Cierre de caja)
     </a>
   </div>
@@ -119,7 +119,7 @@
   <div class="card border-0 shadow-sm rounded-3 mb-4">
     <div class="card-body p-4">
       <h2 class="h6 text-uppercase text-muted mb-2">Probar correo de confirmación</h2>
-      <p class="small text-muted mb-3">Misma cuenta SMTP que <a href="{{ url_for('admin.cierre_caja_index') }}">Cierre de caja</a>. El enlace del mensaje es solo de ejemplo y no confirma reservas.</p>
+      <p class="small text-muted mb-3">Misma cuenta SMTP que <a href="{{ url_for('admin.cierre_caja_index', _anchor='cc-email') }}">Cierre de caja</a> (pestaña Correo). El enlace del mensaje es solo de ejemplo y no confirma reservas.</p>
       <form method="post" class="row g-2 align-items-end flex-wrap">
         <input type="hidden" name="accion" value="prueba_correo_confirmacion">
         <div class="col-md-6">

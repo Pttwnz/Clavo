@@ -20,6 +20,12 @@ export async function getMenuItemsResolved(): Promise<MenuItem[]> {
   }
 }
 
+/** Carta tal como la ve el cliente (sin platos marcados como ocultos en el panel). */
+export async function getMenuItemsForPublicDisplay(): Promise<MenuItem[]> {
+  const items = await getMenuItemsResolved();
+  return items.filter((m) => !m.hiddenFromPublic);
+}
+
 export async function isMenuCartaPersisted(): Promise<boolean> {
   try {
     const row = await prisma.menuCartaStore.findUnique({

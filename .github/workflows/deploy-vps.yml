@@ -1,4 +1,4 @@
-# Despliegue al VPS por SSH tras push (opcional) o manual (Actions → Run workflow).
+# Despliegue al VPS por SSH tras cada push a main/master (o manual: Actions → Run workflow).
 #
 # Configuración en GitHub → Settings → Secrets and variables → Actions:
 #   VPS_HOST          IP o hostname del VPS
@@ -7,8 +7,8 @@
 #   VPS_SSH_PORT      opcional, por defecto 22
 #   VPS_REPO_PATH     ruta absoluta del clon en el servidor (ej. /root/Clavo o /home/deploy/Clavo)
 #
-# Opcional (repo → Settings → Variables → Actions):
-#   VPS_DEPLOY_AUTO   pon a 1 para ejecutar este workflow en cada push a main/master
+# Opcional (Variables → Actions):
+#   VPS_DEPLOY_SKIP   pon a 1 para NO desplegar en push (sigue funcionando "Run workflow" a mano).
 
 name: Deploy VPS
 
@@ -34,8 +34,9 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'push' && vars.VPS_DEPLOY_AUTO == '1' &&
-       (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'))
+      (github.event_name == 'push' &&
+       (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') &&
+       vars.VPS_DEPLOY_SKIP != '1')
 
     steps:
       - name: Rama a desplegar

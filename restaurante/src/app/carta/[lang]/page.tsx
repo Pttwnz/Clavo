@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { MenuCartaFolleto } from "@/components/menu/MenuCartaFolleto";
-import { getMenuItemsResolved } from "@/lib/menu-items-resolved";
+import { getMenuItemsForPublicDisplay } from "@/lib/menu-items-resolved";
 import { localeLabels, locales, type Locale } from "@/lib/menu-types";
 
 function isLocale(s: string): s is Locale {
@@ -33,7 +33,7 @@ export default async function CartaLangPage({ params }: { params: Promise<{ lang
   if (!isLocale(raw)) redirect("/carta/es");
 
   const lang = raw;
-  const menuItems = await getMenuItemsResolved();
+  const menuItems = await getMenuItemsForPublicDisplay();
 
   return (
     <div className="min-h-full bg-[#ebe4d9] pb-10">

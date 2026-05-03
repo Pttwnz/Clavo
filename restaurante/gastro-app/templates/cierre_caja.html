@@ -218,4 +218,16 @@
   </div>
 
 </div>
+<script>
+(function () {
+  document.addEventListener("DOMContentLoaded", function () {
+    var id = (location.hash || "").replace(/^#/, "");
+    if (!id) return;
+    var tab = document.querySelector('#ccTabs a.nav-link[href="#' + id + '"]');
+    if (tab && typeof bootstrap !== "undefined" && bootstrap.Tab) {
+      bootstrap.Tab.getOrCreateInstance(tab).show();
+    }
+  });
+})();
+</script>
 {% endblock %}

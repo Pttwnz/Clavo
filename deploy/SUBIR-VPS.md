@@ -96,7 +96,7 @@ Sustituye dominios e IP por los tuyos. Si `deploy/.env` ya tenía `NEXT_PUBLIC_G
 
 - **Script:** `bash deploy/vps-remote-deploy.sh` (variable `VPS_SSH=user@ip`). Ver comentarios al inicio del archivo.
 - **Windows:** `deploy/vps-remote-deploy.ps1` si tienes Git Bash en el PATH.
-- **CI:** `.github/workflows/deploy-vps.yml` — en GitHub, *Actions* → *Deploy VPS*; para auto-despliegue en cada push a `main`, variable de repositorio `VPS_DEPLOY_AUTO=1` y los secrets indicados en el propio workflow.
+- **CI:** `.github/workflows/deploy-vps.yml` — en GitHub, *Actions* → *Deploy VPS*; cada push a `main`/`master` lanza el despliegue (secrets del workflow). Variable opcional `VPS_DEPLOY_SKIP=1` para no desplegar en push hasta quitarla.
 
 ## 7. Script rápido (en el VPS)
 

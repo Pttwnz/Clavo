@@ -141,7 +141,7 @@ Desde la raíz del repo en el VPS también puedes usar: **`bash deploy/vps-pull-
 3. **GitHub Actions** (push o manual): archivo **`.github/workflows/deploy-vps.yml`**.
 
    - **Manual:** en GitHub → *Actions* → *Deploy VPS* → *Run workflow* (elige rama).
-   - **Automático en cada push a `main`/`master`:** en el repo → *Settings* → *Variables* → *Actions* → crea **`VPS_DEPLOY_AUTO`** = `1`.
+   - **Automático en cada push a `main`/`master`:** activo por defecto (mismos secrets). Para pausar temporalmente los despliegues por push, variable **`VPS_DEPLOY_SKIP`** = `1` (*Settings* → *Variables* → *Actions*); el despliegue manual desde Actions sigue disponible.
    - **Secrets** (*Settings* → *Secrets* → *Actions*): `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` (clave privada PEM/OpenSSH), `VPS_REPO_PATH` (ruta absoluta del clon en el servidor, p. ej. `/root/Clavo`). El SSH usa el puerto **22**; si necesitas otro, edita `port:` en el workflow.
 
    El VPS debe tener el repo clonado una vez (`git clone …`) y Docker funcionando como en [`SUBIR-VPS.md`](./SUBIR-VPS.md).
