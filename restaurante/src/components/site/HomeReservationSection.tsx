@@ -8,22 +8,30 @@ const inputClass =
 
 const labelClass = "text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6b5a4e]";
 
-/** Enlace en el mismo sitio web: Next redirige a Gastro con URL pública (evita host interno tipo gastro:37892). */
+/**
+ * Enlace que el navegador puede abrir: prioriza la URL pública de Gastro (build del cliente);
+ * si no hay, misma web + /confirmar-reserva (redirige el servidor); evita host interno tipo gastro:37892.
+ */
 function confirmHrefForBrowser(apiUrl: string): string {
+  let token: string | null = null;
   try {
-    const base =
+    const origin =
       typeof window !== "undefined" && window.location?.origin
         ? window.location.origin
         : "http://localhost";
-    const u = new URL(apiUrl.trim(), base);
-    const token = u.searchParams.get("token");
-    if (token) {
-      return `/confirmar-reserva?token=${encodeURIComponent(token)}`;
-    }
+    const u = new URL(apiUrl.trim(), origin);
+    token = u.searchParams.get("token");
   } catch {
-    /* URL inválida: se usa la que venga del API */
+    return apiUrl.trim();
   }
-  return apiUrl.trim();
+  if (!token) {
+    return apiUrl.trim();
+  }
+  const gastroPublic = (process.env.NEXT_PUBLIC_GASTRO_BASE_URL || "").trim().replace(/\/$/, "");
+  if (gastroPublic) {
+    return `${gastroPublic}/confirmar-reserva?token=${encodeURIComponent(token)}`;
+  }
+  return `/confirmar-reserva?token=${encodeURIComponent(token)}`;
 }
 
 function Chevron({ open }: { open: boolean }) {
@@ -531,6 +539,7 @@ export function HomeReservationSection() {
                   <p className="mb-2 font-medium">Confirma tu reserva con un clic</p>
                   <a
                     href={confirmLinkUrl}
+                    rel="noopener noreferrer"
                     className="inline-block max-w-full break-all rounded-lg bg-white px-3 py-2 text-xs font-semibold text-[#8f1d1d] underline decoration-[#8f1d1d]/40 underline-offset-2 hover:bg-[#faf8f5]"
                   >
                     Confirmar reserva
