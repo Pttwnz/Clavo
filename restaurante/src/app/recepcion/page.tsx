@@ -19,9 +19,7 @@ import {
   tabletTabHint,
   tabletTabTitle,
 } from "@/components/tablet/tablet-tokens";
-import { publicGastroBaseUrl } from "@/lib/gastro-site";
-
-const GASTRO_BASE = publicGastroBaseUrl();
+import { gastroAccessHubUrl } from "@/lib/gastro-site";
 
 type Employee = { id: string; name: string; role: string };
 type SessionEmp = { id: string; name: string; role: string };
@@ -216,7 +214,7 @@ export default function RecepcionPage() {
             <Link href="/" className={`${tabletBtnGhost} text-sm`}>
               Web
             </Link>
-            <a href={`${GASTRO_BASE}/login?next=${encodeURIComponent("/panel")}`} className={`${tabletBtnGhost} text-sm`}>
+            <a href={gastroAccessHubUrl("/panel")} className={`${tabletBtnGhost} text-sm`}>
               Acceso panel
             </a>
           </nav>

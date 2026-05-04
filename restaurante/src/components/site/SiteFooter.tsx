@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { OpeningHoursBlock } from "@/components/site/OpeningHoursBlock";
-import { publicGastroBaseUrl } from "@/lib/gastro-site";
+import { gastroAccessHubUrl } from "@/lib/gastro-site";
 import { VENUE } from "@/lib/venue";
 
 export function SiteFooter() {
-  const gastro = publicGastroBaseUrl();
   const year = new Date().getFullYear();
 
   return (
@@ -79,7 +78,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <a
-                  href={`${gastro}/login?next=${encodeURIComponent("/panel")}`}
+                  href={gastroAccessHubUrl("/panel")}
                   className="text-[#9a8a7c] transition hover:text-[#c4b5a8]"
                 >
                   Acceso personal
