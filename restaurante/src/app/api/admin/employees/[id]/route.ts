@@ -24,7 +24,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
 
   const data: { active?: boolean; role?: string; pinHash?: string } = {};
   if (typeof body.active === "boolean") data.active = body.active;
-  if (body.role === "MANAGER" || body.role === "STAFF") data.role = body.role;
+  if (body.role === "MANAGER" || body.role === "STAFF" || body.role === "KITCHEN") data.role = body.role;
   if (typeof body.newPin === "string" && body.newPin.length >= 4) {
     data.pinHash = await bcrypt.hash(body.newPin, 10);
   }

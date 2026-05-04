@@ -13,7 +13,7 @@ model Employee {
   id        String   @id @default(cuid())
   name      String
   email     String?  @unique
-  role      String   @default("STAFF") // STAFF | MANAGER
+  role      String   @default("STAFF") // STAFF | MANAGER | KITCHEN
   pinHash   String
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
@@ -124,6 +124,13 @@ model MenuCartaStore {
   id        String   @id @default("singleton")
   itemsJson String   @default("")
   updatedAt DateTime @updatedAt
+}
+
+/// Platos «parados» desde cocina (no se muestran en carta web/QR hasta reactivar).
+model KitchenStopsState {
+  id                 String   @id @default("singleton")
+  stoppedItemIdsJson String   @default("[]")
+  updatedAt          DateTime @updatedAt
 }
 
 /// Vista de página pública (telemetría agregada en panel admin).

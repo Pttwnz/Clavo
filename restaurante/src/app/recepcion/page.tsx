@@ -230,6 +230,9 @@ export default function RecepcionPage() {
             <Link href="/" className={`${tabletBtnGhost} text-sm`}>
               Web
             </Link>
+            <Link href="/cocina" className={`${tabletBtnGhost} text-sm`}>
+              Cocina (paros)
+            </Link>
             <a href={gastroAccessHubUrl("/panel")} className={`${tabletBtnGhost} text-sm`}>
               Acceso panel
             </a>
@@ -256,7 +259,8 @@ export default function RecepcionPage() {
                 >
                   {employees.map((e) => (
                     <option key={e.id} value={e.id}>
-                      {e.name} ({e.role === "MANAGER" ? "Encargado" : "Personal"})
+                      {e.name} (
+                      {e.role === "MANAGER" ? "Encargado" : e.role === "KITCHEN" ? "Cocina" : "Personal"})
                     </option>
                   ))}
                 </select>
@@ -290,7 +294,12 @@ export default function RecepcionPage() {
               <p className="text-lg text-emerald-950">
                 <span className="font-semibold">{session.name}</span>
                 <span className="ml-2 text-base font-normal text-emerald-800/90">
-                  · {session.role === "MANAGER" ? "Encargado" : "Personal"}
+                  ·{" "}
+                  {session.role === "MANAGER"
+                    ? "Encargado"
+                    : session.role === "KITCHEN"
+                      ? "Cocina"
+                      : "Personal"}
                 </span>
               </p>
               <button

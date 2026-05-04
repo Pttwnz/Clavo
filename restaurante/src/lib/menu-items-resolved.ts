@@ -1,4 +1,5 @@
 import { menuItems as defaultMenuItems } from "@/lib/menu-carta";
+import { getStoppedKitchenItemIds } from "@/lib/kitchen-stops-db";
 import { prisma } from "@/lib/db";
 import { parseMenuItemsJson } from "@/lib/menu-items-validate";
 import type { MenuItem } from "@/lib/menu-types";
@@ -20,10 +21,11 @@ export async function getMenuItemsResolved(): Promise<MenuItem[]> {
   }
 }
 
-/** Carta tal como la ve el cliente (sin platos marcados como ocultos en el panel). */
+/** Carta tal como la ve el cliente (sin ocultos del panel ni paros de cocina). */
 export async function getMenuItemsForPublicDisplay(): Promise<MenuItem[]> {
   const items = await getMenuItemsResolved();
-  return items.filter((m) => !m.hiddenFromPublic);
+  const stopped = await getStoppedKitchenItemIds();
+  return items.filter((m) => !m.hiddenFromPublic && !stopped.has(m.id));
 }
 
 export async function isMenuCartaPersisted(): Promise<boolean> {

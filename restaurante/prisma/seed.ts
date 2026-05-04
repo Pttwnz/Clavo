@@ -24,11 +24,11 @@ async function main() {
 
   await prisma.employee.upsert({
     where: { email: "cocina@restaurante.local" },
-    update: { pinHash: hash, name: "Carlos Ruiz", role: "STAFF", active: true },
+    update: { pinHash: hash, name: "Carlos Ruiz", role: "KITCHEN", active: true },
     create: {
       email: "cocina@restaurante.local",
       name: "Carlos Ruiz",
-      role: "STAFF",
+      role: "KITCHEN",
       pinHash: hash,
     },
   });
