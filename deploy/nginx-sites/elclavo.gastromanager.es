@@ -733,8 +733,18 @@ server {
         proxy_read_timeout 120s;
     }
 
+    # Inicio del modo tablet en Gastro (Flask: GET /tablet tras el PIN). Un 301 a Next /recepcion
+    # rompía la sesión cookie y mostraba recepción en lugar del menú táctil Flask.
     location = /tablet {
-        return 301 /recepcion;
+        proxy_pass http://clavo_gastro_elclavo;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Connection "";
+        proxy_redirect off;
+        proxy_read_timeout 120s;
     }
 
     location / {

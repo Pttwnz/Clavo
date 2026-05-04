@@ -35,7 +35,8 @@
 #   location ^~ /static/ { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
 #   location = /sw.js { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
 #   location ^~ /confirmar-reserva { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
-#   # Gastro tablet del local (subrutas); la ruta /tablet «recepción Next» va abajo con location = /tablet
+#   # Modo tablet Gastro: /tablet (inicio) y /tablet/* → Flask. Recepción Next: solo /recepcion
+#   location = /tablet { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
 #   location ^~ /tablet/ { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
 #
 #   location ^~ /reservas { proxy_pass http://clavo_gastro; include snippets/proxy-gastro.conf; }
@@ -93,7 +94,6 @@
 #   }
 #
 #   # --- Next.js (todo lo demás: /, /menu, /ingreso, /recepcion, /admin, /api/auth, …) ---
-#   location = /tablet { proxy_pass http://clavo_next; include snippets/proxy-next.conf; }
 #   location / {
 #     proxy_pass http://clavo_next;
 #     include snippets/proxy-next.conf;
