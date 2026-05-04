@@ -64,9 +64,25 @@ export default function RecepcionPage() {
   }, []);
 
   useEffect(() => {
-    queueMicrotask(() => {
-      void refreshSession();
-    });
+    let cancelled = false;
+    void (async () => {
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        const r = (params.get("reauth") || "").toLowerCase();
+        if (r === "1" || r === "true" || r === "si" || r === "sí") {
+          await fetch("/api/tablet/logout", { method: "POST", credentials: "include" });
+          if (cancelled) return;
+          params.delete("reauth");
+          const q = params.toString();
+          window.history.replaceState({}, "", `/recepcion${q ? `?${q}` : ""}`);
+        }
+      }
+      if (cancelled) return;
+      await refreshSession();
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [refreshSession]);
 
   useEffect(() => {

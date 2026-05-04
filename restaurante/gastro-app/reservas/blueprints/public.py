@@ -347,9 +347,20 @@ def login_cliente_redirect():
     return redirect(url_for("public.tablet_acceso"))
 
 
+def _pedir_nuevo_pin_tablet() -> bool:
+    """?reauth=1 desde el hub: no reutilizar modo tablet de una sesión anterior en este navegador."""
+    v = (request.args.get("reauth") or "").strip().lower()
+    return v in ("1", "true", "yes", "si", "sí")
+
+
 @bp.route("/tablet/acceso", methods=["GET", "POST"])
 def tablet_acceso():
     """PIN del modo tablet (local): solo reservas + fichaje; sin editor de salón ni resto."""
+    if request.method == "GET" and _pedir_nuevo_pin_tablet():
+        session.pop("modo_tablet", None)
+        if session.get("rol") == "tablet":
+            session.pop("rol", None)
+        return redirect(url_for("public.tablet_acceso"))
     if session.get("modo_tablet"):
         return redirect(url_for("public.tablet_inicio"))
     if request.method == "POST":

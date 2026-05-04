@@ -5,7 +5,11 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/login", destination: "/ingreso", permanent: false },
-      { source: "/tablet", destination: gastroTabletAccesoUrl(), permanent: false },
+      {
+        source: "/tablet",
+        destination: `${gastroTabletAccesoUrl()}?reauth=1`,
+        permanent: false,
+      },
       { source: "/qr/carta", destination: "/carta/es", permanent: false },
     ];
   },

@@ -169,7 +169,7 @@
     </a>
     {% endif %}
 
-    <a href="{{ url_for('public.tablet_acceso') }}" class="access-card">
+    <a href="{{ url_for('public.tablet_acceso', reauth=1) }}" class="access-card">
       <div class="ac-icon cli" aria-hidden="true"><i class="bi bi-tablet-landscape"></i></div>
       <div class="ac-body">
         <div class="ac-title">{{ tr('login_selector.tablet_title') }}</div>

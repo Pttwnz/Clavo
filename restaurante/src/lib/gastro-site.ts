@@ -38,7 +38,10 @@ export function gastroAccessHubUrl(nextPath: string = "/panel"): string {
   return `${origin}/${q}`;
 }
 
-/** Entrada modo tablet del local (Flask: PIN en `/tablet/acceso`). */
+/**
+ * Entrada modo tablet del local (Flask: PIN en `/tablet/acceso`).
+ * Recepción Next: usa `/recepcion?reauth=1` para obligar de nuevo empleado + PIN (cierra cookie `clavo_tablet`).
+ */
 export function gastroTabletAccesoUrl(): string {
   const base = publicGastroBaseUrl();
   return base ? `${base}/tablet/acceso` : "/tablet/acceso";
