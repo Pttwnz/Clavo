@@ -1,13 +1,55 @@
 """Endpoints JSON para salones, esquemas y búsqueda admin."""
+import os
+
 from flask import Blueprint, current_app, jsonify, request, session
 
 from config import RESERVAS_ONLY
 from models import get_db
 from reservas.db_helpers import columnas_tabla, tabla_existe
 from reservas.decorators import login_requerido, permiso_mod
-from reservas.salon_helpers import ensure_salon_tables
+from reservas.salon_helpers import ensure_salon_tables, list_uniones_esquema_activo
 
 bp = Blueprint("api", __name__)
+
+
+def _internal_clavo_token() -> str:
+    """Misma cabecera que Next (`verifyInternalClavoRequest`): X-Clavo-Internal o Bearer."""
+    t = (request.headers.get("X-Clavo-Internal") or "").strip()
+    if t:
+        return t
+    auth = request.headers.get("Authorization") or ""
+    if auth.lower().startswith("bearer "):
+        return auth[7:].strip()
+    return ""
+
+
+@bp.route("/api/internal/clavo/dining-table-unions", methods=["GET"])
+def api_internal_clavo_dining_table_unions():
+    """Uniones del esquema de sala activo para sincronizar mesas virtuales en Next (Prisma)."""
+    expected = (os.getenv("CLAVO_INTERNAL_API_SECRET") or "").strip()
+    if not expected:
+        return jsonify({"error": "CLAVO_INTERNAL_API_SECRET no configurado"}), 503
+    if _internal_clavo_token() != expected:
+        return jsonify({"error": "No autorizado"}), 401
+
+    db = get_db()
+    try:
+        uniones = list_uniones_esquema_activo(db)
+    finally:
+        db.close()
+
+    out = []
+    for u in uniones:
+        out.append(
+            {
+                "id": u.get("id"),
+                "nombre": u.get("nombre"),
+                "capacidad_total": u.get("capacidad_total"),
+                "mesa_nombres": u.get("mesa_nombres") or [],
+                "mesa_ids": u.get("mesa_ids") or [],
+            }
+        )
+    return jsonify({"uniones": out})
 
 
 def _json_permiso(codigo: str):

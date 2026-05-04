@@ -13,7 +13,8 @@ export type TableSuggestion = {
 
 /**
  * Ordena mesas válidas para una franja horaria maximizando encaje de capacidad (sin solapes).
- * No une mesas: si partySize supera la mayor mesa, devuelve lista vacía.
+ * Incluye filas de unión sincronizadas desde Gastro (`unionMemberIds`); el aforo y el solape
+ * usan la huella de mesas físicas (mismos miembros).
  */
 export async function rankTableSuggestions(
   prisma: PrismaClient,

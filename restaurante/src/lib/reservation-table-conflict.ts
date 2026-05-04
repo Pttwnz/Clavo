@@ -1,5 +1,11 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 import { ReservationStatus } from "@/generated/prisma/enums";
+import {
+  buildDiningTableLookup,
+  physicalFootprintForReservation,
+  physicalFootprintForTableRow,
+  setsIntersect,
+} from "@/lib/reservation-table-footprint";
 import { reservationSlotEnd, rangesOverlap } from "@/lib/reservation-slot";
 
 const inactive: ReservationStatus[] = ["CANCELLED", "COMPLETED"];
@@ -20,24 +26,37 @@ export async function assertReservationTableNoConflict(
   });
   if (!table) return { ok: false, message: "Mesa no encontrada o inactiva" };
 
+  const proposed = physicalFootprintForTableRow(table);
   const myStart = args.startsAt;
   const myEnd = reservationSlotEnd(args.startsAt, args.endsAt);
 
-  const others = await prisma.reservation.findMany({
+  const candidates = await prisma.reservation.findMany({
     where: {
       id: { not: args.excludeReservationId },
       status: { notIn: inactive },
-      OR: [{ tableId: args.tableId }, { AND: [{ tableId: null }, { assignedTable: table.label }] }],
     },
-    select: { id: true, startsAt: true, endsAt: true },
+    select: {
+      id: true,
+      tableId: true,
+      assignedTable: true,
+      startsAt: true,
+      endsAt: true,
+    },
   });
 
-  for (const o of others) {
+  const allTables = await prisma.diningTable.findMany();
+  const lookup = buildDiningTableLookup(allTables);
+  const cache = new Map<string, import("@/generated/prisma/client").DiningTable>();
+
+  for (const o of candidates) {
     const oEnd = reservationSlotEnd(o.startsAt, o.endsAt);
-    if (rangesOverlap(myStart, myEnd, o.startsAt, oEnd)) {
+    if (!rangesOverlap(myStart, myEnd, o.startsAt, oEnd)) continue;
+
+    const fpO = await physicalFootprintForReservation(prisma, o, cache, lookup);
+    if (setsIntersect(proposed, fpO)) {
       return {
         ok: false,
-        message: "Esa mesa ya tiene otra reserva activa en esa franja horaria.",
+        message: "Esa mesa o unión choca con otra reserva activa en esa franja horaria.",
       };
     }
   }

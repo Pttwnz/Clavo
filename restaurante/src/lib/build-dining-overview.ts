@@ -1,6 +1,7 @@
 import type { DiningTable, Reservation } from "@/generated/prisma/client";
 import { ReservationSource, ReservationStatus } from "@/generated/prisma/enums";
 import type { DiningOverviewRow } from "@/lib/dining-overview-types";
+import { physicalFootprintForTableRow } from "@/lib/reservation-table-footprint";
 import { reservationSlotEnd } from "@/lib/reservation-slot";
 
 export type { DiningOverviewRow, DiningOverviewState } from "@/lib/dining-overview-types";
@@ -22,22 +23,38 @@ function overviewSource(src: ReservationSource): DiningOverviewRow["reservationS
   }
 }
 
-function belongsToTable(r: Reservation, dt: DiningTable): boolean {
-  if (r.tableId === dt.id) return true;
-  if (r.tableId) return false;
-  const a = r.assignedTable?.trim();
-  return !!a && a === dt.label.trim();
-}
-
 export function buildDiningOverview(
   tables: DiningTable[],
   reservations: Reservation[],
   now: Date,
 ): DiningOverviewRow[] {
   const active = reservations.filter((r) => !inactive.includes(r.status));
+  const tableById = new Map(tables.map((t) => [t.id, t]));
+  const labelToId = new Map<string, string>();
+  for (const t of tables) {
+    labelToId.set(t.label.trim().toLowerCase(), t.id);
+  }
+
+  function physicalFpForReservation(r: Reservation): Set<string> {
+    if (r.tableId) {
+      const t = tableById.get(r.tableId);
+      if (!t) return new Set();
+      return physicalFootprintForTableRow(t);
+    }
+    const lab = r.assignedTable?.trim();
+    if (!lab) return new Set();
+    const id = labelToId.get(lab.toLowerCase());
+    if (!id) return new Set();
+    const t = tableById.get(id);
+    return t ? physicalFootprintForTableRow(t) : new Set();
+  }
+
+  function belongsToTable(r: Reservation, dt: DiningTable): boolean {
+    return physicalFpForReservation(r).has(dt.id);
+  }
 
   return tables
-    .filter((t) => t.active)
+    .filter((t) => t.active && !(t.unionMemberIds && t.unionMemberIds.trim()))
     .sort((a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label))
     .map((dt) => {
       const mine = active.filter((r) => belongsToTable(r, dt));

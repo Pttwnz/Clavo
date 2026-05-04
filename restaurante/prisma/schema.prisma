@@ -71,6 +71,8 @@ model DiningTable {
   capacity  Int      @default(4)
   sortOrder Int      @default(0)
   active    Boolean  @default(true)
+  /// Si no es null: esta fila representa una unión del editor de salón (Gastro). JSON: ["cuidMesa1","cuidMesa2"].
+  unionMemberIds String?
   /// Ocupación manual: clientes sin reserva (walk-in). Solo aplica si no hay reserva activa en la mesa.
   walkInOccupied  Boolean @default(false)
   walkInPartySize Int?
