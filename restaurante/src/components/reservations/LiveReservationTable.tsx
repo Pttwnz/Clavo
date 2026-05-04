@@ -49,20 +49,21 @@ const statusLabels: Record<string, string> = {
 
 const sourceLabels: Record<string, string> = {
   WEB: "Web",
-  TABLET_PHONE: "Teléfono",
-  TABLET_WALKIN: "Mostrador",
+  TABLET_PHONE: "Manual",
+  TABLET_WALKIN: "Walk-in",
 };
 
-/** Badges alineados con la paleta del panel (sin violetas/azules genéricos). */
+/** Badges: Web muy visible (cliente reservó online); manual y walk-in desde recepción. */
 function sourceBadgeClass(src: string | undefined) {
   switch (src) {
+    case "WEB":
+      return "bg-gradient-to-r from-[#c9a54a]/35 via-amber-50 to-[#fdf8ee] text-[#4a3208] ring-2 ring-[#c9a54a]/55 shadow-sm";
     case "TABLET_PHONE":
       return "bg-[#efe8e0] text-[#4a4038] ring-1 ring-[#2c1810]/10";
     case "TABLET_WALKIN":
       return "bg-[#fff4ed] text-[#7a3410] ring-1 ring-[#e8a87c]/50";
-    case "WEB":
     default:
-      return "bg-[#eef2f6] text-[#2c3540] ring-1 ring-[#2c1810]/8";
+      return "bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200";
   }
 }
 
@@ -119,6 +120,7 @@ export function LiveReservationTable({ onTabletSessionLost }: Props) {
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [listFilter, setListFilter] = useState<ListFilter>("all");
+  const [suggestingId, setSuggestingId] = useState<string | null>(null);
 
   const listUrl = "/api/tablet/reservations";
   const streamUrl = "/api/tablet/reservations/stream";
@@ -228,6 +230,37 @@ export function LiveReservationTable({ onTabletSessionLost }: Props) {
     return () => window.clearInterval(id);
   }, [load, connected]);
 
+  async function suggestTableForRow(r: ReservationRow) {
+    setSuggestingId(r.id);
+    setError(null);
+    try {
+      const res = await fetch("/api/dining-tables/suggest", {
+        method: "POST",
+        credentials: creds,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reservationId: r.id }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        suggestions?: { tableId: string; reason?: string }[];
+        error?: string;
+      };
+      if (!res.ok) {
+        setError(typeof data.error === "string" ? data.error : "No se pudo sugerir mesa");
+        return;
+      }
+      const first = data.suggestions?.[0];
+      if (!first) {
+        setError(
+          "No hay mesa libre que encaje (revisa comensales, hora o une mesas manualmente si el grupo es grande).",
+        );
+        return;
+      }
+      await patch(r.id, { tableId: first.tableId });
+    } finally {
+      setSuggestingId(null);
+    }
+  }
+
   async function patch(id: string, body: Record<string, unknown>) {
     const res = await fetch(patchUrl(id), {
       method: "PATCH",
@@ -314,7 +347,7 @@ export function LiveReservationTable({ onTabletSessionLost }: Props) {
         </span>
         <span className="text-[#c9b8a8]">|</span>
         <span className="text-[#6b5d55]">
-          Origen: web, teléfono o mostrador. Cupo por franja según horarios.
+          Origen en columna: Web (online), Manual (teléfono) o Walk-in. «Sugerir mesa» optimiza encaje sin solapes.
         </span>
       </div>
       {error && (
@@ -440,12 +473,28 @@ export function LiveReservationTable({ onTabletSessionLost }: Props) {
                       </span>
                     )}
                   </div>
+                  <button
+                    type="button"
+                    className="mt-2 w-full rounded-lg border border-[#2c1810]/12 bg-[#faf8f5] py-2 text-xs font-semibold text-[#5c4f47] shadow-sm transition hover:bg-[#f0ebe3] disabled:opacity-50"
+                    disabled={suggestingId === r.id}
+                    onClick={() => void suggestTableForRow(r)}
+                  >
+                    {suggestingId === r.id ? "Calculando…" : "Sugerir mesa"}
+                  </button>
                 </td>
                 <td className={cell}>
                   <span
-                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${sourceBadgeClass(r.source)}`}
+                    className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${sourceBadgeClass(r.source)}`}
                   >
-                    {sourceLabels[r.source ?? "WEB"] ?? r.source ?? "Web"}
+                    <span className="sr-only">Origen </span>
+                    {r.source === "WEB" && (
+                      <span className="mr-1 font-black uppercase tracking-wide text-[#6b4f0a]" aria-hidden>
+                        ●
+                      </span>
+                    )}
+                    {r.source && sourceLabels[r.source]
+                      ? sourceLabels[r.source]
+                      : r.source ?? "—"}
                   </span>
                 </td>
                 <td className={`${cell} font-medium text-[#1a1614]`}>{r.customerName}</td>

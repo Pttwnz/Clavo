@@ -36,6 +36,7 @@ export function TabletWalkInReservation({ onSessionLost, onCreated }: Props) {
   /** PHONE = llamada; WALKIN = viene al local */
   const [tabletSource, setTabletSource] = useState<"PHONE" | "WALKIN">("PHONE");
   const [busy, setBusy] = useState(false);
+  const [suggestingMesa, setSuggestingMesa] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadTables = useCallback(async () => {
@@ -64,6 +65,50 @@ export function TabletWalkInReservation({ onSessionLost, onCreated }: Props) {
     }
     return [...m.entries()].sort(([a], [b]) => a.localeCompare(b));
   }, [tables]);
+
+  async function suggestMesa() {
+    setError(null);
+    const startsAt = new Date(datetime);
+    if (Number.isNaN(startsAt.getTime())) {
+      setError("Indica día y hora antes de sugerir mesa.");
+      return;
+    }
+    setSuggestingMesa(true);
+    try {
+      const payload: Record<string, unknown> = {
+        partySize,
+        startsAt: startsAt.toISOString(),
+      };
+      if (endsAt.trim()) {
+        const end = new Date(endsAt);
+        if (!Number.isNaN(end.getTime())) payload.endsAt = end.toISOString();
+      }
+      const res = await fetch("/api/dining-tables/suggest", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        suggestions?: { tableId: string; reason?: string }[];
+        error?: string;
+      };
+      if (!res.ok) {
+        setError(typeof data.error === "string" ? data.error : "No se pudo calcular la mesa");
+        return;
+      }
+      const first = data.suggestions?.[0];
+      if (!first) {
+        setError(
+          "No hay mesa libre con capacidad suficiente en esa franja (revisa pax o la hora).",
+        );
+        return;
+      }
+      setTableId(first.tableId);
+    } finally {
+      setSuggestingMesa(false);
+    }
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -273,6 +318,14 @@ export function TabletWalkInReservation({ onSessionLost, onCreated }: Props) {
               </optgroup>
             ))}
           </select>
+          <button
+            type="button"
+            className="mt-3 w-full rounded-2xl border-2 border-[#8f1d1d]/25 bg-white py-3 text-base font-semibold text-[#6b1518] shadow-sm transition hover:bg-[#fdf4f4] disabled:opacity-50"
+            disabled={suggestingMesa}
+            onClick={() => void suggestMesa()}
+          >
+            {suggestingMesa ? "Calculando…" : "Sugerir mejor mesa (aprovecha aforo sin solapes)"}
+          </button>
         </label>
 
         <label className="flex flex-col gap-2">

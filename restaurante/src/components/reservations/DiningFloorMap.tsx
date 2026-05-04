@@ -1,8 +1,43 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { DiningOverviewRow } from "@/lib/dining-overview-types";
+import type { DiningOverviewRow, DiningReservationSourceKind } from "@/lib/dining-overview-types";
 import { OccupancyTimer } from "@/components/reservations/OccupancyTimer";
+
+function ReservationOriginBadge({
+  source,
+  compact,
+}: {
+  source: DiningReservationSourceKind;
+  compact: boolean;
+}) {
+  const sz = compact ? "text-[10px] px-1.5 py-0.5" : "text-xs px-2 py-0.5";
+  if (source === "WEB") {
+    return (
+      <span
+        className={`inline-flex max-w-full items-center rounded-md bg-gradient-to-r from-[#c9a54a]/40 to-amber-100 font-bold uppercase tracking-wide text-[#4a3208] ring-1 ring-[#a67c2a]/55 ${sz}`}
+      >
+        Web
+      </span>
+    );
+  }
+  if (source === "TABLET_PHONE") {
+    return (
+      <span
+        className={`inline-flex max-w-full rounded-md bg-[#efe8e0] font-semibold text-[#4a4038] ring-1 ring-[#2c1810]/12 ${sz}`}
+      >
+        Manual
+      </span>
+    );
+  }
+  return (
+    <span
+      className={`inline-flex max-w-full rounded-md bg-[#fff4ed] font-semibold text-[#7a3410] ring-1 ring-[#e8a87c]/45 ${sz}`}
+    >
+      Walk-in
+    </span>
+  );
+}
 
 function walkInDetailFromServer(p: number | null | undefined): string {
   return p != null && p >= 1 ? `Ocupación manual · ${p} pax` : "Ocupación manual";
@@ -257,6 +292,15 @@ export function DiningFloorMap({ onTabletSessionLost }: Props) {
           <p className={`text-[#6b5d55] ${isTablet ? "text-sm" : "text-[11px] leading-snug"}`}>
             {[t.zone, `${t.capacity} pax`].filter(Boolean).join(" · ")}
           </p>
+
+          {t.reservationSource && (
+            <div className="flex flex-wrap items-center gap-1">
+              <span className={`text-[10px] font-medium uppercase tracking-wide text-[#8a7d72]`}>
+                Origen
+              </span>
+              <ReservationOriginBadge source={t.reservationSource} compact={!isTablet} />
+            </div>
+          )}
 
           {t.occupiedSinceIso && (
             <div

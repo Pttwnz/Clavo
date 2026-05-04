@@ -1,11 +1,26 @@
 import type { DiningTable, Reservation } from "@/generated/prisma/client";
-import { ReservationStatus } from "@/generated/prisma/enums";
+import { ReservationSource, ReservationStatus } from "@/generated/prisma/enums";
 import type { DiningOverviewRow } from "@/lib/dining-overview-types";
 import { reservationSlotEnd } from "@/lib/reservation-slot";
 
 export type { DiningOverviewRow, DiningOverviewState } from "@/lib/dining-overview-types";
 
 const inactive: ReservationStatus[] = ["CANCELLED", "COMPLETED"];
+
+function overviewSource(src: ReservationSource): DiningOverviewRow["reservationSource"] {
+  switch (src) {
+    case ReservationSource.WEB:
+      return "WEB";
+    case ReservationSource.TABLET_PHONE:
+      return "TABLET_PHONE";
+    case ReservationSource.TABLET_WALKIN:
+      return "TABLET_WALKIN";
+    default: {
+      const _x: never = src;
+      return _x;
+    }
+  }
+}
 
 function belongsToTable(r: Reservation, dt: DiningTable): boolean {
   if (r.tableId === dt.id) return true;
@@ -38,6 +53,7 @@ export function buildDiningOverview(
           state: "seated",
           detail: r.customerName,
           occupiedSinceIso: since.toISOString(),
+          reservationSource: overviewSource(r.source),
         };
       }
 
@@ -57,6 +73,7 @@ export function buildDiningOverview(
           state: "reserved_now",
           detail: `Reserva en curso · ${fmtClock(r.startsAt)} · ${r.customerName}`,
           occupiedSinceIso: r.startsAt.toISOString(),
+          reservationSource: overviewSource(r.source),
         };
       }
 
@@ -75,6 +92,7 @@ export function buildDiningOverview(
           state: "reserved_future",
           detail,
           occupiedSinceIso: null,
+          reservationSource: overviewSource(r.source),
         };
       }
 
@@ -89,6 +107,7 @@ export function buildDiningOverview(
           detail:
             p != null && p >= 1 ? `Ocupación manual · ${p} pax` : "Ocupación manual",
           occupiedSinceIso: dt.walkInStartedAt?.toISOString() ?? null,
+          reservationSource: null,
         };
       }
 
@@ -100,6 +119,7 @@ export function buildDiningOverview(
         state: "free",
         detail: null,
         occupiedSinceIso: null,
+        reservationSource: null,
       };
     });
 }
