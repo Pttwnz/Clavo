@@ -9,10 +9,11 @@ cd "$REPO_ROOT"
 echo "== vps-pull-rebuild $(date -Iseconds) @ $(git rev-parse --short HEAD 2>/dev/null || echo '?') =="
 git pull
 cd deploy
-docker compose build web gastro
-docker compose up -d web gastro
+docker compose build web gastro gerente
+docker compose up -d web gastro gerente
 docker compose ps
 echo ""
 echo "Hecho. Prueba en el navegador (Ctrl+F5 si parece igual):"
 echo "  Web:    puerto publicado en CLAVO_WEB_PUBLISH (defecto 37891)"
 echo "  Gastro: puerto publicado en CLAVO_GASTRO_PUBLISH (defecto 37892)"
+echo "  Gerente: puerto publicado en CLAVO_GERENTE_PUBLISH (defecto 37893)"

@@ -7,6 +7,7 @@
 #
 # Web:  http://IP_O_DOMINIO:37891
 # Gastro: http://IP_O_DOMINIO:37892  (panel /login, tablet, API reservas vía proxy Next)
+# Gerente (opcional): http://IP_O_DOMINIO:37893 — PWA + API personal gerencia (pedidos, tareas, Telegram)
 
 services:
   gastro:
@@ -80,6 +81,25 @@ services:
       - gastro
     restart: unless-stopped
 
+  gerente:
+    build:
+      context: ../gerente
+      dockerfile: server/Dockerfile
+    ports:
+      - "${CLAVO_GERENTE_PUBLISH:-37893}:37893"
+    environment:
+      PORT: "37893"
+      DATABASE_PATH: /data/gerente.db
+      GERENTE_API_KEY: ${GERENTE_API_KEY:-}
+      GERENTE_CRON_SECRET: ${GERENTE_CRON_SECRET:-}
+      GERENTE_TZ: ${GERENTE_TZ:-Europe/Madrid}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+    volumes:
+      - clavo_gerente_sqlite:/data
+    restart: unless-stopped
+
 volumes:
   clavo_gastro_sqlite:
   clavo_prisma_sqlite:
+  clavo_gerente_sqlite:

@@ -2,6 +2,7 @@
 
 - **`restaurante/`** — web Next.js (pública, Prisma, recepción).
 - **`restaurante/gastro-app/`** — panel Gastro (Flask), tablet, API de reservas.
+- **`gerente/`** — PWA + API personal (pedidos a proveedores, tareas, resumen Telegram); puerto por defecto **37893** en `deploy/docker-compose.yml`.
 - **`deploy/`** — Docker Compose para VPS: [deploy/README.md](deploy/README.md).
 
 ## Git y GitHub privado

@@ -11,8 +11,9 @@ Stack listo para **migrar Taberna El Clavo** a un servidor Linux sin pisar servi
 |----------|------------------------|------------|-------------------|
 | **web** | **37891** | 3000 | Sitio público, `/admin`, API Prisma, proxy de reservas a Gastro |
 | **gastro** | **37892** | 37892 | Panel Gastro, tablet, SQLite propio de Gastro |
+| **gerente** | **37893** | 37893 | PWA + API personal (`gerente/`), SQLite en volumen `clavo_gerente_sqlite` |
 
-Puedes cambiar el puerto del host con `CLAVO_WEB_PUBLISH` y `CLAVO_GASTRO_PUBLISH` en `.env` (ver `env.example`).
+Puedes cambiar el puerto del host con `CLAVO_WEB_PUBLISH`, `CLAVO_GASTRO_PUBLISH` y `CLAVO_GERENTE_PUBLISH` en `.env` (ver `env.example`).
 
 ---
 
@@ -22,7 +23,7 @@ Puedes cambiar el puerto del host con `CLAVO_WEB_PUBLISH` y `CLAVO_GASTRO_PUBLIS
 - **RAM**: mínimo **2 GB** (el `docker compose build` de Next es pesado; 4 GB evita swaps).
 - **Disco**: **10 GB** libres como mínimo (imágenes Docker + volúmenes SQLite creciendo).
 - **Software**: Docker Engine **24+** y Docker Compose plugin v2 (`docker compose`).
-- **Red**: IPv4 accesible; abre en el cortafuegos solo los puertos que vayas a usar (p. ej. `37891`, `37892`).
+- **Red**: IPv4 accesible; abre en el cortafuegos solo los puertos que vayas a usar (p. ej. `37891`, `37892`, `37893` si usas Gerente).
 - **Opcional**: dominio + reverse proxy (Caddy/Nginx) en **443** apuntando a `127.0.0.1:37891` y, si quieres Gastro bajo el mismo dominio, rutas o subdominio — no va incluido aquí para no duplicar tu configuración actual.
 
 ### Comandos típicos (Ubuntu)
@@ -33,6 +34,7 @@ sudo apt update && sudo apt install -y ca-certificates curl
 sudo ufw allow OpenSSH
 sudo ufw allow 37891/tcp comment 'clavo-next'
 sudo ufw allow 37892/tcp comment 'clavo-gastro'
+sudo ufw allow 37893/tcp comment 'clavo-gerente'
 sudo ufw enable
 ```
 
@@ -42,6 +44,7 @@ sudo ufw enable
 
 1. **web** (`restaurante/`): Next.js 16 en producción, Prisma + **SQLite** en volumen `clavo_prisma_sqlite` (`/data/clavo.db`). Al arrancar ejecuta `prisma migrate deploy`.
 2. **gastro** (`restaurante/gastro-app/`): Flask + Gunicorn, **SQLite** en volumen `clavo_gastro_sqlite` (`/data/gastro.db`). Crea tablas al iniciar si faltan.
+3. **gerente** (`gerente/`): Fastify + PWA estática, **SQLite** en volumen `clavo_gerente_sqlite` (`/data/gerente.db`). Opcional: Telegram y cron (ver `gerente/README.md`).
 
 Las reservas web pueden delegarse en Gastro vía `GASTRO_RESERVAS_BASE_URL` (en Compose ya apunta a `http://gastro:37892`).
 
@@ -123,7 +126,7 @@ docker compose build
 docker compose up -d
 ```
 
-Desde la raíz del repo en el VPS también puedes usar: **`bash deploy/vps-pull-rebuild.sh`** (equivale a `git pull` + `build web gastro` + `up -d`).
+Desde la raíz del repo en el VPS también puedes usar: **`bash deploy/vps-pull-rebuild.sh`** (equivale a `git pull` + `build web gastro gerente` + `up -d`).
 
 ### Despliegue sin entrar al VPS (desde tu PC)
 
